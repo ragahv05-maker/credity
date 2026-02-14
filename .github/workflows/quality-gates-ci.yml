@@ -183,6 +183,13 @@ jobs:
           else
             npm ci
           fi
+      - name: Install cross-service deps for recruiter e2e imports
+        if: matrix.key == 'recruiter' && (needs.changes.outputs[matrix.key] == 'true' || github.event_name == 'workflow_dispatch')
+        run: |
+          cd "CredVerseIssuer 3"
+          npm ci --legacy-peer-deps
+          cd ../BlockWalletDigi
+          npm ci
       - name: Test gate
         if: needs.changes.outputs[matrix.key] == 'true' || github.event_name == 'workflow_dispatch'
         working-directory: ${{ matrix.path }}
