@@ -165,7 +165,7 @@ function App() {
       <header className="top-nav">
         <div className="brand">
           <div className="brand-icon-wrap">
-            <img src="/credity-logo.png" alt="CredVerse" className="brand-logo" />
+            <img src="/credity-logo.jpg" alt="CredVerse" className="brand-logo" />
           </div>
           <span>CredVerse</span>
         </div>
