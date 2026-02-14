@@ -1,354 +1,239 @@
-/**
- * Claims Dashboard Page
- * B2B Claims Management Dashboard per PRD v3.1 Feature 3
- * 
- * Shows:
- * - Claims processed today stats
- * - Auto-approved/Flagged/Rejected breakdown
- * - Fraud detected count
- * - Amount saved metric
- * - Processing time average
- */
-
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-    ShieldCheck,
-    AlertTriangle,
-    CheckCircle2,
-    XCircle,
-    Clock,
-    TrendingUp,
-    IndianRupee,
-    FileText,
-    Download,
-    RefreshCw,
-    BarChart3,
-    Loader2,
-    Eye,
-    ArrowLeft
-} from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { Link } from "wouter";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { RefreshCw, Loader2, AlertTriangle, CheckCircle2, Clock3, XCircle, FileText, ShieldCheck } from "lucide-react";
 
 interface ClaimsStats {
-    total: number;
-    approved: number;
-    review: number;
-    investigate: number;
-    rejected: number;
-    avgTrustScore: number;
+  total: number;
+  approved: number;
+  review: number;
+  investigate: number;
+  rejected: number;
+  avgTrustScore: number;
 }
 
 interface ClaimSummary {
-    id: string;
-    trust_score: number;
-    recommendation: string;
-    claim_type: string;
-    created_at: string;
+  id: string;
+  trust_score: number;
+  recommendation: "approve" | "review" | "investigate" | "reject" | string;
+  claim_type: string;
+  created_at: string;
 }
 
+interface ClaimsResponse {
+  claims?: ClaimSummary[];
+  stats?: ClaimsStats;
+}
+
+const emptyStats: ClaimsStats = {
+  total: 0,
+  approved: 0,
+  review: 0,
+  investigate: 0,
+  rejected: 0,
+  avgTrustScore: 0,
+};
+
 export default function ClaimsDashboard() {
-    const [selectedPeriod, setSelectedPeriod] = useState<'today' | 'week' | 'month'>('today');
+  const [selectedPeriod, setSelectedPeriod] = useState<"today" | "week" | "month">("today");
 
-    // Fetch claims list and stats from Wallet API
-    const { data: claimsData, isLoading, refetch } = useQuery({
-        queryKey: ['claims-dashboard', selectedPeriod],
-        queryFn: async () => {
-            // Call the Wallet's Claims API
-            const res = await fetch('http://localhost:5002/api/v1/claims?limit=100');
-            if (!res.ok) {
-                // Return mock data if wallet not available
-                return {
-                    claims: [],
-                    stats: { total: 0, approved: 0, review: 0, investigate: 0, rejected: 0, avgTrustScore: 0 }
-                };
-            }
-            return res.json();
-        },
-        refetchInterval: 30000,
-    });
+  const {
+    data,
+    isLoading,
+    isFetching,
+    isError,
+    error,
+    refetch,
+  } = useQuery<ClaimsResponse>({
+    queryKey: ["claims-dashboard", selectedPeriod],
+    queryFn: async () => {
+      const res = await fetch(`/api/claims?period=${selectedPeriod}&limit=100`);
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `Claims API unavailable (${res.status})`);
+      }
+      return res.json();
+    },
+    refetchInterval: 30000,
+  });
 
-    const claims: ClaimSummary[] = claimsData?.claims || [];
-    const stats: ClaimsStats = claimsData?.stats || {
-        total: 0,
-        approved: 0,
-        review: 0,
-        investigate: 0,
-        rejected: 0,
-        avgTrustScore: 0
-    };
+  const claims = data?.claims ?? [];
+  const stats = data?.stats ?? emptyStats;
 
-    // Calculate metrics
-    const approvedPercentage = stats.total > 0 ? Math.round((stats.approved / stats.total) * 100) : 0;
-    const rejectedPercentage = stats.total > 0 ? Math.round((stats.rejected / stats.total) * 100) : 0;
-    const fraudDetected = stats.rejected + stats.investigate;
-    const amountSaved = fraudDetected * 15000;
-    const avgProcessingTime = 1.8;
+  const approvedPercent = stats.total > 0 ? Math.round((stats.approved / stats.total) * 100) : 0;
+  const reviewPercent = stats.total > 0 ? Math.round((stats.review / stats.total) * 100) : 0;
+  const investigatePercent = stats.total > 0 ? Math.round((stats.investigate / stats.total) * 100) : 0;
+  const rejectedPercent = stats.total > 0 ? Math.round((stats.rejected / stats.total) * 100) : 0;
 
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-6">
-            <div className="max-w-6xl mx-auto space-y-6">
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <Link href="/">
-                            <Button variant="ghost" size="sm" className="text-white/70 hover:text-white">
-                                <ArrowLeft className="w-4 h-4 mr-1" />
-                                Back
-                            </Button>
-                        </Link>
-                        <div>
-                            <h1 className="text-2xl font-bold flex items-center gap-2">
-                                <BarChart3 className="w-6 h-6 text-cyan-400" />
-                                Claims Dashboard
-                            </h1>
-                            <p className="text-white/60">Claims verification analytics & insights</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="flex bg-slate-700/50 rounded-lg p-1">
-                            {(['today', 'week', 'month'] as const).map((period) => (
-                                <button
-                                    key={period}
-                                    onClick={() => setSelectedPeriod(period)}
-                                    className={`px-3 py-1 text-sm rounded-md transition-colors ${selectedPeriod === period
-                                            ? 'bg-cyan-500 text-white shadow-sm'
-                                            : 'text-white/60 hover:text-white'
-                                        }`}
-                                >
-                                    {period.charAt(0).toUpperCase() + period.slice(1)}
-                                </button>
-                            ))}
-                        </div>
-                        <Button variant="outline" size="sm" onClick={() => refetch()} className="border-white/20 text-white">
-                            <RefreshCw className="w-4 h-4 mr-1" />
-                            Refresh
-                        </Button>
-                        <Button variant="outline" size="sm" className="border-white/20 text-white">
-                            <Download className="w-4 h-4 mr-1" />
-                            Export
-                        </Button>
-                    </div>
-                </div>
+  const amountSaved = useMemo(() => (stats.rejected + stats.investigate) * 15000, [stats]);
 
-                {/* Key Metrics Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {/* Claims Processed */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-slate-800/50 backdrop-blur p-6 rounded-xl border border-slate-700"
-                    >
-                        <div className="flex items-center justify-between mb-4">
-                            <FileText className="w-8 h-8 text-blue-400" />
-                            <Badge variant="outline" className="text-blue-400 border-blue-400/30">
-                                {selectedPeriod}
-                            </Badge>
-                        </div>
-                        <p className="text-3xl font-bold">{stats.total}</p>
-                        <p className="text-sm text-white/60">Claims Processed</p>
-                    </motion.div>
-
-                    {/* Auto-Approved */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
-                        className="bg-slate-800/50 backdrop-blur p-6 rounded-xl border border-slate-700"
-                    >
-                        <div className="flex items-center justify-between mb-4">
-                            <CheckCircle2 className="w-8 h-8 text-green-400" />
-                            <span className="text-green-400 font-bold">{approvedPercentage}%</span>
-                        </div>
-                        <p className="text-3xl font-bold">{stats.approved}</p>
-                        <p className="text-sm text-white/60">Auto-Approved</p>
-                    </motion.div>
-
-                    {/* Fraud Detected */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="bg-slate-800/50 backdrop-blur p-6 rounded-xl border border-slate-700"
-                    >
-                        <div className="flex items-center justify-between mb-4">
-                            <AlertTriangle className="w-8 h-8 text-amber-400" />
-                            <Badge className="bg-red-500/20 text-red-400 border-red-400/30">{rejectedPercentage}%</Badge>
-                        </div>
-                        <p className="text-3xl font-bold">{fraudDetected}</p>
-                        <p className="text-sm text-white/60">Fraud Detected</p>
-                    </motion.div>
-
-                    {/* Amount Saved */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 }}
-                        className="bg-gradient-to-br from-green-500 to-emerald-600 p-6 rounded-xl"
-                    >
-                        <div className="flex items-center justify-between mb-4">
-                            <IndianRupee className="w-8 h-8" />
-                            <TrendingUp className="w-5 h-5" />
-                        </div>
-                        <p className="text-3xl font-bold">₹{(amountSaved / 100000).toFixed(1)}L</p>
-                        <p className="text-sm text-white/80">Amount Saved</p>
-                    </motion.div>
-                </div>
-
-                {/* Processing Stats */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Recommendation Breakdown */}
-                    <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="bg-slate-800/50 backdrop-blur p-6 rounded-xl border border-slate-700"
-                    >
-                        <h3 className="font-semibold mb-4">Recommendation Breakdown</h3>
-                        <div className="space-y-4">
-                            <div>
-                                <div className="flex justify-between text-sm mb-1">
-                                    <span className="flex items-center gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-green-400" /> Approved
-                                    </span>
-                                    <span className="font-medium">{stats.approved}</span>
-                                </div>
-                                <Progress value={stats.total > 0 ? (stats.approved / stats.total) * 100 : 0} className="h-2" />
-                            </div>
-
-                            <div>
-                                <div className="flex justify-between text-sm mb-1">
-                                    <span className="flex items-center gap-2">
-                                        <Clock className="w-4 h-4 text-blue-400" /> Review
-                                    </span>
-                                    <span className="font-medium">{stats.review}</span>
-                                </div>
-                                <Progress value={stats.total > 0 ? (stats.review / stats.total) * 100 : 0} className="h-2" />
-                            </div>
-
-                            <div>
-                                <div className="flex justify-between text-sm mb-1">
-                                    <span className="flex items-center gap-2">
-                                        <AlertTriangle className="w-4 h-4 text-amber-400" /> Investigate
-                                    </span>
-                                    <span className="font-medium">{stats.investigate}</span>
-                                </div>
-                                <Progress value={stats.total > 0 ? (stats.investigate / stats.total) * 100 : 0} className="h-2" />
-                            </div>
-
-                            <div>
-                                <div className="flex justify-between text-sm mb-1">
-                                    <span className="flex items-center gap-2">
-                                        <XCircle className="w-4 h-4 text-red-400" /> Rejected
-                                    </span>
-                                    <span className="font-medium">{stats.rejected}</span>
-                                </div>
-                                <Progress value={stats.total > 0 ? (stats.rejected / stats.total) * 100 : 0} className="h-2" />
-                            </div>
-                        </div>
-                    </motion.div>
-
-                    {/* Performance Metrics */}
-                    <motion.div
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="bg-slate-800/50 backdrop-blur p-6 rounded-xl border border-slate-700"
-                    >
-                        <h3 className="font-semibold mb-4">Performance Metrics</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="p-4 bg-slate-700/50 rounded-lg">
-                                <Clock className="w-5 h-5 text-cyan-400 mb-2" />
-                                <p className="text-2xl font-bold">{avgProcessingTime}s</p>
-                                <p className="text-xs text-white/60">Avg Processing Time</p>
-                            </div>
-
-                            <div className="p-4 bg-slate-700/50 rounded-lg">
-                                <ShieldCheck className="w-5 h-5 text-green-400 mb-2" />
-                                <p className="text-2xl font-bold">{stats.avgTrustScore || 0}</p>
-                                <p className="text-xs text-white/60">Avg Trust Score</p>
-                            </div>
-
-                            <div className="p-4 bg-slate-700/50 rounded-lg">
-                                <TrendingUp className="w-5 h-5 text-blue-400 mb-2" />
-                                <p className="text-2xl font-bold">99.9%</p>
-                                <p className="text-xs text-white/60">API Uptime</p>
-                            </div>
-
-                            <div className="p-4 bg-slate-700/50 rounded-lg">
-                                <IndianRupee className="w-5 h-5 text-amber-400 mb-2" />
-                                <p className="text-2xl font-bold">₹2.03</p>
-                                <p className="text-xs text-white/60">Cost per Claim</p>
-                            </div>
-                        </div>
-                    </motion.div>
-                </div>
-
-                {/* Recent Claims */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-slate-800/50 backdrop-blur rounded-xl border border-slate-700"
+  return (
+    <DashboardLayout title="Claims Dashboard">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-muted-foreground">Claims analytics and adjudication overview</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex rounded-md border bg-background p-1">
+              {(["today", "week", "month"] as const).map((period) => (
+                <Button
+                  key={period}
+                  size="sm"
+                  variant={period === selectedPeriod ? "default" : "ghost"}
+                  onClick={() => setSelectedPeriod(period)}
+                  className="capitalize"
                 >
-                    <div className="p-4 border-b border-slate-700 flex justify-between items-center">
-                        <h3 className="font-semibold">Recent Claims</h3>
-                        <Button variant="ghost" size="sm" className="text-white/70 hover:text-white">
-                            View All
-                            <Eye className="w-4 h-4 ml-1" />
-                        </Button>
-                    </div>
-
-                    {isLoading ? (
-                        <div className="flex justify-center p-8">
-                            <Loader2 className="w-6 h-6 animate-spin text-white/60" />
-                        </div>
-                    ) : claims.length === 0 ? (
-                        <div className="text-center p-8 text-white/60">
-                            <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                            <p>No claims processed yet</p>
-                            <p className="text-sm">Submit claims via the API to see them here</p>
-                        </div>
-                    ) : (
-                        <div className="divide-y divide-slate-700">
-                            {claims.slice(0, 5).map((claim) => (
-                                <div key={claim.id} className="p-4 flex items-center justify-between hover:bg-slate-700/30 transition-colors">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${claim.recommendation === 'approve' ? 'bg-green-500/20 text-green-400' :
-                                                claim.recommendation === 'review' ? 'bg-blue-500/20 text-blue-400' :
-                                                    claim.recommendation === 'investigate' ? 'bg-amber-500/20 text-amber-400' :
-                                                        'bg-red-500/20 text-red-400'
-                                            }`}>
-                                            {claim.recommendation === 'approve' ? <CheckCircle2 className="w-5 h-5" /> :
-                                                claim.recommendation === 'review' ? <Clock className="w-5 h-5" /> :
-                                                    claim.recommendation === 'investigate' ? <AlertTriangle className="w-5 h-5" /> :
-                                                        <XCircle className="w-5 h-5" />}
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-sm">{claim.id.slice(0, 20)}...</p>
-                                            <p className="text-xs text-white/60 capitalize">{claim.claim_type?.replace('_', ' ')}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-4">
-                                        <div className="text-right">
-                                            <p className="font-bold">{claim.trust_score}</p>
-                                            <p className="text-xs text-white/60">Trust Score</p>
-                                        </div>
-                                        <Badge className={
-                                            claim.recommendation === 'approve' ? 'bg-green-500/20 text-green-400' :
-                                                claim.recommendation === 'review' ? 'bg-blue-500/20 text-blue-400' :
-                                                    'bg-red-500/20 text-red-400'
-                                        }>
-                                            {claim.recommendation}
-                                        </Badge>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </motion.div>
+                  {period}
+                </Button>
+              ))}
             </div>
+            <Button variant="outline" onClick={() => refetch()}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+          </div>
         </div>
-    );
+
+        {isError && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Claims feed unavailable</AlertTitle>
+            <AlertDescription>
+              {error instanceof Error ? error.message : "Failed to load claims data."}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Claims Processed</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">{isLoading ? "…" : stats.total}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Auto Approved</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-emerald-600">{isLoading ? "…" : stats.approved}</p>
+              <p className="text-xs text-muted-foreground">{approvedPercent}% of total</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Fraud / Risk Cases</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-amber-600">{isLoading ? "…" : stats.rejected + stats.investigate}</p>
+              <p className="text-xs text-muted-foreground">Review + reject volume</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">Estimated Savings</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold">₹{(amountSaved / 100000).toFixed(1)}L</p>
+              <p className="text-xs text-muted-foreground">Based on prevented fraud loss</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recommendation Breakdown</CardTitle>
+              <CardDescription>Distribution across automated outcomes</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <div className="flex justify-between text-sm mb-1"><span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" />Approve</span><span>{stats.approved}</span></div>
+                <Progress value={approvedPercent} />
+              </div>
+              <div>
+                <div className="flex justify-between text-sm mb-1"><span className="flex items-center gap-2"><Clock3 className="w-4 h-4 text-blue-500" />Review</span><span>{stats.review}</span></div>
+                <Progress value={reviewPercent} />
+              </div>
+              <div>
+                <div className="flex justify-between text-sm mb-1"><span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-amber-500" />Investigate</span><span>{stats.investigate}</span></div>
+                <Progress value={investigatePercent} />
+              </div>
+              <div>
+                <div className="flex justify-between text-sm mb-1"><span className="flex items-center gap-2"><XCircle className="w-4 h-4 text-destructive" />Rejected</span><span>{stats.rejected}</span></div>
+                <Progress value={rejectedPercent} />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Trust & Throughput</CardTitle>
+              <CardDescription>Current quality indicators</CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 gap-3">
+              <div className="rounded-lg border p-3">
+                <ShieldCheck className="w-4 h-4 text-primary mb-1" />
+                <p className="text-xl font-semibold">{stats.avgTrustScore || 0}</p>
+                <p className="text-xs text-muted-foreground">Average Trust Score</p>
+              </div>
+              <div className="rounded-lg border p-3">
+                <FileText className="w-4 h-4 text-primary mb-1" />
+                <p className="text-xl font-semibold">{claims.length}</p>
+                <p className="text-xs text-muted-foreground">Claims in feed</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Recent Claims</CardTitle>
+              <CardDescription>Latest adjudication activity</CardDescription>
+            </div>
+            {isFetching && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="text-sm text-muted-foreground">Loading claims…</div>
+            ) : claims.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No claims yet for this period.</p>
+                <p className="text-xs mt-1">Once claims are processed, evidence and recommendations will appear here.</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {claims.slice(0, 8).map((claim) => (
+                  <div key={claim.id} className="flex items-center justify-between rounded-lg border p-3">
+                    <div>
+                      <p className="font-medium text-sm">{claim.id}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{claim.claim_type?.replaceAll("_", " ") || "claim"}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge variant={claim.recommendation === "approve" ? "outline" : claim.recommendation === "review" ? "secondary" : "destructive"}>
+                        {claim.recommendation}
+                      </Badge>
+                      <div className="text-right">
+                        <p className="font-semibold">{claim.trust_score ?? 0}</p>
+                        <p className="text-xs text-muted-foreground">Trust</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </DashboardLayout>
+  );
 }

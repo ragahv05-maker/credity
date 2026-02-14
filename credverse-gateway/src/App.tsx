@@ -22,7 +22,7 @@ const URLS = {
   issuer: import.meta.env.VITE_ISSUER_URL || 'http://localhost:5001',
   wallet: import.meta.env.VITE_WALLET_URL || 'http://localhost:5002',
   recruiter: import.meta.env.VITE_RECRUITER_URL || 'http://localhost:5003',
-  repo: 'https://github.com/ragahv05-maker/credity',
+  repo: 'https://github.com/raghav05-maker/credity',
   ci: 'https://github.com/ragahv05-maker/credity/actions',
   releaseBoard:
     'https://github.com/ragahv05-maker/credity/blob/main/swarm/reports/credity-s28-release-board.md',

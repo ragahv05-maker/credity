@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from "recharts";
 import { CheckCircle2, AlertTriangle, XCircle, TrendingUp, Users, Activity, RefreshCw, Loader2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
@@ -58,7 +59,7 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
 
   // Fetch stats
-  const { data: stats, isLoading: statsLoading } = useQuery<{ stats: VerificationStats }>({
+  const { data: stats, isLoading: statsLoading, isError: statsError, error: statsErrorDetails } = useQuery<{ stats: VerificationStats }>({
     queryKey: ['verification-stats'],
     queryFn: async () => {
       const response = await fetch('/api/verifications/stats');
@@ -69,7 +70,7 @@ export default function Dashboard() {
   });
 
   // Fetch recent verifications
-  const { data: recentData, isLoading: recentLoading } = useQuery<{ results: VerificationRecord[] }>({
+  const { data: recentData, isLoading: recentLoading, isError: recentError, error: recentErrorDetails } = useQuery<{ results: VerificationRecord[] }>({
     queryKey: ['recent-verifications'],
     queryFn: async () => {
       const response = await fetch('/api/verifications?limit=5');
@@ -115,6 +116,18 @@ export default function Dashboard() {
           </Button>
         </div>
       </div>
+
+      {(statsError || recentError) && (
+        <Alert className="mb-6" variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Some live data could not be loaded</AlertTitle>
+          <AlertDescription>
+            {statsError && (statsErrorDetails instanceof Error ? statsErrorDetails.message : "Stats request failed.")}
+            {statsError && recentError ? " · " : ""}
+            {recentError && (recentErrorDetails instanceof Error ? recentErrorDetails.message : "Recent activity request failed.")}
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
         <Card className="border-l-4 border-l-primary shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 bg-card/50 backdrop-blur-sm">
