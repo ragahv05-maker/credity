@@ -60,28 +60,36 @@ function assertCondition(condition, message) {
   }
 }
 
-async function resolveRecruiterAccessToken(runId) {
-  if (config.recruiterAccessToken) {
-    return config.recruiterAccessToken;
-  }
-
-  const username = `foundation_${runId}`;
+async function resolveServiceAccessToken(baseUrl, runId, label) {
+  const username = `${label}_${runId}`;
   const password = `Gate#${runId}Aa1!`;
 
-  await requestJson(config.recruiterBase, '/api/auth/register', {
+  await requestJson(baseUrl, '/api/auth/register', {
     method: 'POST',
     body: { username, password },
     expectedStatuses: [201, 409],
   });
 
-  const login = await requestJson(config.recruiterBase, '/api/auth/login', {
+  const login = await requestJson(baseUrl, '/api/auth/login', {
     method: 'POST',
     body: { username, password },
   });
 
   const token = login?.tokens?.accessToken;
-  assertCondition(typeof token === 'string' && token.length > 0, 'Recruiter login did not return access token');
+  assertCondition(typeof token === 'string' && token.length > 0, `${label} login did not return access token`);
   return token;
+}
+
+async function resolveRecruiterAccessToken(runId) {
+  if (config.recruiterAccessToken) {
+    return config.recruiterAccessToken;
+  }
+
+  return resolveServiceAccessToken(config.recruiterBase, runId, 'recruiter_foundation');
+}
+
+async function resolveWalletAccessToken(runId) {
+  return resolveServiceAccessToken(config.walletBase, runId, 'wallet_foundation');
 }
 
 async function run() {
@@ -89,8 +97,12 @@ async function run() {
   const recipientEmail = `foundation.${runId}@credverse.test`;
   const recipientDid = `did:key:z6Mk${crypto.randomBytes(16).toString('hex')}`;
   const recruiterAccessToken = await resolveRecruiterAccessToken(runId);
+  const walletAccessToken = await resolveWalletAccessToken(runId);
   const recruiterAuthHeaders = {
     Authorization: `Bearer ${recruiterAccessToken}`,
+  };
+  const walletAuthHeaders = {
+    Authorization: `Bearer ${walletAccessToken}`,
   };
 
   console.log('[Gate] Starting foundation flow: Issue -> Claim -> Present -> Verify -> Revoke');
@@ -155,6 +167,9 @@ async function run() {
 
   await requestJson(config.walletBase, '/api/wallet/credentials', {
     method: 'POST',
+    headers: {
+      ...walletAuthHeaders,
+    },
     body: {
       userId: config.walletUserId,
       credential: {
@@ -188,7 +203,11 @@ async function run() {
     headers: { ...recruiterAuthHeaders, 'Idempotency-Key': idempotencyKey('vp-response') },
     body: {
       request_id: vpRequest.request_id,
-      vp_token: credentialJwt,
+      state: runId,
+      credential: {
+        format: issued?.format || 'sd-jwt-vc',
+        jwt: credentialJwt,
+      },
     },
   });
 

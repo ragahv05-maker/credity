@@ -62,6 +62,7 @@ describeSepolia('sepolia smoke: issue -> claim -> verify', () => {
   }, 60_000);
 
   afterAll(async () => {
+    if (!issuerServer) return;
     await new Promise<void>((resolve, reject) =>
       issuerServer.close((err) => (err ? reject(err) : resolve())),
     );
