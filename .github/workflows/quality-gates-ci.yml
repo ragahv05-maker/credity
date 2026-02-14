@@ -112,10 +112,21 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: ${{ matrix.lockfile }}
+      - name: Build shared-auth package for dependent services
+        if: (matrix.key == 'wallet' || matrix.key == 'issuer' || matrix.key == 'recruiter') && (needs.changes.outputs[matrix.key] == 'true' || github.event_name == 'workflow_dispatch')
+        working-directory: packages/shared-auth
+        run: |
+          npm ci
+          npm run build
       - name: Install dependencies
         if: needs.changes.outputs[matrix.key] == 'true' || github.event_name == 'workflow_dispatch'
         working-directory: ${{ matrix.path }}
-        run: npm ci
+        run: |
+          if [ "${{ matrix.key }}" = "issuer" ]; then
+            npm ci --legacy-peer-deps
+          else
+            npm ci
+          fi
       - name: Type/build check gate
         if: needs.changes.outputs[matrix.key] == 'true' || github.event_name == 'workflow_dispatch'
         working-directory: ${{ matrix.path }}
@@ -157,10 +168,21 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: ${{ matrix.lockfile }}
+      - name: Build shared-auth package for dependent services
+        if: (matrix.key == 'wallet' || matrix.key == 'issuer' || matrix.key == 'recruiter') && (needs.changes.outputs[matrix.key] == 'true' || github.event_name == 'workflow_dispatch')
+        working-directory: packages/shared-auth
+        run: |
+          npm ci
+          npm run build
       - name: Install dependencies
         if: needs.changes.outputs[matrix.key] == 'true' || github.event_name == 'workflow_dispatch'
         working-directory: ${{ matrix.path }}
-        run: npm ci
+        run: |
+          if [ "${{ matrix.key }}" = "issuer" ]; then
+            npm ci --legacy-peer-deps
+          else
+            npm ci
+          fi
       - name: Test gate
         if: needs.changes.outputs[matrix.key] == 'true' || github.event_name == 'workflow_dispatch'
         working-directory: ${{ matrix.path }}
@@ -228,7 +250,12 @@ jobs:
       - name: Install dependencies
         if: needs.changes.outputs[matrix.key] == 'true' || github.event_name == 'workflow_dispatch'
         working-directory: ${{ matrix.path }}
-        run: npm ci
+        run: |
+          if [ "${{ matrix.key }}" = "issuer" ] || [ "${{ matrix.key }}" = "root" ]; then
+            npm ci --legacy-peer-deps
+          else
+            npm ci
+          fi
       - name: High/Critical dependency vulnerability gate
         if: needs.changes.outputs[matrix.key] == 'true' || github.event_name == 'workflow_dispatch'
         working-directory: ${{ matrix.path }}
