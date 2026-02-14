@@ -5,6 +5,19 @@ Applies to: Issuer, Wallet, Recruiter, Gateway, Contracts
 
 ## Gate Checklist (must-pass)
 
+### 0) Mandatory Runtime Secret Inventory (must be set before Go/No-Go)
+
+- Auth/session: `JWT_SECRET`, `JWT_REFRESH_SECRET`
+- Queue/limits: `REDIS_URL`
+- Observability: `SENTRY_DSN` or `GATEWAY_SENTRY_DSN` (prefer both)
+- Issuer signing/encryption: `ISSUER_KEY_ENCRYPTION`, `RELAYER_PRIVATE_KEY`
+- Chain routing: `REGISTRY_CONTRACT_ADDRESS`
+
+Minimum evidence required:
+- Secret manager screenshots/links (masked)
+- `npm run gate:launch:strict` pass log
+- Confirmation `.env` files are not used in production deploy path
+
 ### 1) Secrets & Key Management
 - [ ] No hardcoded prod secrets in code/history (`gitleaks`/equivalent report clean).
 - [ ] `JWT_SECRET`, `JWT_REFRESH_SECRET`, and service API keys are set in runtime secret manager.

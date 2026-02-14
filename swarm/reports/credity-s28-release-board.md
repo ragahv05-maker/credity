@@ -9,14 +9,15 @@ _Last updated: 2026-02-15 (Asia/Calcutta)_
 2. `npm run check` passes at root and affected services.
 3. `npm test` passes at root and affected services.
 4. `npm run gate:launch:strict` passes with launch env loaded.
-5. No open High/Critical security issues in release scope.
+5. Foundation flow gate passes (`npm run gate:foundation` or `npm run gate:foundation:local`).
+6. No open High/Critical security issues in release scope.
 
 If any P0 is not done, decision is **NO-GO**.
 
 ## Current Decision Snapshot
 
-- **Decision:** ✅ **GO**
-- **Reason:** All P0 release blockers have current evidence on latest head: recruiter/runtime integrity, deterministic suite pass, consolidated root gates, CI green runs, and security sweep.
+- **Decision:** ❌ **NO-GO**
+- **Reason:** Root check/test/strict-launch pass locally, but foundation gate currently fails (`nonce mismatch`) and hosted launch/contract CI evidence is not yet refreshed on the current release SHA.
 
 ---
 
@@ -26,8 +27,8 @@ If any P0 is not done, decision is **NO-GO**.
 |---|---|---|---|---|---|
 | P0-01 | Recruiter verification route parse/runtime integrity | `@owner-recruiter` | `CredVerseRecruiter/server/routes/verification.ts` has no syntax/runtime import errors; recruiter tests run cleanly | 🟩 DONE | Revalidated on current head: `cd CredVerseRecruiter && npm test` passed (9 files passed, 1 smoke file skipped by default). |
 | P0-02 | Recruiter full-suite deterministic pass | `@owner-recruiter` | `cd "CredVerseRecruiter" && npm test` exits 0 with no flaky failures | 🟩 DONE | Determinism restored by gating Sepolia smoke behind `RUN_SEPOLIA_SMOKE=true`; default suite now stable and green. |
-| P0-03 | Cross-service quality gates pass | `@owner-release` | Root: `npm run check`, `npm test`, `npm run gate:launch:strict` all pass | 🟩 DONE | All root gates passed on latest head (`npm run check` ✅, `npm test` ✅, `npm run gate:launch:strict` ✅ with launch env loaded). |
-| P0-04 | CI release workflow validation on GitHub Actions | `@owner-devops` | `.github/workflows/quality-gates-ci.yml` executes green on PR/push for release branch | 🟩 DONE | GitHub Actions green: Quality gates `22022369872` ✅, Launch gate `22022372832` ✅, website redesign commit `318ce56` run `22024099197` ✅, latest audience-track update commit `7bdcd51` run `22024379990` ✅. |
+| P0-03 | Cross-service quality gates pass | `@owner-release` | Root: `npm run check`, `npm test`, `npm run gate:launch:strict`, and foundation gate pass | 🟨 BLOCKED | Local runs on `ddd8b70` passed for `check`/`test`/`gate:launch:strict`, but `npm run gate:foundation:local` failed with `POST /api/v1/oid4vp/responses failed (400): {"error":"nonce mismatch"}`. Logs: `swarm/reports/logs/20260215-032831-*.log`. |
+| P0-04 | CI release workflow validation on GitHub Actions | `@owner-devops` | Quality + launch + contract workflows green on release SHA | 🟧 PARTIAL | Latest green runs verified: quality `22024661938`, launch `22022372832`, contract `22022153594`. Launch/contract runs are on older SHAs; need fresh workflow_dispatch evidence for current release SHA. |
 | P0-05 | Security high/critical sweep (runtime deps + contracts) | `@owner-security` | `npm audit --omit=dev --audit-level=high` clean for impacted modules + contract static analysis green | 🟩 DONE | `npm audit --omit=dev --audit-level=high` returned `found 0 vulnerabilities`; contract static analysis green via `test:contracts` (`solhint`, `hardhat compile`, `hardhat test`). |
 
 ---

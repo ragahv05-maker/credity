@@ -47,6 +47,69 @@ CredVerse is a monorepo with 4 services:
 2. GitHub repository (already connected)
 3. Environment variables configured (see below)
 
+## 🚀 Permanent Hosting Blueprint (Vercel + Railway)
+
+Recommended split for stable production hosting:
+
+- **Vercel:** `credverse-gateway` (edge/static + server routes)
+- **Railway:** `CredVerseIssuer 3`, `BlockWalletDigi`, `CredVerseRecruiter` (long-running APIs)
+- **Managed data/services:** PostgreSQL + Redis + Sentry (or equivalent)
+
+### Secret-safe setup rules (must follow)
+
+- Never paste real keys/tokens into docs, PRs, screenshots, or commit history.
+- Keep all production secrets in provider secret managers (Vercel/Railway project envs).
+- Use `.env.launch.example` as the placeholder checklist only.
+- Validate presence with `npm run gate:launch:strict` after loading non-git local env.
+
+### Vercel (Gateway)
+
+1. Import this repo in Vercel.
+2. Set Root Directory to `credverse-gateway`.
+3. Configure environment variables in Vercel UI (Production + Preview):
+   - `NODE_ENV=production`
+   - `JWT_SECRET`, `JWT_REFRESH_SECRET`
+   - `ALLOWED_ORIGINS`
+   - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`
+   - `GATEWAY_SENTRY_DSN` (or `SENTRY_DSN`)
+4. Point custom domain (e.g., `gateway.credity.in`) and verify HTTPS.
+
+### Railway (Issuer / Wallet / Recruiter)
+
+1. Create three services from this monorepo with roots:
+   - `CredVerseIssuer 3`
+   - `BlockWalletDigi`
+   - `CredVerseRecruiter`
+2. Configure shared env keys for all API services:
+   - `NODE_ENV=production`
+   - `JWT_SECRET`, `JWT_REFRESH_SECRET`
+   - `ALLOWED_ORIGINS`
+   - `DATABASE_URL`
+   - `REDIS_URL`
+3. Configure Issuer-specific keys:
+   - `ISSUER_KEY_ENCRYPTION` (+ optional `ISSUER_KEY_ENCRYPTION_PREVIOUS`)
+   - `RELAYER_PRIVATE_KEY`
+   - `REGISTRY_CONTRACT_ADDRESS`
+   - `SENTRY_DSN`
+4. Enforce hardening flags:
+   - `ALLOW_DEMO_ROUTES=false`
+   - `REQUIRE_DATABASE=true`
+   - `REQUIRE_QUEUE=true`
+
+### Post-deploy verification (no secret exposure)
+
+```bash
+# Health checks
+curl https://issuer.<domain>/api/health
+curl https://wallet.<domain>/api/health
+curl https://recruiter.<domain>/api/health
+curl https://gateway.<domain>/api/health
+
+# Launch docs/config + required runtime vars (loaded locally, not committed)
+set -a; source .env.launch.local; set +a
+npm run gate:launch:strict
+```
+
 ## 🚀 Deploy to Railway
 
 ### Step 1: Create Project
