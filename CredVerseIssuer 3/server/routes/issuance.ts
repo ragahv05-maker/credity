@@ -18,6 +18,25 @@ const router = Router();
 router.use(apiKeyOrAuthMiddleware);
 const writeIdempotency = idempotencyMiddleware({ ttlMs: 6 * 60 * 60 * 1000 });
 
+async function resolveTenantId(req: any): Promise<string | undefined> {
+    // Prefer API key tenant resolution when present.
+    const apiKeyHeader = req.headers?.["x-api-key"];
+    if (typeof apiKeyHeader === "string" && apiKeyHeader.trim().length > 0) {
+        const apiKey = await storage.getApiKey(apiKeyHeader);
+        if (apiKey?.tenantId) {
+            req.tenantId = apiKey.tenantId;
+            return apiKey.tenantId;
+        }
+    }
+
+    const existingTenantId = typeof req.tenantId === "string" && req.tenantId.trim().length > 0 ? req.tenantId : undefined;
+    if (existingTenantId) {
+        return existingTenantId;
+    }
+
+    return undefined;
+}
+
 function hasIssuerAccess(req: any): boolean {
     const hasApiKey = typeof req.headers?.["x-api-key"] === "string";
     if (hasApiKey) {
@@ -118,8 +137,13 @@ router.post("/credentials/issue", writeIdempotency, async (req, res) => {
         if (!template) {
             return res.status(404).json({ message: "Template not found", code: "TEMPLATE_NOT_FOUND" });
         }
-        if ((template as any).tenantId && (template as any).tenantId !== tenantId) {
-            return res.status(403).json({ message: "Forbidden", code: "TEMPLATE_FORBIDDEN" });
+        const templateTenantId = typeof (template as any).tenantId === "string" ? String((template as any).tenantId).trim() : undefined;
+        const requestTenantId = String(tenantId).trim();
+        if (templateTenantId && templateTenantId !== requestTenantId) {
+            return res.status(403).json({
+                message: "Forbidden",
+                code: "TEMPLATE_FORBIDDEN",
+            });
         }
 
         const schemaCheck = validateCredentialDataAgainstTemplateSchema((template as any).schema, credentialData);

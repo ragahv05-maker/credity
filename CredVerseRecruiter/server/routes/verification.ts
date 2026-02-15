@@ -335,12 +335,35 @@ router.post('/verify/instant', writeIdempotency, async (req, res) => {
         };
         await storage.addVerification(record);
 
+        const reasonCodes = verificationResult.riskFlags;
+        const severity: 'info' | 'low' | 'medium' | 'high' =
+            verificationResult.riskScore >= 75 ? 'high'
+            : verificationResult.riskScore >= 45 ? 'medium'
+            : verificationResult.riskScore > 0 ? 'low'
+            : 'info';
+
+        const riskSignals = reasonCodes.map((code) => ({
+            id: code,
+            score: verificationResult.riskScore,
+            severity,
+            source: 'rules' as const,
+            reason_codes: [code],
+        }));
+
         const responseBody = {
             success: true,
             verification: verificationResult,
             fraud: fraudAnalysis,
             record,
+            reason_codes: reasonCodes,
+            risk_signals_version: 'risk-v1',
+            risk_signals: riskSignals,
+            evidence_links: [],
             v1: {
+                reason_codes: reasonCodes,
+                risk_signals_version: 'risk-v1',
+                risk_signals: riskSignals,
+                evidence_links: [],
                 credential_validity: verificationResult.status === 'verified' ? 'valid' : 'invalid',
                 status_validity: verificationResult.riskFlags.includes('REVOKED_CREDENTIAL') ? 'revoked' : 'active',
                 anchor_validity: verificationResult.riskFlags.includes('NO_BLOCKCHAIN_ANCHOR') ? 'pending' : 'anchored',

@@ -70,7 +70,11 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
   }): Promise<{ storedCredential: Record<string, unknown>; proof: Record<string, unknown> }> {
     mockChainMode(params.mode);
 
-    const issueReq = fetch('http://127.0.0.1:5001/api/v1/credentials/issue', {
+    const issueUrl = params.auth.kind === 'bearer'
+      ? 'http://127.0.0.1:5001/api/v1/credentials/issue?tenantId=550e8400-e29b-41d4-a716-446655440000'
+      : 'http://127.0.0.1:5001/api/v1/credentials/issue';
+
+    const issueReq = fetch(issueUrl, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -96,10 +100,14 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
 
     const issueHttpRes = await issueReq;
     const issueRes = await issueHttpRes.json() as Record<string, unknown>;
-    expect(issueHttpRes.status).toBe(201);
+    expect(issueHttpRes.status, JSON.stringify(issueRes)).toBe(201);
     expect(issueRes.id).toBeTruthy();
 
-    const offerHttpRes = await fetch(`http://127.0.0.1:5001/api/v1/credentials/${issueRes.id as string}/offer`, {
+    const offerUrl = params.auth.kind === 'bearer'
+      ? `http://127.0.0.1:5001/api/v1/credentials/${issueRes.id as string}/offer?tenantId=550e8400-e29b-41d4-a716-446655440000`
+      : `http://127.0.0.1:5001/api/v1/credentials/${issueRes.id as string}/offer`;
+
+    const offerHttpRes = await fetch(offerUrl, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',

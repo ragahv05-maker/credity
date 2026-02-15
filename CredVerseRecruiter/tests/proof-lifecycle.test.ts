@@ -19,7 +19,7 @@ const issuerToken = generateAccessToken({ id: '2', username: 'issuer-user', role
 describe('proof lifecycle routes', () => {
   it('returns explicit unauthorized code for link verification without auth', async () => {
     const res = await request(app)
-      .post('/api/v1/verify/link')
+      .post('/api/verify/link')
       .send({ link: 'https://example.com/credential.json' });
 
     expect(res.status).toBe(401);
