@@ -34,6 +34,7 @@
     "gate:launch": "node scripts/launch-gate-check.mjs",
     "gate:launch:strict": "LAUNCH_GATE_STRICT=1 node scripts/launch-gate-check.mjs",
     "gate:contracts:security": "cd \"CredVerseIssuer 3/contracts\" && npm run analyze:static",
+    "demo:local": "node scripts/demo-local.mjs",
     "perf:baseline": "node scripts/perf-baseline.mjs",
     "perf:baseline:report": "node scripts/perf-baseline-report.mjs",
     "db:safety:check": "node scripts/db-migration-safety-check.mjs",
