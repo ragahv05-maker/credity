@@ -200,6 +200,19 @@ router.post('/wallet/offer/claim', authMiddleware, async (req, res) => {
         const parsedProof = proofPayloadSchema.safeParse(data?.proof);
         const proofMeta = parsedProof.success ? sanitizeUnsafeMetadata(parsedProof.data) : null;
 
+        function decodeJwtPayload(jwt: string): any | null {
+            try {
+                const parts = jwt.split('.');
+                if (parts.length !== 3) return null;
+                const payloadJson = Buffer.from(parts[1], 'base64url').toString('utf8');
+                return JSON.parse(payloadJson);
+            } catch {
+                return null;
+            }
+        }
+
+        const decodedPayload = typeof vcJwt === 'string' && vcJwt.length > 0 ? decodeJwtPayload(vcJwt) : null;
+
         // Extract issuer info - try to get issuer name from storage or use ID
         let issuerName = 'External Issuer';
         if (credData.issuerId) {
@@ -215,21 +228,19 @@ router.post('/wallet/offer/claim', authMiddleware, async (req, res) => {
         }
 
         // Determine credential type from template or data
-        const credType = credData.credentialData?.credentialName || 'Verified Credential';
+        const credType = credData.credentialData?.credentialName || decodedPayload?.vc?.type?.[1] || 'Verified Credential';
 
         // Store in wallet
+        // For demo determinism, prefer storing the decoded VC-JWT payload (so selective disclosure works on the VC shape)
+        // while also preserving the original JWT for recruiter verification.
         const stored = await walletService.storeCredential(userId, {
             type: ['VerifiableCredential', credType],
             issuer: issuerName,
             issuanceDate: credData.createdAt ? new Date(credData.createdAt) : new Date(),
-            data: {
-                ...credData.credentialData,
-                recipient: credData.recipient,
-                credentialId: credData.id,
-                txHash: credData.txHash,
-                blockNumber: credData.blockNumber,
-                proof: proofMeta,
-            },
+            data: sanitizeUnsafeMetadata({
+                ...(decodedPayload || credData),
+                proof: proofMeta || (decodedPayload as any)?.proof || (credData as any)?.proof,
+              }),
             jwt: vcJwt,
             category: 'academic' // Default category
         });

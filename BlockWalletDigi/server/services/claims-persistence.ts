@@ -21,6 +21,8 @@ export interface StoredClaimRecord {
   trustScore: number;
   recommendation: ClaimVerifyResponse['recommendation'];
   redFlags: string[];
+  reasonCodes?: ClaimVerifyResponse['reasonCodes'];
+  riskSignals?: ClaimVerifyResponse['riskSignals'];
   aiAnalysis: ClaimVerifyResponse['aiAnalysis'];
   processingTimeMs: number;
   createdAt: string;
@@ -38,6 +40,9 @@ export interface StoredEvidenceRecord {
   manipulationDetected: boolean;
   metadata: Record<string, unknown>;
   blockchainHash: string;
+  proofMetadataHash?: string;
+  revocationCheck?: { status: 'not_applicable' | 'checked'; revoked?: boolean; checkedAt?: string; provider?: string };
+  anchorTx?: { status: 'missing' | 'pending' | 'confirmed' | 'failed'; chain?: string; txHash?: string };
   analysisData: Record<string, unknown>;
   uploadedAt: string;
   analyzedAt: string;

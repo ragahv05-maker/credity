@@ -10,6 +10,7 @@
  */
 
 import * as crypto from 'crypto';
+import { computeProofMetadataHash } from './evidence-linkage';
 
 export interface EvidenceUploadRequest {
     userId: string;
@@ -23,7 +24,12 @@ export interface EvidenceAnalysisResult {
     authenticityScore: number;
     isAiGenerated: boolean;
     manipulationDetected: boolean;
+    /** Legacy placeholder hash (non-deterministic). Prefer proofMetadataHash for stable linkage. */
     blockchainHash: string;
+    /** Deterministic SHA-256 hash of evidence URL + declared metadata (canonicalized). */
+    proofMetadataHash: string;
+    /** Optional on-chain anchor reference when available. */
+    anchor: { status: 'missing' | 'pending' | 'confirmed' | 'failed'; chain?: string; txHash?: string };
     metadataExtracted: Record<string, any>;
     analysisDetails: {
         exifPresent: boolean;
@@ -43,8 +49,17 @@ export interface EvidenceAnalysisResult {
  * - Store hash on blockchain
  */
 export async function analyzeEvidence(request: EvidenceUploadRequest): Promise<EvidenceAnalysisResult> {
-    // Generate blockchain hash for the evidence
+    // Generate blockchain hash for the evidence (legacy placeholder)
     const blockchainHash = generateBlockchainHash(request.url, request.userId);
+
+    const proofMetadataHash = computeProofMetadataHash({
+        url: request.url,
+        mediaType: request.mediaType,
+        uploadedAt: request.metadata?.uploadedAt as string | undefined,
+        metadata: (request.metadata ?? {}) as Record<string, unknown>,
+    });
+
+    const anchor = { status: 'missing' as const };
 
     // Extract metadata (simulated - would use exif-parser in production)
     const metadataExtracted = extractMetadata(request);
@@ -67,6 +82,8 @@ export async function analyzeEvidence(request: EvidenceUploadRequest): Promise<E
         isAiGenerated,
         manipulationDetected: manipulationAnalysis.detected,
         blockchainHash,
+        proofMetadataHash,
+        anchor,
         metadataExtracted,
         analysisDetails: {
             exifPresent: metadataExtracted.hasExif,

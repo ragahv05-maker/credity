@@ -14,6 +14,7 @@ import { z } from 'zod';
 import { verifyClaim, ClaimVerifyRequest } from '../services/claims-service';
 import { claimsPersistence } from '../services/claims-persistence';
 import { analyzeEvidence, EvidenceUploadRequest } from '../services/evidence-analysis';
+import { buildEvidenceLinkage } from '../services/evidence-linkage';
 
 const router = Router();
 
@@ -103,18 +104,32 @@ router.post('/verify', async (req: Request, res: Response) => {
             trustScore: result.trustScore,
             recommendation: result.recommendation,
             redFlags: result.redFlags,
+            reasonCodes: result.reasonCodes,
+            riskSignals: result.riskSignals,
             aiAnalysis: result.aiAnalysis,
             processingTimeMs: result.processingTimeMs,
             createdAt: nowIso,
             processedAt: nowIso,
         });
 
-        // Return PRD v3.1 format response
+        const evidence_links = request.evidence.map((item) =>
+            buildEvidenceLinkage({
+                url: item.url,
+                mediaType: item.type,
+                uploadedAt: item.uploadedAt,
+            })
+        );
+
+        // Return PRD v3.1 format response (extended with audit-grade reason codes + risk signals)
         res.json({
             success: true,
             claim_id: result.claimId,
             trust_score: result.trustScore,
             recommendation: result.recommendation,
+            reason_codes: result.reasonCodes,
+            risk_signals_version: 'risk-v1',
+            risk_signals: result.riskSignals,
+            evidence_links,
             breakdown: {
                 identity_score: result.breakdown.identityScore,
                 integrity_score: result.breakdown.integrityScore,
@@ -176,6 +191,9 @@ router.get('/:id', async (req: Request, res: Response) => {
                     authenticity_score: claim.authenticityScore
                 },
                 red_flags: claim.redFlags,
+                reason_codes: claim.reasonCodes ?? [],
+                risk_signals_version: 'risk-v1',
+                risk_signals: claim.riskSignals ?? [],
                 created_at: claim.createdAt,
                 status: 'processed'
             }
@@ -285,6 +303,9 @@ router.post('/evidence/upload', async (req: Request, res: Response) => {
             manipulationDetected: analysis.manipulationDetected,
             metadata: analysisRequest.metadata ?? {},
             blockchainHash: analysis.blockchainHash,
+            proofMetadataHash: analysis.proofMetadataHash,
+            revocationCheck: { status: 'not_applicable' },
+            anchorTx: { status: analysis.anchor.status, chain: analysis.anchor.chain, txHash: analysis.anchor.txHash },
             analysisData: analysis as unknown as Record<string, unknown>,
             uploadedAt: nowIso,
             analyzedAt: nowIso,
@@ -297,6 +318,13 @@ router.post('/evidence/upload', async (req: Request, res: Response) => {
             is_ai_generated: analysis.isAiGenerated,
             manipulation_detected: analysis.manipulationDetected,
             blockchain_hash: analysis.blockchainHash,
+            proof_metadata_hash: analysis.proofMetadataHash,
+            revocation_check: { status: 'not_applicable' },
+            anchor: {
+                status: analysis.anchor.status,
+                chain: analysis.anchor.chain,
+                tx_hash: analysis.anchor.txHash,
+            },
             metadata_extracted: analysis.metadataExtracted
         });
     } catch (error: any) {

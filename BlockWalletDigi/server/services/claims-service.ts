@@ -10,6 +10,7 @@
 import { detectDeepfakeFromUrl } from './deepfake-detection-service';
 import { scoreClaimConfidence } from './confidence-scoring-adapter';
 import { claimsPersistence } from './claims-persistence';
+import { ReasonCodes, stableSortReasonCodes, type ReasonCode } from '../contracts/reason-codes';
 
 export interface TimelineEvent {
     event: string;
@@ -33,15 +34,41 @@ export interface ClaimVerifyRequest {
     userCredentials: string[];
 }
 
+export type RiskSignalSeverity = 'info' | 'low' | 'medium' | 'high';
+
+export interface RiskSignal {
+    /**
+     * Stable machine-readable id (do not change without version bump).
+     * Example: integrity.fraud_pattern
+     */
+    id: string;
+    /**
+     * Normalized score 0..1 where higher means higher risk.
+     */
+    score: number;
+    severity: RiskSignalSeverity;
+    source: 'rules' | 'ai' | 'provider';
+    reason_codes: ReasonCode[];
+    details?: Record<string, unknown>;
+}
+
 export interface ClaimVerifyResponse {
     claimId: string;
     trustScore: number;
     recommendation: 'approve' | 'review' | 'investigate' | 'reject';
+    /** Stable machine-readable reason codes derived from rules + AI/provider signals */
+    reasonCodes: ReasonCode[];
+    /** Normalized, versionable risk signal objects (safe for audit/logging) */
+    riskSignals: RiskSignal[];
     breakdown: {
         identityScore: number;
         integrityScore: number;
         authenticityScore: number;
     };
+    /**
+     * Human-readable red flags (legacy).
+     * Prefer reasonCodes + riskSignals for deterministic interpretation.
+     */
     redFlags: string[];
     aiAnalysis: {
         deepfakeDetected: boolean;
@@ -90,12 +117,22 @@ export async function verifyClaim(request: ClaimVerifyRequest): Promise<ClaimVer
     // Determine recommendation based on Trust Score
     const recommendation = getRecommendation(trustScore);
 
-    // Combine all red flags
+    // Combine all red flags (legacy)
     const redFlags = [
         ...identityResult.redFlags,
         ...integrityResult.redFlags,
         ...authenticityResult.redFlags
     ];
+
+    const reasonCodes = stableSortReasonCodes([
+        ...identityResult.reasonCodes,
+        ...integrityResult.reasonCodes,
+        ...authenticityResult.reasonCodes,
+    ]) as ReasonCode[];
+
+    const riskSignals = [...identityResult.riskSignals, ...integrityResult.riskSignals, ...authenticityResult.riskSignals]
+        .map((signal) => ({ ...signal, reason_codes: stableSortReasonCodes(signal.reason_codes) as ReasonCode[] }))
+        .sort((a, b) => a.id.localeCompare(b.id));
 
     const processingTimeMs = Date.now() - startTime;
 
@@ -103,6 +140,8 @@ export async function verifyClaim(request: ClaimVerifyRequest): Promise<ClaimVer
         claimId,
         trustScore,
         recommendation,
+        reasonCodes,
+        riskSignals,
         breakdown: {
             identityScore: identityResult.score,
             integrityScore: integrityResult.score,
@@ -129,11 +168,15 @@ export async function verifyClaim(request: ClaimVerifyRequest): Promise<ClaimVer
 interface IdentityResult {
     score: number;
     redFlags: string[];
+    reasonCodes: ReasonCode[];
+    riskSignals: RiskSignal[];
     credentialsVerified: string[];
 }
 
 async function verifyIdentity(request: ClaimVerifyRequest): Promise<IdentityResult> {
     const redFlags: string[] = [];
+    const reasonCodes: ReasonCode[] = [];
+    const riskSignals: RiskSignal[] = [];
     let score = 0;
     const credentialsVerified: string[] = [];
 
@@ -143,6 +186,7 @@ async function verifyIdentity(request: ClaimVerifyRequest): Promise<IdentityResu
         credentialsVerified.push('verified_human');
     } else {
         redFlags.push('User does not have verified_human credential');
+        reasonCodes.push(ReasonCodes.IDENTITY_MISSING_VERIFIED_HUMAN);
         score += 10; // Minimal score without verification
     }
 
@@ -170,10 +214,22 @@ async function verifyIdentity(request: ClaimVerifyRequest): Promise<IdentityResu
     // Flag if no credentials provided
     if (request.userCredentials.length === 0) {
         redFlags.push('No credentials provided with claim');
+        reasonCodes.push(ReasonCodes.IDENTITY_NO_CREDENTIALS_PROVIDED);
         score = 20; // Very low score
     }
 
-    return { score, redFlags, credentialsVerified };
+    // Normalize risk signal (higher score = higher risk)
+    const identityRisk = Number((1 - score / 100).toFixed(3));
+    riskSignals.push({
+        id: 'identity.credentials',
+        score: identityRisk,
+        severity: identityRisk > 0.7 ? 'high' : identityRisk > 0.4 ? 'medium' : identityRisk > 0.2 ? 'low' : 'info',
+        source: 'rules',
+        reason_codes: stableSortReasonCodes(reasonCodes) as ReasonCode[],
+        details: { credentials_verified: credentialsVerified, provided_count: request.userCredentials.length },
+    });
+
+    return { score, redFlags, reasonCodes: stableSortReasonCodes(reasonCodes) as ReasonCode[], riskSignals, credentialsVerified };
 }
 
 /**
@@ -183,6 +239,8 @@ async function verifyIdentity(request: ClaimVerifyRequest): Promise<IdentityResu
 interface IntegrityResult {
     score: number;
     redFlags: string[];
+    reasonCodes: ReasonCode[];
+    riskSignals: RiskSignal[];
     timelineConsistent: boolean;
     fraudPatternMatch: number;
     llmConfidence: number;
@@ -190,6 +248,8 @@ interface IntegrityResult {
 
 async function validateClaim(request: ClaimVerifyRequest): Promise<IntegrityResult> {
     const redFlags: string[] = [];
+    const reasonCodes: ReasonCode[] = [];
+    const riskSignals: RiskSignal[] = [];
     let score = 50; // Start at neutral
 
     // Timeline Analysis
@@ -201,6 +261,7 @@ async function validateClaim(request: ClaimVerifyRequest): Promise<IntegrityResu
     } else {
         score -= 20;
         redFlags.push(...timelineAnalysis.issues);
+        reasonCodes.push(ReasonCodes.INTEGRITY_TIMELINE_INCONSISTENT);
     }
 
     // Pattern Matching (simplified - in production would use ML model)
@@ -208,9 +269,11 @@ async function validateClaim(request: ClaimVerifyRequest): Promise<IntegrityResu
     if (fraudPatternMatch > 0.7) {
         score -= 30;
         redFlags.push(`High fraud pattern match: ${(fraudPatternMatch * 100).toFixed(0)}%`);
+        reasonCodes.push(ReasonCodes.INTEGRITY_FRAUD_PATTERN_HIGH);
     } else if (fraudPatternMatch > 0.4) {
         score -= 15;
         redFlags.push(`Moderate fraud pattern similarity detected`);
+        reasonCodes.push(ReasonCodes.INTEGRITY_FRAUD_PATTERN_MEDIUM);
     } else {
         score += 15;
     }
@@ -229,16 +292,19 @@ async function validateClaim(request: ClaimVerifyRequest): Promise<IntegrityResu
     } else if (llmConfidence < 0.5) {
         score -= 10;
         redFlags.push(`Claim description raises concerns (${confidenceResult.reason})`);
+        reasonCodes.push(ReasonCodes.INTEGRITY_LLM_CONFIDENCE_LOW);
     }
 
     // Claim amount reasonability check
     if (request.claimAmount) {
         if (request.claimType === 'insurance_auto' && request.claimAmount > 1000000) {
             redFlags.push('Unusually high claim amount');
+            reasonCodes.push(ReasonCodes.INTEGRITY_CLAIM_AMOUNT_UNUSUALLY_HIGH);
             score -= 10;
         }
         if (request.claimType === 'refund_request' && request.claimAmount > 50000) {
             redFlags.push('Refund amount above normal threshold');
+            reasonCodes.push(ReasonCodes.INTEGRITY_REFUND_AMOUNT_ABOVE_THRESHOLD);
             score -= 5;
         }
     }
@@ -246,9 +312,41 @@ async function validateClaim(request: ClaimVerifyRequest): Promise<IntegrityResu
     // Cap between 0 and 100
     score = Math.max(0, Math.min(100, score));
 
+    const fraudRisk = Number(fraudPatternMatch.toFixed(3));
+    riskSignals.push({
+        id: 'integrity.fraud_pattern',
+        score: fraudRisk,
+        severity: fraudRisk > 0.7 ? 'high' : fraudRisk > 0.4 ? 'medium' : fraudRisk > 0.2 ? 'low' : 'info',
+        source: 'rules',
+        reason_codes: stableSortReasonCodes(reasonCodes) as ReasonCode[],
+        details: { fraud_pattern_match: fraudPatternMatch },
+    });
+
+    const timelineRisk = timelineConsistent ? 0 : 0.6;
+    riskSignals.push({
+        id: 'integrity.timeline',
+        score: timelineRisk,
+        severity: timelineRisk >= 0.6 ? 'medium' : 'info',
+        source: 'rules',
+        reason_codes: stableSortReasonCodes(reasonCodes) as ReasonCode[],
+        details: { timeline_consistent: timelineConsistent, issues_count: timelineAnalysis.issues.length },
+    });
+
+    const llmRisk = Number((1 - llmConfidence).toFixed(3));
+    riskSignals.push({
+        id: 'integrity.description_confidence',
+        score: llmRisk,
+        severity: llmRisk > 0.6 ? 'medium' : llmRisk > 0.3 ? 'low' : 'info',
+        source: confidenceResult.provider === 'deterministic' ? 'ai' : 'provider',
+        reason_codes: stableSortReasonCodes(reasonCodes) as ReasonCode[],
+        details: { llm_confidence: llmConfidence, provider: confidenceResult.provider, provider_reason: confidenceResult.reason },
+    });
+
     return {
         score,
         redFlags,
+        reasonCodes: stableSortReasonCodes(reasonCodes) as ReasonCode[],
+        riskSignals,
         timelineConsistent,
         fraudPatternMatch,
         llmConfidence
@@ -262,6 +360,8 @@ async function validateClaim(request: ClaimVerifyRequest): Promise<IntegrityResu
 interface AuthenticityResult {
     score: number;
     redFlags: string[];
+    reasonCodes: ReasonCode[];
+    riskSignals: RiskSignal[];
     deepfakeDetected: boolean;
     deepfakeVerdict: 'real' | 'fake' | 'unknown';
     deepfakeConfidence: number | null;
@@ -271,13 +371,28 @@ interface AuthenticityResult {
 
 async function authenticateEvidence(request: ClaimVerifyRequest): Promise<AuthenticityResult> {
     const redFlags: string[] = [];
+    const reasonCodes: ReasonCode[] = [];
+    const riskSignals: RiskSignal[] = [];
     let score = 50; // Start at neutral
 
     // If no evidence provided
     if (request.evidence.length === 0) {
+        redFlags.push('No evidence provided');
+        reasonCodes.push(ReasonCodes.EVIDENCE_NONE_PROVIDED);
+        riskSignals.push({
+            id: 'evidence.presence',
+            score: 0.25,
+            severity: 'low',
+            source: 'rules',
+            reason_codes: stableSortReasonCodes(reasonCodes) as ReasonCode[],
+            details: { evidence_count: 0 },
+        });
+
         return {
             score: 60, // Some claims don't require evidence
-            redFlags: ['No evidence provided'],
+            redFlags,
+            reasonCodes: stableSortReasonCodes(reasonCodes) as ReasonCode[],
+            riskSignals,
             deepfakeDetected: false,
             deepfakeVerdict: 'unknown',
             deepfakeConfidence: null,
@@ -301,9 +416,11 @@ async function authenticateEvidence(request: ClaimVerifyRequest): Promise<Authen
     if (deepfakeDetected) {
         score = 10;
         redFlags.push('AI-generated content detected in evidence');
+        reasonCodes.push(ReasonCodes.EVIDENCE_DEEPFAKE_DETECTED);
     } else if (hasUnknown) {
         score -= 10;
         redFlags.push('Deepfake detection provider unavailable; authenticity confidence reduced');
+        reasonCodes.push(ReasonCodes.EVIDENCE_DEEPFAKE_PROVIDER_UNAVAILABLE);
     } else {
         score += 20;
     }
@@ -315,6 +432,7 @@ async function authenticateEvidence(request: ClaimVerifyRequest): Promise<Authen
     } else {
         score -= 15;
         redFlags.push('Evidence metadata inconsistent with claim');
+        reasonCodes.push(ReasonCodes.EVIDENCE_METADATA_INCONSISTENT);
     }
 
     // Blockchain Verification (placeholder)
@@ -331,9 +449,35 @@ async function authenticateEvidence(request: ClaimVerifyRequest): Promise<Authen
     // Cap between 0 and 100
     score = Math.max(0, Math.min(100, score));
 
+    const deepfakeRisk = deepfakeDetected ? 1 : hasUnknown ? 0.4 : 0;
+    riskSignals.push({
+        id: 'evidence.deepfake',
+        score: deepfakeRisk,
+        severity: deepfakeRisk >= 1 ? 'high' : deepfakeRisk >= 0.4 ? 'medium' : 'info',
+        source: hasUnknown ? 'provider' : 'ai',
+        reason_codes: stableSortReasonCodes(reasonCodes) as ReasonCode[],
+        details: {
+            verdict: deepfakeDetected ? 'fake' : hasUnknown ? 'unknown' : 'real',
+            confidence: averageConfidence,
+            evidence_count: mediaEvidence.length,
+        },
+    });
+
+    const metadataRisk = metadataValid ? 0 : 0.6;
+    riskSignals.push({
+        id: 'evidence.metadata',
+        score: metadataRisk,
+        severity: metadataRisk >= 0.6 ? 'medium' : 'info',
+        source: 'rules',
+        reason_codes: stableSortReasonCodes(reasonCodes) as ReasonCode[],
+        details: { metadata_valid: metadataValid },
+    });
+
     return {
         score,
         redFlags,
+        reasonCodes: stableSortReasonCodes(reasonCodes) as ReasonCode[],
+        riskSignals,
         deepfakeDetected,
         deepfakeVerdict: deepfakeDetected ? 'fake' : hasUnknown ? 'unknown' : 'real',
         deepfakeConfidence: averageConfidence,
@@ -492,6 +636,8 @@ export async function getClaimById(claimId: string): Promise<ClaimVerifyResponse
         claimId: claim.id,
         trustScore: claim.trustScore,
         recommendation: claim.recommendation,
+        reasonCodes: (claim.reasonCodes ?? []) as ReasonCode[],
+        riskSignals: (claim.riskSignals ?? []) as RiskSignal[],
         breakdown: {
             identityScore: claim.identityScore,
             integrityScore: claim.integrityScore,

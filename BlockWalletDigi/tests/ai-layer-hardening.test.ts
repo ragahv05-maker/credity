@@ -74,10 +74,19 @@ describe('AI layer hardening', () => {
             });
 
             expect(response.status).toBe(200);
-            const body = (await response.json()) as { success: boolean; claim_id?: string; ai_analysis?: unknown };
+            const body = (await response.json()) as {
+                success: boolean;
+                claim_id?: string;
+                ai_analysis?: unknown;
+                reason_codes?: string[];
+                risk_signals?: unknown;
+            };
             expect(body.success).toBe(true);
             expect(body.claim_id).toBeTruthy();
             expect(body.ai_analysis).toBeTruthy();
+            expect(Array.isArray(body.reason_codes)).toBe(true);
+            expect(body.reason_codes).toContain('IDENTITY_MISSING_VERIFIED_HUMAN');
+            expect(body.reason_codes).toContain('EVIDENCE_NONE_PROVIDED');
         });
     });
 });
