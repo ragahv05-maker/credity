@@ -87,12 +87,24 @@ function main() {
   const rows = parseCsv(csv);
   const summary = summarize(rows);
 
-  const snapshot = {
+  let prd = null;
+try {
+  const prdPath = path.join(ROOT, 'credverse-gateway', 'public', 'progress', 'prd.json');
+  if (fs.existsSync(prdPath)) prd = JSON.parse(fs.readFileSync(prdPath, 'utf8'));
+} catch {
+  prd = null;
+}
+
+const snapshot = {
     generatedAt: new Date().toISOString(),
     source: {
       boardCsv: 'swarm/reports/credity-s34-master-board.csv',
+      prdJson: prd ? 'credverse-gateway/public/progress/prd.json' : null,
     },
-    summary,
+    summary: {
+      ...summary,
+      prdCompletionPct: prd?.prdCompletionPct ?? null,
+    },
     items: rows.map((r) => ({
       id: r.ID,
       lane: r.Lane,

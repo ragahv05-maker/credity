@@ -44,7 +44,7 @@ jobs:
       - name: Build gateway (static)
         working-directory: credverse-gateway
         env:
-          GITHUB_PAGES: '1'
+          PAGES_BASE: credity
         run: npm run build
 
       - name: Configure Pages

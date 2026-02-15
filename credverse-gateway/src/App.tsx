@@ -186,7 +186,7 @@ function OpsDashboard() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/progress/latest.json', { cache: 'no-store' })
+    fetch('progress/latest.json', { cache: 'no-store' })
       .then(async (r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return (await r.json()) as ProgressSnapshot;
@@ -256,10 +256,10 @@ function OpsDashboard() {
           </div>
         </div>
         <div className="ops-kpis">
-          {kpi('Overall completion', data ? `${data.summary.completionPct}%` : '—', data ? `Updated: ${new Date(data.generatedAt).toLocaleString()}` : undefined)}
+          {kpi('Board completion', data ? `${data.summary.completionPct}%` : '—', data ? `Updated: ${new Date(data.generatedAt).toLocaleString()}` : undefined)}
+          {kpi('PRD completion', data && data.summary.prdCompletionPct != null ? `${data.summary.prdCompletionPct}%` : '—', 'Evidence-only feature rubric')}
           {kpi('P0 count', data ? String(data.summary.totals.byPriority['P0'] || 0) : '—', 'Critical execution pressure')}
           {kpi('Blocked', data ? String(data.summary.totals.byStatus['Blocked'] || 0) : '—', 'Explicit external dependencies')}
-          {kpi('Red (risk)', data ? String(data.summary.totals.byRag['Red'] || 0) : '—', 'High risk / merge-blockers')}
         </div>
       </div>
 
