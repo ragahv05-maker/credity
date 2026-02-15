@@ -265,10 +265,52 @@ export async function getHolderCredential(id: string | number): Promise<any> {
   return requestRole('holder', `v1/wallet/credentials/${id}`);
 }
 
-export async function createCredentialShareQr(id: string | number): Promise<any> {
+export async function createCredentialShareQr(
+  id: string | number,
+  input?: { expiryMinutes?: 1 | 5 | 30 | 60; disclosedFields?: string[] },
+): Promise<any> {
   return requestRole('holder', `v1/credentials/${id}/qr`, {
     method: 'POST',
-    body: { expiresInHours: 24 },
+    body: {
+      expiryMinutes: input?.expiryMinutes ?? 5,
+      disclosedFields: input?.disclosedFields ?? [],
+    },
+  });
+}
+
+export async function claimHolderCredentialOffer(url: string): Promise<any> {
+  return requestRole('holder', 'v1/wallet/offer/claim', {
+    method: 'POST',
+    body: { url },
+  });
+}
+
+export async function getHolderCredentialFields(id: string | number): Promise<{ fields: any[]; categories: any[] }> {
+  return requestRole('holder', `v1/wallet/credentials/${id}/fields?userId=1`);
+}
+
+export async function createHolderDisclosure(input: {
+  credentialId: string | number;
+  requestedFields: string[];
+  purpose?: string;
+  requesterDID?: string;
+  expiryMinutes?: number;
+}): Promise<any> {
+  return requestRole('holder', `v1/credentials/${input.credentialId}/disclose`, {
+    method: 'POST',
+    body: {
+      requestedFields: input.requestedFields,
+      purpose: input.purpose || 'recruiter_verification',
+      requesterDID: input.requesterDID,
+      expiryMinutes: input.expiryMinutes ?? 30,
+    },
+  });
+}
+
+export async function generateHolderProofMetadata(credentialId: string | number): Promise<any> {
+  return requestRole('holder', 'v1/wallet/proofs/generate', {
+    method: 'POST',
+    body: { credentialId: String(credentialId) },
   });
 }
 

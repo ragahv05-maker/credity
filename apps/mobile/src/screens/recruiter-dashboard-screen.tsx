@@ -67,7 +67,22 @@ export function RecruiterDashboardScreen({ onSwitchRole, onLogout }: Props) {
         return;
       }
 
-      const result = await verifyRecruiterInstant({ jwt: jwtInput.trim() });
+      const trimmed = jwtInput.trim();
+      let result;
+      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        let parsed: any;
+        try {
+          parsed = JSON.parse(trimmed);
+        } catch {
+          throw new Error('Invalid JSON payload. Paste a JWT string or a JSON object.');
+        }
+
+        // Support holder "recruiter package" wrapper.
+        const credential = parsed?.credential || parsed;
+        result = await verifyRecruiterInstant({ credential });
+      } else {
+        result = await verifyRecruiterInstant({ jwt: trimmed });
+      }
       const decision =
         result?.decision || result?.v1?.decision || result?.fraud?.recommendation || result?.verification?.status || 'completed';
       setLastDecision(String(decision));

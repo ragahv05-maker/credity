@@ -1,21 +1,25 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import {
+  claimHolderCredentialOffer,
   createCredentialShareQr,
+  createHolderDisclosure,
+  generateHolderProofMetadata,
   getHolderCertInIncidents,
   getHolderConsents,
   getHolderCredential,
+  getHolderCredentialFields,
   getHolderCredentials,
   getHolderDataRequests,
   getHolderReputationScore,
   getHolderSafeDateScore,
   getHolderWalletStatus,
   getRoleProfile,
+  revokeHolderConsent,
   submitHolderDataDelete,
   submitHolderDataExport,
-  revokeHolderConsent,
 } from '../lib/api-client';
 import { requireProtectedAction } from '../lib/protected-action';
 import { colors } from '../theme/tokens';
@@ -40,6 +44,15 @@ export function HolderDashboardScreen({ onSwitchRole, onLogout }: Props) {
   const [consents, setConsents] = useState<any[]>([]);
   const [dataRequests, setDataRequests] = useState<any[]>([]);
   const [certInIncidents, setCertInIncidents] = useState<any[]>([]);
+
+  const [offerUrl, setOfferUrl] = useState('');
+  const [claimBusy, setClaimBusy] = useState(false);
+
+  const [showDisclosure, setShowDisclosure] = useState(false);
+  const [disclosureCredentialId, setDisclosureCredentialId] = useState<string | null>(null);
+  const [availableFields, setAvailableFields] = useState<string[]>([]);
+  const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
+  const [sharePayload, setSharePayload] = useState<string | null>(null);
 
   const summary = useMemo(() => {
     return {
@@ -136,6 +149,80 @@ export function HolderDashboardScreen({ onSwitchRole, onLogout }: Props) {
       setSelectedCredential(detail);
     } catch (error: any) {
       Alert.alert('Detail failed', error?.message || 'Unable to load credential detail.');
+    }
+  }
+
+  async function onClaimOffer() {
+    const url = offerUrl.trim();
+    if (!url) {
+      Alert.alert('Offer required', 'Paste an offer URL from the Issuer to claim a credential.');
+      return;
+    }
+
+    setClaimBusy(true);
+    try {
+      const approved = await requireProtectedAction('Claim credential offer');
+      if (!approved) {
+        Alert.alert('Claim blocked', 'Biometric verification is required to claim credentials.');
+        return;
+      }
+
+      const result = await claimHolderCredentialOffer(url);
+      setOfferUrl('');
+      await authenticateAndLoad();
+      Alert.alert('Credential claimed', result?.message || 'Credential stored in wallet.');
+    } catch (error: any) {
+      Alert.alert('Claim failed', error?.message || 'Unable to claim credential offer.');
+    } finally {
+      setClaimBusy(false);
+    }
+  }
+
+  async function onOpenDisclosure(credentialId: string | number) {
+    try {
+      setSharePayload(null);
+      setDisclosureCredentialId(String(credentialId));
+      setSelectedFields(new Set());
+      const fieldsResponse = await getHolderCredentialFields(credentialId);
+      const nextFields = (fieldsResponse?.fields || [])
+        .map((f: any) => f?.path)
+        .filter((value: any) => typeof value === 'string' && value.length);
+      setAvailableFields(nextFields.slice(0, 24));
+      setShowDisclosure(true);
+    } catch (error: any) {
+      Alert.alert('Fields failed', error?.message || 'Unable to load credential fields.');
+    }
+  }
+
+  async function onGenerateRecruiterPackage() {
+    if (!disclosureCredentialId) return;
+
+    try {
+      const approved = await requireProtectedAction('Generate selective disclosure package');
+      if (!approved) {
+        Alert.alert('Share blocked', 'Biometric verification is required to share credentials.');
+        return;
+      }
+
+      const requestedFields = Array.from(selectedFields);
+      const [disclosure, proof] = await Promise.all([
+        createHolderDisclosure({ credentialId: disclosureCredentialId, requestedFields }),
+        generateHolderProofMetadata(disclosureCredentialId),
+      ]);
+
+      const payload = {
+        type: 'credverse.recruiter_package.v1',
+        credential: disclosure?.token?.disclosedData || disclosure?.token?.disclosed_data || null,
+        proof: proof?.proof || null,
+        metadata: {
+          credentialId: disclosureCredentialId,
+          generatedAt: new Date().toISOString(),
+        },
+      };
+
+      setSharePayload(JSON.stringify(payload, null, 2));
+    } catch (error: any) {
+      Alert.alert('Package failed', error?.message || 'Unable to generate recruiter package.');
     }
   }
 
@@ -295,6 +382,23 @@ export function HolderDashboardScreen({ onSwitchRole, onLogout }: Props) {
       </View>
 
       <View style={styles.card}>
+        <Text style={styles.cardTitle}>Claim credential offer</Text>
+        <Text style={styles.meta}>Paste an Issuer offer URL (or deep link URL parameter) to import a VC into your wallet.</Text>
+        <TextInput
+          style={styles.input}
+          value={offerUrl}
+          onChangeText={setOfferUrl}
+          placeholder="https://issuer.../api/v1/public/issuance/offer/consume?token=..."
+          placeholderTextColor={colors.muted}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+        <Pressable style={styles.primaryButton} onPress={onClaimOffer} disabled={claimBusy}>
+          <Text style={styles.primaryButtonText}>{claimBusy ? 'Claiming…' : 'Claim & store'}</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.card}>
         <Text style={styles.cardTitle}>Credentials</Text>
         {!credentials.length ? <Text style={styles.meta}>No credentials available.</Text> : null}
         {credentials.slice(0, 5).map((cred) => (
@@ -332,13 +436,84 @@ export function HolderDashboardScreen({ onSwitchRole, onLogout }: Props) {
       {selectedCredential ? (
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Credential Detail</Text>
-          <Text style={styles.meta}>ID: {selectedCredential?.id || 'n/a'}</Text>
-          <Text style={styles.meta}>Type: {selectedCredential?.type || selectedCredential?.templateId || 'n/a'}</Text>
-          <Text style={styles.meta}>Issuer: {selectedCredential?.issuer || selectedCredential?.issuerDid || 'n/a'}</Text>
-          <Text style={styles.meta}>Status: {selectedCredential?.status || (selectedCredential?.revoked ? 'revoked' : 'active')}</Text>
+          <Text style={styles.meta}>ID: {selectedCredential?.credential?.id || selectedCredential?.id || 'n/a'}</Text>
+          <Text style={styles.meta}>Type: {selectedCredential?.credential?.type || selectedCredential?.credential?.templateId || selectedCredential?.credential?.data?.vc?.type?.[1] || 'n/a'}</Text>
+          <Text style={styles.meta}>Issuer: {selectedCredential?.credential?.issuer || selectedCredential?.credential?.issuerDid || 'n/a'}</Text>
+          <Text style={styles.meta}>Status: {selectedCredential?.credential?.status || (selectedCredential?.credential?.revoked ? 'revoked' : 'active')}</Text>
+          <Text style={styles.meta}>
+            Anchor: {selectedCredential?.credential?.anchorStatus || selectedCredential?.credential?.data?.proof?.code || 'unknown'}
+          </Text>
+          <Pressable
+            style={styles.primaryButton}
+            onPress={() => onOpenDisclosure(selectedCredential?.credential?.id || selectedCredential?.id)}
+          >
+            <Text style={styles.primaryButtonText}>Selective disclose (recruiter package)</Text>
+          </Pressable>
         </View>
       ) : null}
       </ScrollView>
+
+      <Modal
+        transparent
+        visible={showDisclosure}
+        animationType="slide"
+        onRequestClose={() => {
+          setShowDisclosure(false);
+          setSharePayload(null);
+        }}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Selective disclosure</Text>
+            <Text style={styles.modalSubtitle}>Choose which fields to disclose. We generate a deterministic proof hash for auditability.</Text>
+
+            {!availableFields.length ? (
+              <Text style={styles.modalHint}>No fields detected for this credential.</Text>
+            ) : (
+              <View style={{ gap: 8 }}>
+                {availableFields.map((field) => {
+                  const selected = selectedFields.has(field);
+                  return (
+                    <Pressable
+                      key={field}
+                      style={[styles.disclosureRow, selected ? styles.disclosureRowSelected : null]}
+                      onPress={() => {
+                        setSelectedFields((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(field)) next.delete(field);
+                          else next.add(field);
+                          return next;
+                        });
+                      }}
+                    >
+                      <Text style={styles.disclosureRowText}>{selected ? '✓ ' : ''}{field}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )}
+
+            <View style={styles.modalActions}>
+              <Pressable style={styles.secondaryButton} onPress={() => setShowDisclosure(false)}>
+                <Text style={styles.secondaryButtonText}>Close</Text>
+              </Pressable>
+              <Pressable style={styles.primaryButton} onPress={onGenerateRecruiterPackage}>
+                <Text style={styles.primaryButtonText}>Generate package</Text>
+              </Pressable>
+            </View>
+
+            {sharePayload ? (
+              <View style={{ gap: 8 }}>
+                <Text style={styles.modalLabel}>Recruiter payload</Text>
+                <TextInput style={[styles.input, { minHeight: 140 }]} multiline value={sharePayload} editable={false} />
+                <Text style={styles.modalHint}>
+                  Recruiter: paste this JSON into Recruiter → Instant Verification (it auto-detects JSON vs JWT).
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        </View>
+      </Modal>
 
       <Modal transparent visible={showZkProof} animationType="slide" onRequestClose={onCloseZkProof}>
         <View style={styles.modalBackdrop}>
@@ -497,4 +672,25 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   rowTitle: { color: colors.text, fontWeight: '600' },
+  disclosureRow: {
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.elevated,
+  },
+  disclosureRowSelected: {
+    borderColor: colors.primary,
+  },
+  disclosureRowText: { color: colors.text, fontWeight: '600', fontSize: 12 },
+  input: {
+    backgroundColor: colors.elevated,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: colors.text,
+  },
 });
