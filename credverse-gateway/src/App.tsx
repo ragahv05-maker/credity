@@ -257,7 +257,13 @@ function OpsDashboard() {
         </div>
         <div className="ops-kpis">
           {kpi('Board completion', data ? `${data.summary.completionPct}%` : '—', data ? `Updated: ${new Date(data.generatedAt).toLocaleString()}` : undefined)}
-          {kpi('PRD completion', data && data.summary.prdCompletionPct != null ? `${data.summary.prdCompletionPct}%` : '—', 'Evidence-only feature rubric')}
+          {kpi(
+            'PRD completion',
+            data && data.summary.prdCompletionPct != null ? `${data.summary.prdCompletionPct}%` : '—',
+            data && data.summary.prdRequirementsTotal != null
+              ? `Req-level: ${data.summary.prdRequirementsCompletionPct ?? 0}% of ${data.summary.prdRequirementsTotal}`
+              : 'Evidence-only feature rubric',
+          )}
           {kpi('P0 count', data ? String(data.summary.totals.byPriority['P0'] || 0) : '—', 'Critical execution pressure')}
           {kpi('Blocked', data ? String(data.summary.totals.byStatus['Blocked'] || 0) : '—', 'Explicit external dependencies')}
         </div>

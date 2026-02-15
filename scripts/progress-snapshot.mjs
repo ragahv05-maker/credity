@@ -95,15 +95,26 @@ try {
   prd = null;
 }
 
+let prdReq = null;
+try {
+  const prdReqPath = path.join(ROOT, 'credverse-gateway', 'public', 'progress', 'prd-requirements.json');
+  if (fs.existsSync(prdReqPath)) prdReq = JSON.parse(fs.readFileSync(prdReqPath, 'utf8'));
+} catch {
+  prdReq = null;
+}
+
 const snapshot = {
     generatedAt: new Date().toISOString(),
     source: {
       boardCsv: 'swarm/reports/credity-s34-master-board.csv',
       prdJson: prd ? 'credverse-gateway/public/progress/prd.json' : null,
+      prdRequirementsJson: prdReq ? 'credverse-gateway/public/progress/prd-requirements.json' : null,
     },
     summary: {
       ...summary,
       prdCompletionPct: prd?.prdCompletionPct ?? null,
+      prdRequirementsCompletionPct: prdReq?.prdRequirementsCompletionPct ?? null,
+      prdRequirementsTotal: prdReq?.totalRequirements ?? null,
     },
     items: rows.map((r) => ({
       id: r.ID,

@@ -1,8 +1,9 @@
 {
-  "generatedAt": "2026-02-15T14:13:06.892Z",
+  "generatedAt": "2026-02-15T14:24:48.173Z",
   "source": {
     "boardCsv": "swarm/reports/credity-s34-master-board.csv",
-    "prdJson": "credverse-gateway/public/progress/prd.json"
+    "prdJson": "credverse-gateway/public/progress/prd.json",
+    "prdRequirementsJson": "credverse-gateway/public/progress/prd-requirements.json"
   },
   "summary": {
     "totals": {
@@ -26,7 +27,9 @@
       }
     },
     "completionPct": 0,
-    "prdCompletionPct": 7.1
+    "prdCompletionPct": 7.1,
+    "prdRequirementsCompletionPct": 0,
+    "prdRequirementsTotal": 189
   },
   "items": [
     {

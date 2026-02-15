@@ -1,0 +1,1143 @@
+{
+  "generatedAt": "2026-02-15T14:24:48.115Z",
+  "method": "requirement-level (heuristic extraction from PRD Feature Requirements)",
+  "totalRequirements": 189,
+  "achievedScore": 0,
+  "prdRequirementsCompletionPct": 0,
+  "items": [
+    {
+      "id": "F1-001",
+      "feature": "User Onboarding & Authentication",
+      "requirement": "Sign-up methods:",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F1-002",
+      "feature": "User Onboarding & Authentication",
+      "requirement": "Email + OTP verification",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F1-003",
+      "feature": "User Onboarding & Authentication",
+      "requirement": "Phone + SMS verification",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F1-004",
+      "feature": "User Onboarding & Authentication",
+      "requirement": "Google OAuth",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F1-005",
+      "feature": "User Onboarding & Authentication",
+      "requirement": "Apple Sign In",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F1-006",
+      "feature": "User Onboarding & Authentication",
+      "requirement": "Profile creation (name, photo optional)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F1-007",
+      "feature": "User Onboarding & Authentication",
+      "requirement": "Biometric authentication setup (Face ID/Touch ID/Fingerprint)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F1-008",
+      "feature": "User Onboarding & Authentication",
+      "requirement": "PIN fallback (6-digit)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F1-009",
+      "feature": "User Onboarding & Authentication",
+      "requirement": "Session management (30-day expiry)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F2-001",
+      "feature": "Identity Verification (Complete Flow)",
+      "requirement": "Real-time face detection",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F2-002",
+      "feature": "Identity Verification (Complete Flow)",
+      "requirement": "Challenge-response (smile, turn head)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F2-003",
+      "feature": "Identity Verification (Complete Flow)",
+      "requirement": "Anti-spoofing (detect masks, photos, screens)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F2-004",
+      "feature": "Identity Verification (Complete Flow)",
+      "requirement": "30-second duration",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F2-005",
+      "feature": "Identity Verification (Complete Flow)",
+      "requirement": "Auto-capture when positioned correctly",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F2-006",
+      "feature": "Identity Verification (Complete Flow)",
+      "requirement": "Support: Aadhaar, PAN, Passport, Driver's License",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F2-007",
+      "feature": "Identity Verification (Complete Flow)",
+      "requirement": "Camera overlay with document guide",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F2-008",
+      "feature": "Identity Verification (Complete Flow)",
+      "requirement": "Auto-detect document edges",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F2-009",
+      "feature": "Identity Verification (Complete Flow)",
+      "requirement": "Quality checks (glare, blur, completeness)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F2-010",
+      "feature": "Identity Verification (Complete Flow)",
+      "requirement": "Manual capture fallback",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F2-011",
+      "feature": "Identity Verification (Complete Flow)",
+      "requirement": "OCR (extract text from document)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F2-012",
+      "feature": "Identity Verification (Complete Flow)",
+      "requirement": "Format validation (check document structure)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F2-013",
+      "feature": "Identity Verification (Complete Flow)",
+      "requirement": "Authenticity checks (holograms, security features)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F2-014",
+      "feature": "Identity Verification (Complete Flow)",
+      "requirement": "Face matching (ID photo vs. liveness)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F2-015",
+      "feature": "Identity Verification (Complete Flow)",
+      "requirement": "Database verification (if available)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F2-016",
+      "feature": "Identity Verification (Complete Flow)",
+      "requirement": "OAuth flow to DigiLocker",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F2-017",
+      "feature": "Identity Verification (Complete Flow)",
+      "requirement": "Document selection interface",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F2-018",
+      "feature": "Identity Verification (Complete Flow)",
+      "requirement": "Bulk import (multiple documents)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F2-019",
+      "feature": "Identity Verification (Complete Flow)",
+      "requirement": "Real-time status updates",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F2-020",
+      "feature": "Identity Verification (Complete Flow)",
+      "requirement": "Error handling and retry",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-001",
+      "feature": "Reputation Rail (Cross-Platform Trust) 🆕",
+      "requirement": "OAuth 2.0 consent flow for platform connections",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-002",
+      "feature": "Reputation Rail (Cross-Platform Trust) 🆕",
+      "requirement": "API for platforms to read/write reputation events",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-003",
+      "feature": "Reputation Rail (Cross-Platform Trust) 🆕",
+      "requirement": "Selective disclosure (user chooses what to share)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-004",
+      "feature": "Reputation Rail (Cross-Platform Trust) 🆕",
+      "requirement": "Real-time sync across connected platforms",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-005",
+      "feature": "Reputation Rail (Cross-Platform Trust) 🆕",
+      "requirement": "Transport: Uber/Ola rider rating (weight: 15%)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-006",
+      "feature": "Reputation Rail (Cross-Platform Trust) 🆕",
+      "requirement": "Accommodation: Airbnb guest reviews (weight: 15%)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-007",
+      "feature": "Reputation Rail (Cross-Platform Trust) 🆕",
+      "requirement": "Delivery: Swiggy/Zomato order behavior (weight: 10%)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-008",
+      "feature": "Reputation Rail (Cross-Platform Trust) 🆕",
+      "requirement": "Employment: LinkedIn recommendations (weight: 20%)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-009",
+      "feature": "Reputation Rail (Cross-Platform Trust) 🆕",
+      "requirement": "Finance: Credit score proxy (weight: 15%)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-010",
+      "feature": "Reputation Rail (Cross-Platform Trust) 🆕",
+      "requirement": "Social: Dating app reported behavior (weight: 10%)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-011",
+      "feature": "Reputation Rail (Cross-Platform Trust) 🆕",
+      "requirement": "Identity: Document verification completeness (weight: 15%)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-012",
+      "feature": "Reputation Rail (Cross-Platform Trust) 🆕",
+      "requirement": "Only verified platforms can write (API key + domain verification)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-013",
+      "feature": "Reputation Rail (Cross-Platform Trust) 🆕",
+      "requirement": "Blockchain anchoring of all reputation events",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-014",
+      "feature": "Reputation Rail (Cross-Platform Trust) 🆕",
+      "requirement": "ML fraud detection for suspicious patterns",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-015",
+      "feature": "Reputation Rail (Cross-Platform Trust) 🆕",
+      "requirement": "Dispute resolution for incorrect reports",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-016",
+      "feature": "Reputation Rail (Cross-Platform Trust) 🆕",
+      "requirement": "Decay function (old events have less weight)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F6-001",
+      "feature": "SafeDate Score (Dating Safety Layer)",
+      "requirement": "Identity verified (0-25 points)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F6-002",
+      "feature": "SafeDate Score (Dating Safety Layer)",
+      "requirement": "Liveness check passed (0-15 points)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F6-003",
+      "feature": "SafeDate Score (Dating Safety Layer)",
+      "requirement": "Background check clean (0-20 points)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F6-004",
+      "feature": "SafeDate Score (Dating Safety Layer)",
+      "requirement": "Cross-platform reputation (0-20 points)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F6-005",
+      "feature": "SafeDate Score (Dating Safety Layer)",
+      "requirement": "Social validation (LinkedIn, etc.) (0-10 points)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F6-006",
+      "feature": "SafeDate Score (Dating Safety Layer)",
+      "requirement": "Behavioral signals (no harassment reports) (0-10 points)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F6-007",
+      "feature": "SafeDate Score (Dating Safety Layer)",
+      "requirement": "See SafeDate scores before matching",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F6-008",
+      "feature": "SafeDate Score (Dating Safety Layer)",
+      "requirement": "Background check summaries",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F6-009",
+      "feature": "SafeDate Score (Dating Safety Layer)",
+      "requirement": "Harassment report history (aggregated)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F6-010",
+      "feature": "SafeDate Score (Dating Safety Layer)",
+      "requirement": "Identity verification timestamps",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F6-011",
+      "feature": "SafeDate Score (Dating Safety Layer)",
+      "requirement": "In-app reporting of bad behavior",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F6-012",
+      "feature": "SafeDate Score (Dating Safety Layer)",
+      "requirement": "Cross-platform ban propagation (optional)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F6-013",
+      "feature": "SafeDate Score (Dating Safety Layer)",
+      "requirement": "Video call verification before first meeting",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F6-014",
+      "feature": "SafeDate Score (Dating Safety Layer)",
+      "requirement": "Meeting safety tips based on SafeDate score",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F7-001",
+      "feature": "Gig Economy Onboarding Acceleration",
+      "requirement": "Aggregated ratings from all platforms",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F7-002",
+      "feature": "Gig Economy Onboarding Acceleration",
+      "requirement": "Background verification (one-time)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F7-003",
+      "feature": "Gig Economy Onboarding Acceleration",
+      "requirement": "Right-to-work documents",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F7-004",
+      "feature": "Gig Economy Onboarding Acceleration",
+      "requirement": "Vehicle verification (for delivery)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F7-005",
+      "feature": "Gig Economy Onboarding Acceleration",
+      "requirement": "Bank account verification",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F7-006",
+      "feature": "Gig Economy Onboarding Acceleration",
+      "requirement": "Platform checks Credity verification status",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F7-007",
+      "feature": "Gig Economy Onboarding Acceleration",
+      "requirement": "If verified (score >70): Auto-approve in <5 minutes",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F7-008",
+      "feature": "Gig Economy Onboarding Acceleration",
+      "requirement": "If not verified: Standard flow",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F7-009",
+      "feature": "Gig Economy Onboarding Acceleration",
+      "requirement": "Platform saves ₹50-100 per onboarding",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F8-001",
+      "feature": "WorkScore (Comprehensive Employment Verification)",
+      "requirement": "Verified badge on all platforms (Naukri, LinkedIn, Indeed)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F8-002",
+      "feature": "WorkScore (Comprehensive Employment Verification)",
+      "requirement": "Cross-platform reputation visible to employers",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F8-003",
+      "feature": "WorkScore (Comprehensive Employment Verification)",
+      "requirement": "Priority ranking in search results (3x more profile views)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F8-004",
+      "feature": "WorkScore (Comprehensive Employment Verification)",
+      "requirement": "Skills verification reports",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F8-005",
+      "feature": "WorkScore (Comprehensive Employment Verification)",
+      "requirement": "Background check report PDF (shareable)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F8-006",
+      "feature": "WorkScore (Comprehensive Employment Verification)",
+      "requirement": "One-click application with verified credentials",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F8-007",
+      "feature": "WorkScore (Comprehensive Employment Verification)",
+      "requirement": "50 WorkScore checks/month",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F8-008",
+      "feature": "WorkScore (Comprehensive Employment Verification)",
+      "requirement": "Instant candidate verification (5 mins vs 7-14 days)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F8-009",
+      "feature": "WorkScore (Comprehensive Employment Verification)",
+      "requirement": "Background check reports",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F8-010",
+      "feature": "WorkScore (Comprehensive Employment Verification)",
+      "requirement": "Skills assessment integration",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F8-011",
+      "feature": "WorkScore (Comprehensive Employment Verification)",
+      "requirement": "Unlimited WorkScore checks",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F8-012",
+      "feature": "WorkScore (Comprehensive Employment Verification)",
+      "requirement": "ATS integration (Darwinbox, Keka, greytHR)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F8-013",
+      "feature": "WorkScore (Comprehensive Employment Verification)",
+      "requirement": "Custom verification workflows",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F8-014",
+      "feature": "WorkScore (Comprehensive Employment Verification)",
+      "requirement": "Bulk verification APIs",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F8-015",
+      "feature": "WorkScore (Comprehensive Employment Verification)",
+      "requirement": "Fraud detection alerts",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F8-016",
+      "feature": "WorkScore (Comprehensive Employment Verification)",
+      "requirement": "Dedicated account manager",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F8-017",
+      "feature": "WorkScore (Comprehensive Employment Verification)",
+      "requirement": "API access to WorkScore",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F8-018",
+      "feature": "WorkScore (Comprehensive Employment Verification)",
+      "requirement": "\"Verified by Credity\" badge for profiles",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F8-019",
+      "feature": "WorkScore (Comprehensive Employment Verification)",
+      "requirement": "₹10-15 per verification (platforms can markup to ₹20-30)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F8-020",
+      "feature": "WorkScore (Comprehensive Employment Verification)",
+      "requirement": "Premium tier: Verified candidates only (subscription upsell)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F8-021",
+      "feature": "WorkScore (Comprehensive Employment Verification)",
+      "requirement": "Reduced fake profiles = higher recruiter satisfaction",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F9-001",
+      "feature": "TenantScore (Rental Housing Verification)",
+      "requirement": "Landlords lose ₹30-50K due to bad tenants (payment defaults, property damage)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F9-002",
+      "feature": "TenantScore (Rental Housing Verification)",
+      "requirement": "Tenants face discrimination, need to reverify for every property",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F9-003",
+      "feature": "TenantScore (Rental Housing Verification)",
+      "requirement": "40% of rental disputes = payment or property issues",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F9-004",
+      "feature": "TenantScore (Rental Housing Verification)",
+      "requirement": "Past landlord ratings (60% weight)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F9-005",
+      "feature": "TenantScore (Rental Housing Verification)",
+      "requirement": "Payment reliability from work/banking (20% weight)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F9-006",
+      "feature": "TenantScore (Rental Housing Verification)",
+      "requirement": "Property care reputation (10% weight)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F9-007",
+      "feature": "TenantScore (Rental Housing Verification)",
+      "requirement": "Dispute resolution history (10% weight)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F9-008",
+      "feature": "TenantScore (Rental Housing Verification)",
+      "requirement": "Landlords pay ₹299/comprehensive tenant check",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F9-009",
+      "feature": "TenantScore (Rental Housing Verification)",
+      "requirement": "Tenants pay ₹99/year for \"Trusted Tenant\" premium profile",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F9-010",
+      "feature": "TenantScore (Rental Housing Verification)",
+      "requirement": "Platforms (NoBroker, Housing.com) pay ₹50K-1L/year API access",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F10-001",
+      "feature": "HealthScore (Healthcare/Telemedicine Trust)",
+      "requirement": "60% of online consultations = unverified doctors",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F10-002",
+      "feature": "HealthScore (Healthcare/Telemedicine Trust)",
+      "requirement": "Patients can't verify doctor credentials (fake MCI registrations)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F10-003",
+      "feature": "HealthScore (Healthcare/Telemedicine Trust)",
+      "requirement": "No patient compliance tracking for doctors",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F10-004",
+      "feature": "HealthScore (Healthcare/Telemedicine Trust)",
+      "requirement": "**DoctorScore (0-100):** MCI verification + hospital affiliations + patient satisfaction + board certifications",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F10-005",
+      "feature": "HealthScore (Healthcare/Telemedicine Trust)",
+      "requirement": "**PatientScore:** Treatment adherence + appointment reliability + payment history",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F10-006",
+      "feature": "HealthScore (Healthcare/Telemedicine Trust)",
+      "requirement": "Doctors pay ₹2,999/year for \"Verified Doctor\" badge (4x booking increase)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F10-007",
+      "feature": "HealthScore (Healthcare/Telemedicine Trust)",
+      "requirement": "Patients: ₹149/month premium (priority booking with top docs)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F10-008",
+      "feature": "HealthScore (Healthcare/Telemedicine Trust)",
+      "requirement": "Platforms (Practo, 1mg): ₹1-2L/year + ₹5 per verification",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F11-001",
+      "feature": "TutorScore (Education Marketplace Verification)",
+      "requirement": "60% of online tutors have fake degrees",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F11-002",
+      "feature": "TutorScore (Education Marketplace Verification)",
+      "requirement": "Parents can't verify tutor credentials",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F11-003",
+      "feature": "TutorScore (Education Marketplace Verification)",
+      "requirement": "No cross-platform reputation for teaching quality",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F11-004",
+      "feature": "TutorScore (Education Marketplace Verification)",
+      "requirement": "Degree verification + teaching certifications",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F11-005",
+      "feature": "TutorScore (Education Marketplace Verification)",
+      "requirement": "Student outcome data",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F11-006",
+      "feature": "TutorScore (Education Marketplace Verification)",
+      "requirement": "Parent ratings aggregated across platforms",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F11-007",
+      "feature": "TutorScore (Education Marketplace Verification)",
+      "requirement": "Tutors pay ₹499/year for universal verified profile",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F11-008",
+      "feature": "TutorScore (Education Marketplace Verification)",
+      "requirement": "Parents pay ₹99/month for \"Safe Learning\" (background verified only)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F11-009",
+      "feature": "TutorScore (Education Marketplace Verification)",
+      "requirement": "Platforms (Vedantu, Unacademy) pay ₹75K-1.5L/year",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F12-001",
+      "feature": "HomeWorkerScore (Domestic Services Verification)",
+      "requirement": "80% of households won't hire without personal reference",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F12-002",
+      "feature": "HomeWorkerScore (Domestic Services Verification)",
+      "requirement": "No verification system (theft/safety incidents common)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F12-003",
+      "feature": "HomeWorkerScore (Domestic Services Verification)",
+      "requirement": "Workers lose income due to trust deficit",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F12-004",
+      "feature": "HomeWorkerScore (Domestic Services Verification)",
+      "requirement": "Police verification + Aadhaar",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F12-005",
+      "feature": "HomeWorkerScore (Domestic Services Verification)",
+      "requirement": "Past employer ratings",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F12-006",
+      "feature": "HomeWorkerScore (Domestic Services Verification)",
+      "requirement": "Training certifications",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F12-007",
+      "feature": "HomeWorkerScore (Domestic Services Verification)",
+      "requirement": "Theft insurance",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F12-008",
+      "feature": "HomeWorkerScore (Domestic Services Verification)",
+      "requirement": "Workers pay ₹599/year for verified profile (6x placement increase)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F12-009",
+      "feature": "HomeWorkerScore (Domestic Services Verification)",
+      "requirement": "Employers pay ₹199/comprehensive background check",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F12-010",
+      "feature": "HomeWorkerScore (Domestic Services Verification)",
+      "requirement": "Platforms (UrbanClap, Housejoy) pay ₹50K-1L/year",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F13-001",
+      "feature": "TrustScore for Lending (Alternative Credit)",
+      "requirement": "190M Indians have no credit score (thin-file/no-file)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F13-002",
+      "feature": "TrustScore for Lending (Alternative Credit)",
+      "requirement": "Banks reject 70% of gig worker loan applications",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F13-003",
+      "feature": "TrustScore for Lending (Alternative Credit)",
+      "requirement": "Credit bureaus can't see gig economy reputation",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F13-004",
+      "feature": "TrustScore for Lending (Alternative Credit)",
+      "requirement": "Gig platform ratings + rental payment history",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F13-005",
+      "feature": "TrustScore for Lending (Alternative Credit)",
+      "requirement": "Employment verification + social reputation",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F13-006",
+      "feature": "TrustScore for Lending (Alternative Credit)",
+      "requirement": "Alternative credit model for \"credit invisibles\"",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F13-007",
+      "feature": "TrustScore for Lending (Alternative Credit)",
+      "requirement": "Lenders pay ₹50-100 per TrustScore pull (like CIBIL)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F13-008",
+      "feature": "TrustScore for Lending (Alternative Credit)",
+      "requirement": "Users pay ₹299/year for \"Credit Builder\" subscription",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F3-001",
+      "feature": "Trust Score Calculation",
+      "requirement": "Identity Verification (40% weight)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F3-002",
+      "feature": "Trust Score Calculation",
+      "requirement": "Liveness passed: 20 points",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F3-003",
+      "feature": "Trust Score Calculation",
+      "requirement": "Document verified: 15 points",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F3-004",
+      "feature": "Trust Score Calculation",
+      "requirement": "Biometrics matched: 5 points",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F3-005",
+      "feature": "Trust Score Calculation",
+      "requirement": "Activity & Behavior (30% weight)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F3-006",
+      "feature": "Trust Score Calculation",
+      "requirement": "Number of verifications: up to 15 points",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F3-007",
+      "feature": "Trust Score Calculation",
+      "requirement": "Platform connections: up to 10 points",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F3-008",
+      "feature": "Trust Score Calculation",
+      "requirement": "Recency of activity: up to 5 points",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F3-009",
+      "feature": "Trust Score Calculation",
+      "requirement": "Reputation & Trust (30% weight)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F3-010",
+      "feature": "Trust Score Calculation",
+      "requirement": "No suspicious activity: 15 points",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F3-011",
+      "feature": "Trust Score Calculation",
+      "requirement": "Platform endorsements: up to 10 points",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F3-012",
+      "feature": "Trust Score Calculation",
+      "requirement": "User feedback: up to 5 points",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F3-013",
+      "feature": "Trust Score Calculation",
+      "requirement": "0-100 scale",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F3-014",
+      "feature": "Trust Score Calculation",
+      "requirement": "Status labels: Poor (<50), Fair (50-69), Good (70-84), Excellent (85-94), Outstanding (95-100)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F3-015",
+      "feature": "Trust Score Calculation",
+      "requirement": "Visual ring animation",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F3-016",
+      "feature": "Trust Score Calculation",
+      "requirement": "Breakdown by component",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F3-017",
+      "feature": "Trust Score Calculation",
+      "requirement": "Historical trend chart",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F3-018",
+      "feature": "Trust Score Calculation",
+      "requirement": "Quick wins (+3-5 points)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F3-019",
+      "feature": "Trust Score Calculation",
+      "requirement": "Long-term actions (+10-15 points)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F3-020",
+      "feature": "Trust Score Calculation",
+      "requirement": "Timeframe estimates",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F3-021",
+      "feature": "Trust Score Calculation",
+      "requirement": "Progress tracking",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F4-001",
+      "feature": "Credential Management",
+      "requirement": "Verified Human (default after identity verification)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F4-002",
+      "feature": "Credential Management",
+      "requirement": "Age 18+ (from DOB on ID)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F4-003",
+      "feature": "Credential Management",
+      "requirement": "Location (country/state from ID or GPS)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F4-004",
+      "feature": "Credential Management",
+      "requirement": "Government ID (Aadhaar, PAN, etc.)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F4-005",
+      "feature": "Credential Management",
+      "requirement": "Professional (LinkedIn, work email)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F4-006",
+      "feature": "Credential Management",
+      "requirement": "Custom (platform-specific)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F4-007",
+      "feature": "Credential Management",
+      "requirement": "Card-based layout",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F4-008",
+      "feature": "Credential Management",
+      "requirement": "Status indicators (active, expired, pending)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F4-009",
+      "feature": "Credential Management",
+      "requirement": "Usage count",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F4-010",
+      "feature": "Credential Management",
+      "requirement": "Last used timestamp",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F4-011",
+      "feature": "Credential Management",
+      "requirement": "Expiry dates",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F4-012",
+      "feature": "Credential Management",
+      "requirement": "Platform connection requests",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F4-013",
+      "feature": "Credential Management",
+      "requirement": "Granular permission selection",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F4-014",
+      "feature": "Credential Management",
+      "requirement": "Validity period (1 month, 1 year, forever)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F4-015",
+      "feature": "Credential Management",
+      "requirement": "Biometric confirmation before sharing",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F4-016",
+      "feature": "Credential Management",
+      "requirement": "Shareable QR codes (5-minute expiry)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F4-017",
+      "feature": "Credential Management",
+      "requirement": "Revoke individual platform access",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F4-018",
+      "feature": "Credential Management",
+      "requirement": "Revoke all access for credential",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F4-019",
+      "feature": "Credential Management",
+      "requirement": "Delete credential entirely",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F4-020",
+      "feature": "Credential Management",
+      "requirement": "Confirmation prompts",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-001",
+      "feature": "Platform Connections",
+      "requirement": "Platform sends API request with required credentials",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-002",
+      "feature": "Platform Connections",
+      "requirement": "Push notification to user",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-003",
+      "feature": "Platform Connections",
+      "requirement": "In-app approval interface",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-004",
+      "feature": "Platform Connections",
+      "requirement": "Biometric confirmation",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-005",
+      "feature": "Platform Connections",
+      "requirement": "Platform receives webhook with result",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-006",
+      "feature": "Platform Connections",
+      "requirement": "List all active connections",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-007",
+      "feature": "Platform Connections",
+      "requirement": "Last access timestamp",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-008",
+      "feature": "Platform Connections",
+      "requirement": "Data shared with each platform",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-009",
+      "feature": "Platform Connections",
+      "requirement": "Usage history",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-010",
+      "feature": "Platform Connections",
+      "requirement": "Disconnect option",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-011",
+      "feature": "Platform Connections",
+      "requirement": "Queue of unapproved requests",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-012",
+      "feature": "Platform Connections",
+      "requirement": "Approve/deny actions",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-013",
+      "feature": "Platform Connections",
+      "requirement": "Bulk actions (approve all, deny all)",
+      "status": "NOT_STARTED"
+    },
+    {
+      "id": "F5-014",
+      "feature": "Platform Connections",
+      "requirement": "Request expiry (24 hours)",
+      "status": "NOT_STARTED"
+    }
+  ]
+}
