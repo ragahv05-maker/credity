@@ -51,7 +51,8 @@ type ComplianceState = {
 };
 
 const router = Router();
-router.use(authMiddleware);
+// Apply auth ONLY to compliance routes, not all /api/* endpoints.
+router.use(["/v1/compliance", "/compliance"], authMiddleware);
 
 const hasDatabase = typeof process.env.DATABASE_URL === "string" && process.env.DATABASE_URL.length > 0;
 const stateStore = hasDatabase

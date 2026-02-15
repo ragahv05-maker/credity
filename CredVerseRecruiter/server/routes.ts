@@ -4,6 +4,7 @@ import verificationRoutes from "./routes/verification";
 import analyticsRoutes from "./routes/analytics";
 import authRoutes from "./routes/auth";
 import complianceRoutes from "./routes/compliance";
+import claimsProxyRoutes from "./routes/claims-proxy";
 import { blockchainService } from "./services/blockchain-service";
 
 export async function registerRoutes(
@@ -25,6 +26,7 @@ export async function registerRoutes(
   app.use("/api", analyticsRoutes);
   app.use("/api", authRoutes);
   app.use("/api", complianceRoutes);
+  app.use("/api", claimsProxyRoutes);
 
   return httpServer;
 }
