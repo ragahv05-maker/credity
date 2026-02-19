@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/node';
+import { logger } from './logger';
 import { sanitizeContext } from '../middleware/observability';
 
 const SENTRY_DSN = process.env.SENTRY_DSN;
@@ -6,7 +7,7 @@ const APP_NAME = process.env.APP_NAME || 'credverse-wallet';
 
 export function initSentry(appName?: string): void {
     if (!SENTRY_DSN) {
-        console.log('[Sentry] DSN not configured, error monitoring disabled');
+        logger.warn('[Sentry] DSN not configured, error monitoring disabled');
         return;
     }
 
@@ -33,7 +34,7 @@ export function initSentry(appName?: string): void {
         ],
     });
 
-    console.log(`[Sentry] Error monitoring initialized for ${appName || APP_NAME}`);
+    logger.info(`[Sentry] Error monitoring initialized for ${appName || APP_NAME}`);
 }
 
 export function captureException(error: Error, context?: Record<string, unknown>): void {
