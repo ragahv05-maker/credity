@@ -22,7 +22,6 @@ export const apiRateLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     validate: false, // Disable IPv6 key generator validation
-    keyGenerator: (req: Request) => (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.ip || 'unknown',
 });
 
 export const authRateLimiter = rateLimit({
