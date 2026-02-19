@@ -25,7 +25,7 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
   const walletToken = generateWalletAccessToken({ id: 1, username: 'holder', role: 'holder' });
   // Bearer flow uses tenant derived from token userId in issuer auth middleware.
   // Align it with the bootstrap/API-key tenant used by seeded templates.
-  const issuerBearerToken = generateIssuerAccessToken({ id: 'operator', username: 'issuer-e2e', role: 'issuer' });
+  const issuerBearerToken = generateIssuerAccessToken({ id: 'issuer-1', username: 'issuer-e2e', role: 'issuer' });
 
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
