@@ -140,7 +140,7 @@ async function queuePersist(): Promise<void> {
  */
 export async function initQueueService(): Promise<boolean> {
     await ensureHydrated();
-    const requireQueue = process.env.NODE_ENV === 'production' || process.env.REQUIRE_QUEUE === 'true';
+    const requireQueue = process.env.REQUIRE_QUEUE === 'true';
 
     // Skip Redis if not configured
     if (!REDIS_URL) {

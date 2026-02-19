@@ -222,7 +222,7 @@ export default function Dashboard() {
                   <span className="text-sm font-medium capitalize">Filtering: {categoryFilter}</span>
                 </div>
                 <Link href="/">
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 rounded-full hover:bg-primary/20">
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 rounded-full hover:bg-primary/20" aria-label="Clear filter">
                     <X className="w-3 h-3" />
                   </Button>
                 </Link>

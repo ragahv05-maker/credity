@@ -146,22 +146,30 @@ router.post('/auth/login', async (req, res) => {
             role: user.role as AuthUser['role'],
         };
 
-        const accessToken = generateAccessToken(authUser);
-        const refreshToken = generateRefreshToken(authUser);
+        // Establish session
+        req.login({ ...authUser, userId: authUser.id }, (err) => {
+            if (err) {
+                console.error("Login session error:", err);
+                return res.status(500).json({ error: 'Session login failed' });
+            }
 
-        res.json({
-            success: true,
-            requires2FA: false,
-            user: {
-                id: user.id,
-                username: user.username,
-                role: user.role,
-            },
-            tokens: {
-                accessToken,
-                refreshToken,
-                expiresIn: 900,
-            },
+            const accessToken = generateAccessToken(authUser);
+            const refreshToken = generateRefreshToken(authUser);
+
+            res.json({
+                success: true,
+                requires2FA: false,
+                user: {
+                    id: user.id,
+                    username: user.username,
+                    role: user.role,
+                },
+                tokens: {
+                    accessToken,
+                    refreshToken,
+                    expiresIn: 900,
+                },
+            });
         });
     } catch (error: any) {
         console.error('[Auth] Login error:', error);
@@ -218,7 +226,12 @@ router.post('/auth/logout', authMiddleware as any, (req, res) => {
             invalidateAccessToken(accessToken);
         }
 
-        res.json({ success: true });
+        req.logout((err) => {
+            if (err) {
+                console.error("Logout session error:", err);
+            }
+            res.json({ success: true });
+        });
     } catch (error) {
         res.status(500).json({ error: 'Logout failed' });
     }

@@ -38,6 +38,12 @@
       ],
       "@shared/*": [
         "./shared/*"
+      ],
+      "@credverse/shared-auth": [
+        "../packages/shared-auth/src/index.ts"
+      ],
+      "@credverse/trust": [
+        "../packages/trust-sdk/src/index.ts"
       ]
     }
   }
