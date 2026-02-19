@@ -8,6 +8,7 @@ import {
     deriveSafeDateInputs,
     listReputationEvents,
     ReputationCategory,
+    ReputationCategoryBreakdown,
     ReputationEventInput,
     ReputationEventRecord,
     upsertReputationEvent,
@@ -117,7 +118,7 @@ async function buildCandidateVerificationSummary(userId: number): Promise<Candid
             score: reputationScore.score,
             max_score: 1000,
             computed_at: reputationScore.computed_at,
-            breakdown: reputationScore.category_breakdown.map((entry) => ({
+            breakdown: reputationScore.category_breakdown.map((entry: ReputationCategoryBreakdown) => ({
                 ...entry,
                 weight: normalizeBreakdownWeight(entry.weight),
             })),
