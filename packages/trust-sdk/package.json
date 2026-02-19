@@ -1,22 +1,25 @@
 {
   "name": "@credverse/trust",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "SDK-first Trust API client for Credity Reputation Rail verticals",
   "type": "module",
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
+      "require": "./dist/index.js",
       "default": "./dist/index.js"
     }
   },
   "scripts": {
     "build": "tsc",
+    "prepare": "npm run build",
     "lint": "eslint .",
-    "test": "npm run build && node --test ./tests/*.test.mjs"
+    "test": "npm run build && node --test ./tests/*.test.mjs",
+    "prepare": "npm run build"
   },
   "dependencies": {
     "@credverse/shared-auth": "file:../shared-auth"

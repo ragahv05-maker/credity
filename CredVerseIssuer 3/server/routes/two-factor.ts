@@ -147,21 +147,29 @@ router.post('/2fa/verify', async (req, res) => {
             role: user.role as 'admin' | 'issuer' | 'user',
         };
 
-        const accessToken = generateAccessToken(authUser);
-        const refreshToken = generateRefreshToken(authUser);
+        // Establish session
+        req.login({ ...authUser, userId: authUser.id }, (err) => {
+            if (err) {
+                console.error("2FA Login session error:", err);
+                return res.status(500).json({ error: 'Session login failed' });
+            }
 
-        res.json({
-            success: true,
-            user: {
-                id: user.id,
-                username: user.username,
-                role: user.role,
-            },
-            tokens: {
-                accessToken,
-                refreshToken,
-                expiresIn: 900,
-            },
+            const accessToken = generateAccessToken(authUser);
+            const refreshToken = generateRefreshToken(authUser);
+
+            res.json({
+                success: true,
+                user: {
+                    id: user.id,
+                    username: user.username,
+                    role: user.role,
+                },
+                tokens: {
+                    accessToken,
+                    refreshToken,
+                    expiresIn: 900,
+                },
+            });
         });
     } catch (error) {
         console.error('[2FA] Verify error:', error);
