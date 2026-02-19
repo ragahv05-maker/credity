@@ -4,6 +4,7 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
+    "preinstall": "cd ../packages/shared-auth && npm install --no-audit && npm run build && cd ../trust-sdk && npm install --no-audit && npm run build",
     "dev:client": "vite dev --port 5000",
     "dev": "NODE_ENV=development tsx server/index.ts",
     "build": "tsx script/build.ts",
@@ -138,5 +139,8 @@
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
+  },
+  "overrides": {
+    "minimatch": "^10.0.0"
   }
 }

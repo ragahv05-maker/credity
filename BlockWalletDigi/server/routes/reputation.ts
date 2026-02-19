@@ -107,6 +107,8 @@ async function buildCandidateVerificationSummary(userId: number): Promise<Candid
             ? normalizedReasonCodes
             : ['MANUAL_REVIEW_REQUIRED'];
 
+    type CategoryBreakdownEntry = ReputationScoreContract['category_breakdown'][number];
+
     return {
         candidate_id: `candidate_wallet_user_${userId}`,
         decision: mapVerificationDecision(reputationScore.score, safeDate.score, safeDate.reason_codes),
@@ -117,7 +119,7 @@ async function buildCandidateVerificationSummary(userId: number): Promise<Candid
             score: reputationScore.score,
             max_score: 1000,
             computed_at: reputationScore.computed_at,
-            breakdown: reputationScore.category_breakdown.map((entry) => ({
+            breakdown: reputationScore.category_breakdown.map((entry: CategoryBreakdownEntry) => ({
                 ...entry,
                 weight: normalizeBreakdownWeight(entry.weight),
             })),
