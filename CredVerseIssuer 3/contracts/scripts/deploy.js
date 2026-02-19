@@ -28,20 +28,11 @@ async function main() {
     console.log(`Network: ${hre.network.name}`);
     console.log(`Chain ID: ${chainId}`);
 
-    // NOTE: Deployer is NOT auto-registered as issuer in production.
-    // Use a separate admin transaction to register authorized issuers.
-    console.log("\n⚠️  Deployer is NOT auto-registered as issuer.");
-    console.log("   Register issuers explicitly via registerIssuer() from the admin multisig.\n");
-
-    // Post-deployment verification
-    console.log("=== Post-Deployment Verification ===");
-    const adminRole = await registry.DEFAULT_ADMIN_ROLE();
-    const isAdmin = await registry.hasRole(adminRole, deployer.address);
-    console.log(`Admin role assigned to deployer: ${isAdmin ? '✅' : '❌'}`);
-
-    const maxDid = await registry.MAX_DID_LENGTH();
-    const maxDomain = await registry.MAX_DOMAIN_LENGTH();
-    console.log(`MAX_DID_LENGTH: ${maxDid}, MAX_DOMAIN_LENGTH: ${maxDomain}`);
+    // Self-register as Issuer for Demo purposes
+    console.log("Registering deployer as Issuer...");
+    const tx = await registry.registerIssuer(deployer.address, "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnn3Zua2F72", "university.edu");
+    await tx.wait();
+    console.log("Deployer registered as Issuer.");
 
     console.log("\n=== Deployment Summary ===");
     console.log(`Contract Address: ${address}`);

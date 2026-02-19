@@ -15,12 +15,6 @@ if (!status) {
 const changedFiles = status
   .split('\n')
   .map((line) => line.slice(3).trim())
-  .map((file) => {
-    if (file.startsWith('"') && file.endsWith('"')) {
-      return file.slice(1, -1).replace(/\\"/g, '"');
-    }
-    return file;
-  })
   .filter(Boolean);
 
 const codeFilePattern = /^(BlockWalletDigi|CredVerseRecruiter|CredVerseIssuer 3|packages\/trust-sdk)\/(server|src|client|shared)\//;

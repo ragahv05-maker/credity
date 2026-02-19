@@ -1,5 +1,4 @@
 import crypto from 'crypto';
-import { logger } from './logger';
 
 /**
  * Credential Push Service
@@ -98,7 +97,7 @@ export async function pushCredentialToWallet(
         });
     }
 
-    logger.info(`[Push] Credential ${offerId} pushed to ${recipientDid}`);
+    console.log(`[Push] Credential ${offerId} pushed to ${recipientDid}`);
 
     return { offerId, status: 'pending' };
 }
@@ -157,7 +156,7 @@ export function acceptCredentialOffer(offerId: string, walletDid: string): {
     offer.status = 'accepted';
     offer.acceptedAt = new Date();
 
-    logger.info(`[Push] Offer ${offerId} accepted by ${walletDid}`);
+    console.log(`[Push] Offer ${offerId} accepted by ${walletDid}`);
 
     return {
         success: true,
@@ -177,7 +176,7 @@ export function rejectCredentialOffer(offerId: string, walletDid: string): boole
 
     if (offer.status === 'pending') {
         offer.status = 'rejected';
-        logger.info(`[Push] Offer ${offerId} rejected by ${walletDid}`);
+        console.log(`[Push] Offer ${offerId} rejected by ${walletDid}`);
         return true;
     }
 
@@ -207,7 +206,7 @@ export function registerWebhook(
         events,
     });
 
-    logger.info(`[Push] Webhook registered for ${walletDid}`);
+    console.log(`[Push] Webhook registered for ${walletDid}`);
 
     return secret;
 }
@@ -246,9 +245,9 @@ async function sendWebhookNotification(
             },
             body,
         });
-        logger.info(`[Push] Webhook sent to ${config.url} for event ${event}`);
+        console.log(`[Push] Webhook sent to ${config.url} for event ${event}`);
     } catch (error) {
-        logger.error(error, `[Push] Webhook failed:`);
+        console.error(`[Push] Webhook failed:`, error);
     }
 }
 
@@ -259,7 +258,7 @@ export function cleanupExpiredOffers(): number {
     const now = new Date();
     let cleaned = 0;
 
-    pendingCredentials.forEach((offer) => {
+    pendingCredentials.forEach((offer, id) => {
         if (offer.status === 'pending' && offer.expiresAt < now) {
             offer.status = 'expired';
             cleaned++;
@@ -273,6 +272,6 @@ export function cleanupExpiredOffers(): number {
 setInterval(() => {
     const cleaned = cleanupExpiredOffers();
     if (cleaned > 0) {
-        logger.info(`[Push] Cleaned up ${cleaned} expired offers`);
+        console.log(`[Push] Cleaned up ${cleaned} expired offers`);
     }
 }, 60 * 60 * 1000);

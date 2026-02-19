@@ -182,15 +182,23 @@ export function setupPassport(app: Express) {
   });
 }
 
+/**
+ * Middleware to enforce authentication.
+ * Supports multiple authentication mechanisms:
+ * 1. Passport Session (req.isAuthenticated())
+ * 2. API Key (req.tenantId set by middleware)
+ * 3. JWT Token (req.user set by middleware)
+ */
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
+    // Check for active Passport session
     if (req.isAuthenticated()) {
         return next();
     }
 
-    // For now, we'll assume if tenantId is present (via API key), it's "authenticated" for API access
-    // Or if it's a browser session, we'd check req.session
+    // Check if API Key or Token middleware has already authenticated the request
     if ((req as any).tenantId || (req as any).user) {
         return next();
     }
+
     res.status(401).json({ message: "Unauthorized", code: "AUTH_UNAUTHORIZED" });
 }

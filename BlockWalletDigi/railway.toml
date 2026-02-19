@@ -1,10 +1,10 @@
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
+dockerfilePath = "BlockWalletDigi/Dockerfile"
 
 [deploy]
 startCommand = "npm run start"
 healthcheckPath = "/api/health"
-healthcheckTimeout = 180
+healthcheckTimeout = 100
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3

@@ -184,11 +184,14 @@ router.post("/digilocker/import-all", authMiddleware, async (req, res) => {
         const imported: string[] = [];
         const failed: string[] = [];
 
+        const credentialsToStore: any[] = [];
+        const successDocs: string[] = [];
+
         for (const doc of documents) {
             try {
                 const { document } = await digilockerService.pullDocument(userId, doc.uri);
 
-                await walletService.storeCredential(userId, {
+                credentialsToStore.push({
                     type: ['VerifiableCredential', doc.doctype, 'DigiLockerDocument'],
                     issuer: doc.issuer,
                     issuanceDate: new Date(doc.date),
@@ -202,11 +205,15 @@ router.post("/digilocker/import-all", authMiddleware, async (req, res) => {
                     },
                     category: doc.doctype.includes('CLASS') ? 'academic' : 'government',
                 });
-
-                imported.push(doc.name);
+                successDocs.push(doc.name);
             } catch (e) {
                 failed.push(doc.name);
             }
+        }
+
+        if (credentialsToStore.length > 0) {
+            await walletService.storeCredentials(userId, credentialsToStore);
+            imported.push(...successDocs);
         }
 
         await storage.createActivity({
@@ -271,21 +278,31 @@ router.post("/digilocker/connect", authMiddleware, async (req, res) => {
             // Import demo documents
             const documents = await digilockerService.listDocuments(userId);
 
-            for (const doc of documents.slice(0, 3)) { // Import first 3
-                const { document } = await digilockerService.pullDocument(userId, doc.uri);
+            const credentialsToStore: any[] = [];
 
-                await walletService.storeCredential(userId, {
-                    type: ['VerifiableCredential', doc.doctype, 'DigiLockerDocument'],
-                    issuer: doc.issuer,
-                    issuanceDate: new Date(doc.date),
-                    data: {
-                        name: doc.name,
-                        source: 'DigiLocker',
-                        uri: doc.uri,
-                        ...document,
-                    },
-                    category: doc.doctype.includes('CLASS') ? 'academic' : 'government',
-                });
+            for (const doc of documents.slice(0, 3)) { // Import first 3
+                try {
+                    const { document } = await digilockerService.pullDocument(userId, doc.uri);
+
+                    credentialsToStore.push({
+                        type: ['VerifiableCredential', doc.doctype, 'DigiLockerDocument'],
+                        issuer: doc.issuer,
+                        issuanceDate: new Date(doc.date),
+                        data: {
+                            name: doc.name,
+                            source: 'DigiLocker',
+                            uri: doc.uri,
+                            ...document,
+                        },
+                        category: doc.doctype.includes('CLASS') ? 'academic' : 'government',
+                    });
+                } catch (e) {
+                    console.error('[DigiLocker] Demo import error:', e);
+                }
+            }
+
+            if (credentialsToStore.length > 0) {
+                await walletService.storeCredentials(userId, credentialsToStore);
             }
 
             await storage.createActivity({

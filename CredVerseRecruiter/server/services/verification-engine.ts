@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { blockchainService } from './blockchain-service';
 import { PostgresStateStore } from '@credverse/shared-auth';
 import { deterministicHash, deterministicHashLegacyTopLevel, parseCanonicalization, parseProofAlgorithm } from './proof-lifecycle';
@@ -177,10 +178,7 @@ export class VerificationEngine {
     /**
      * Verify a single credential
      */
-    async verifyCredential(
-        payload: CredentialPayload,
-        options: { skipPersist?: boolean } = {},
-    ): Promise<VerificationResult> {
+    async verifyCredential(payload: CredentialPayload): Promise<VerificationResult> {
         await ensureHydrated();
         const verificationId = `verify-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         const checks: VerificationCheck[] = [];
@@ -288,9 +286,7 @@ export class VerificationEngine {
 
             // Cache result
             verificationCache.set(verificationId, result);
-            if (!options.skipPersist) {
-                await queuePersist();
-            }
+            await queuePersist();
 
             return result;
         } catch (error) {
@@ -312,7 +308,7 @@ export class VerificationEngine {
         let suspicious = 0;
 
         for (const cred of credentials) {
-            const result = await this.verifyCredential(cred, { skipPersist: true });
+            const result = await this.verifyCredential(cred);
             results.push(result);
 
             if (result.status === 'verified') verified++;

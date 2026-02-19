@@ -1,4 +1,3 @@
-/* global Response */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { CredVerse } from '../dist/index.js';
