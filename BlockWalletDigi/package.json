@@ -4,6 +4,7 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
+    "preinstall": "npm install --prefix ../packages/shared-auth && npm install --prefix ../packages/trust-sdk",
     "dev:client": "vite dev --port 5000",
     "dev": "NODE_ENV=development tsx server/index.ts",
     "build:deps": "cd ../packages/shared-auth && npm install && npm run build && cd ../trust-sdk && npm install && npm run build",
