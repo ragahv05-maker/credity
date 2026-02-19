@@ -13,8 +13,6 @@ export default defineConfig({
     alias: {
       '@': path.resolve(import.meta.dirname, 'client', 'src'),
       '@shared': path.resolve(import.meta.dirname, 'shared'),
-      '@credverse/shared-auth': path.resolve(import.meta.dirname, '../packages/shared-auth/dist/index.js'),
-      '@credverse/trust': path.resolve(import.meta.dirname, '../packages/trust-sdk/dist/index.js'),
     },
   },
 });

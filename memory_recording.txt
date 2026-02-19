@@ -1,1 +1,0 @@
-Refactored api-client.ts by splitting it into domain-specific modules in apps/mobile/src/lib/api/. Maintained backward compatibility by re-exporting from api-client.ts. Verified with existing tests.

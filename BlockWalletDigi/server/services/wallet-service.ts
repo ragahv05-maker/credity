@@ -1,34 +1,315 @@
 import crypto from 'crypto';
-import { walletStorageService } from './wallet/storage';
-import { walletEncryptionService } from './wallet/encryption';
-import { walletSharingService } from './wallet/sharing';
-import {
-    WalletState,
-    StoredCredential,
-    ShareRecord,
-    ConsentLog,
-    ConsentGrantRecord,
-    DataRequestRecord,
-    CertInIncidentRecord,
-    WalletNotification,
-    MediaFile,
-    AccessLog
-} from './wallet/types';
-
-// Re-export types for backward compatibility
-export * from './wallet/types';
+import { PostgresStateStore } from '@credverse/shared-auth';
 
 /**
  * Wallet Service - Complete credential wallet management
  * Handles credential storage, encryption, sharing, and synchronization
  */
+
+export interface WalletState {
+    userId: number;
+    did: string;
+    credentials: StoredCredential[];
+    shares: ShareRecord[];
+    consentLogs: ConsentLog[];
+    consentGrants: ConsentGrantRecord[];
+    dataRequests: DataRequestRecord[];
+    notifications: WalletNotification[];
+    backupKey?: string;
+    lastSync: Date;
+}
+
+export interface StoredCredential {
+    id: string;
+    type: string[];
+    issuer: string;
+    issuanceDate: Date;
+    expirationDate?: Date;
+    data: any;
+    jwt?: string;
+    encryptedData: string;
+    hash: string;
+    anchorStatus: 'pending' | 'anchored' | 'revoked';
+    anchorTxHash?: string;
+    blockNumber?: number;
+    category: 'academic' | 'employment' | 'government' | 'medical' | 'kyc' | 'skill' | 'other';
+    mediaFiles?: MediaFile[];
+    lastVerified?: Date;
+    verificationCount: number;
+}
+
+export interface MediaFile {
+    id: string;
+    name: string;
+    type: string;
+    ipfsHash?: string;
+    encryptedUrl: string;
+    size: number;
+}
+
+export interface ShareRecord {
+    id: string;
+    credentialId: string;
+    shareType: 'qr' | 'link' | 'email' | 'whatsapp' | 'ats' | 'recruiter';
+    recipientInfo?: string;
+    disclosedFields: string[];
+    token: string;
+    expiry: Date;
+    createdAt: Date;
+    accessLog: AccessLog[];
+    revoked: boolean;
+}
+
+export interface AccessLog {
+    timestamp: Date;
+    ip: string;
+    userAgent: string;
+    location?: string;
+    organization?: string;
+    verified: boolean;
+}
+
+export interface ConsentLog {
+    id: string;
+    credentialId: string;
+    action: 'share' | 'verify' | 'revoke';
+    disclosedFields: string[];
+    recipientDid?: string;
+    recipientName?: string;
+    purpose: string;
+    timestamp: Date;
+    ipAddress?: string;
+}
+
+export interface ConsentGrantRecord {
+    id: string;
+    subject_id: string;
+    verifier_id: string;
+    purpose: string;
+    data_elements: string[];
+    expiry: string;
+    revocation_ts: string | null;
+    consent_proof: Record<string, unknown>;
+    created_at: string;
+}
+
+export interface DataRequestRecord {
+    id: string;
+    user_id: number;
+    request_type: 'export' | 'delete';
+    status: 'accepted' | 'processing' | 'completed';
+    created_at: string;
+    completed_at: string | null;
+    reason?: string;
+    result?: Record<string, unknown>;
+}
+
+export interface CertInIncidentRecord {
+    id: string;
+    category: string;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    detected_at: string;
+    report_due_at: string;
+    status: 'open' | 'reported' | 'closed';
+    report_reference?: string;
+    metadata: Record<string, unknown>;
+    log_retention_days: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface WalletNotification {
+    id: string;
+    type: 'verification' | 'share_access' | 'credential_received' | 'credential_revoked' | 'sync' | 'security';
+    title: string;
+    message: string;
+    timestamp: Date;
+    read: boolean;
+    data?: any;
+}
+
+type PersistedStoredCredential = Omit<StoredCredential, 'issuanceDate' | 'expirationDate' | 'lastVerified'> & {
+    issuanceDate: string;
+    expirationDate?: string;
+    lastVerified?: string;
+};
+
+type PersistedShareRecord = Omit<ShareRecord, 'expiry' | 'createdAt' | 'accessLog'> & {
+    expiry: string;
+    createdAt: string;
+    accessLog: Array<Omit<AccessLog, 'timestamp'> & { timestamp: string }>;
+};
+
+type PersistedConsentLog = Omit<ConsentLog, 'timestamp'> & { timestamp: string };
+type PersistedNotification = Omit<WalletNotification, 'timestamp'> & { timestamp: string };
+
+type PersistedWalletState = Omit<WalletState, 'lastSync' | 'credentials' | 'shares' | 'consentLogs' | 'notifications'> & {
+    lastSync: string;
+    credentials: PersistedStoredCredential[];
+    shares: PersistedShareRecord[];
+    consentLogs: PersistedConsentLog[];
+    notifications: PersistedNotification[];
+};
+
+type WalletServiceState = {
+    wallets: Array<[number, PersistedWalletState]>;
+    certInIncidents: Array<[string, CertInIncidentRecord]>;
+};
+
+const wallets = new Map<number, WalletState>();
+const certInIncidents = new Map<string, CertInIncidentRecord>();
+const hasDatabase = typeof process.env.DATABASE_URL === 'string' && process.env.DATABASE_URL.length > 0;
+const stateStore = hasDatabase
+    ? new PostgresStateStore<WalletServiceState>({
+        databaseUrl: process.env.DATABASE_URL as string,
+        serviceKey: 'wallet-runtime-state',
+    })
+    : null;
+
+let hydrated = false;
+let hydrationPromise: Promise<void> | null = null;
+let persistChain = Promise.resolve();
+
+function serializeWalletState(wallet: WalletState): PersistedWalletState {
+    return {
+        ...wallet,
+        lastSync: wallet.lastSync.toISOString(),
+        credentials: wallet.credentials.map((credential) => ({
+            ...credential,
+            issuanceDate: credential.issuanceDate.toISOString(),
+            expirationDate: credential.expirationDate?.toISOString(),
+            lastVerified: credential.lastVerified?.toISOString(),
+        })),
+        shares: wallet.shares.map((share) => ({
+            ...share,
+            expiry: share.expiry.toISOString(),
+            createdAt: share.createdAt.toISOString(),
+            accessLog: share.accessLog.map((entry) => ({
+                ...entry,
+                timestamp: entry.timestamp.toISOString(),
+            })),
+        })),
+        consentLogs: wallet.consentLogs.map((entry) => ({
+            ...entry,
+            timestamp: entry.timestamp.toISOString(),
+        })),
+        notifications: wallet.notifications.map((entry) => ({
+            ...entry,
+            timestamp: entry.timestamp.toISOString(),
+        })),
+    };
+}
+
+function deserializeWalletState(wallet: PersistedWalletState): WalletState {
+    return {
+        ...wallet,
+        lastSync: new Date(wallet.lastSync),
+        credentials: wallet.credentials.map((credential) => ({
+            ...credential,
+            issuanceDate: new Date(credential.issuanceDate),
+            expirationDate: credential.expirationDate ? new Date(credential.expirationDate) : undefined,
+            lastVerified: credential.lastVerified ? new Date(credential.lastVerified) : undefined,
+        })),
+        shares: wallet.shares.map((share) => ({
+            ...share,
+            expiry: new Date(share.expiry),
+            createdAt: new Date(share.createdAt),
+            accessLog: share.accessLog.map((entry) => ({
+                ...entry,
+                timestamp: new Date(entry.timestamp),
+            })),
+        })),
+        consentLogs: wallet.consentLogs.map((entry) => ({
+            ...entry,
+            timestamp: new Date(entry.timestamp),
+        })),
+        notifications: wallet.notifications.map((entry) => ({
+            ...entry,
+            timestamp: new Date(entry.timestamp),
+        })),
+    };
+}
+
+async function ensureHydrated(): Promise<void> {
+    if (!stateStore || hydrated) return;
+    if (!hydrationPromise) {
+        hydrationPromise = (async () => {
+            const loaded = await stateStore.load();
+            wallets.clear();
+            certInIncidents.clear();
+
+            if (loaded) {
+                for (const [userId, persistedWallet] of loaded.wallets || []) {
+                    wallets.set(Number(userId), deserializeWalletState(persistedWallet));
+                }
+                for (const [incidentId, incident] of loaded.certInIncidents || []) {
+                    certInIncidents.set(incidentId, incident);
+                }
+            } else {
+                await stateStore.save({
+                    wallets: [],
+                    certInIncidents: [],
+                });
+            }
+            hydrated = true;
+        })();
+    }
+    await hydrationPromise;
+}
+
+async function queuePersist(): Promise<void> {
+    if (!stateStore) return;
+    persistChain = persistChain
+        .then(async () => {
+            const payload: WalletServiceState = {
+                wallets: Array.from(wallets.entries()).map(([userId, wallet]) => [
+                    userId,
+                    serializeWalletState(wallet),
+                ]),
+                certInIncidents: Array.from(certInIncidents.entries()),
+            };
+            await stateStore.save(payload);
+        })
+        .catch((error) => {
+            console.error('[Wallet Service] Persist failed:', error);
+        });
+    await persistChain;
+}
+
+/**
+ * Complete Wallet Service
+ */
 export class WalletService {
+    private encryptionKey: string;
+
+    constructor() {
+        this.encryptionKey = process.env.WALLET_ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex');
+    }
 
     /**
      * Initialize or get wallet for user
      */
     async getOrCreateWallet(userId: number, did?: string): Promise<WalletState> {
-        return walletStorageService.getOrCreateWallet(userId, did);
+        await ensureHydrated();
+        let wallet = wallets.get(userId);
+
+        if (!wallet) {
+            wallet = {
+                userId,
+                did: did || '',
+                credentials: [],
+                shares: [],
+                consentLogs: [],
+                consentGrants: [],
+                dataRequests: [],
+                notifications: [],
+                lastSync: new Date(),
+            };
+            wallets.set(userId, wallet);
+            await queuePersist();
+        }
+
+        return wallet;
     }
 
     /**
@@ -49,8 +330,8 @@ export class WalletService {
         const wallet = await this.getOrCreateWallet(userId);
 
         // Encrypt sensitive data
-        const encryptedData = walletEncryptionService.encrypt(JSON.stringify(credential.data));
-        const hash = walletEncryptionService.hashCredential(credential.data);
+        const encryptedData = this.encrypt(JSON.stringify(credential.data));
+        const hash = this.hashCredential(credential.data);
 
         const storedCredential: StoredCredential = {
             id: `cred-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -70,7 +351,7 @@ export class WalletService {
         wallet.credentials.push(storedCredential);
 
         // Add notification
-        await this.addNotification(userId, {
+        this.addNotification(userId, {
             type: 'credential_received',
             title: 'New Credential Received',
             message: `${credential.issuer} issued you a new ${credential.type[0] || 'credential'}`,
@@ -79,7 +360,7 @@ export class WalletService {
 
         // Simulate blockchain anchoring
         setTimeout(() => this.simulateAnchor(userId, storedCredential.id), 2000);
-        await walletStorageService.queuePersist();
+        await queuePersist();
 
         return storedCredential;
     }
@@ -98,7 +379,44 @@ export class WalletService {
             purpose?: string;
         }
     ): Promise<ShareRecord> {
-        return walletSharingService.createShare(userId, credentialId, options);
+        const wallet = await this.getOrCreateWallet(userId);
+        const credential = wallet.credentials.find(c => c.id === credentialId);
+
+        if (!credential) {
+            throw new Error('Credential not found');
+        }
+
+        const token = this.generateShareToken();
+        const expiry = new Date(Date.now() + options.expiryMinutes * 60 * 1000);
+
+        const share: ShareRecord = {
+            id: `share-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            credentialId,
+            shareType: options.shareType,
+            recipientInfo: options.recipientInfo,
+            disclosedFields: options.disclosedFields,
+            token,
+            expiry,
+            createdAt: new Date(),
+            accessLog: [],
+            revoked: false,
+        };
+
+        wallet.shares.push(share);
+
+        // Log consent
+        wallet.consentLogs.push({
+            id: `consent-${Date.now()}`,
+            credentialId,
+            action: 'share',
+            disclosedFields: options.disclosedFields,
+            recipientName: options.recipientInfo,
+            purpose: options.purpose || 'general',
+            timestamp: new Date(),
+        });
+        await queuePersist();
+
+        return share;
     }
 
     /**
@@ -108,14 +426,90 @@ export class WalletService {
         shareId: string,
         accessInfo: { ip: string; userAgent: string; location?: string; organization?: string }
     ): Promise<{ valid: boolean; credential?: Partial<StoredCredential>; error?: string }> {
-        return walletSharingService.accessShare(shareId, accessInfo);
+        await ensureHydrated();
+        // Find share across all wallets
+        for (const [userId, wallet] of Array.from(wallets.entries())) {
+            const share = wallet.shares.find((s: ShareRecord) => s.id === shareId || s.token === shareId);
+
+            if (share) {
+                if (share.revoked) {
+                    return { valid: false, error: 'Share has been revoked' };
+                }
+
+                if (new Date() > share.expiry) {
+                    return { valid: false, error: 'Share has expired' };
+                }
+
+                // Log access
+                share.accessLog.push({
+                    timestamp: new Date(),
+                    ip: accessInfo.ip,
+                    userAgent: accessInfo.userAgent,
+                    location: accessInfo.location,
+                    organization: accessInfo.organization,
+                    verified: true,
+                });
+
+                // Get credential with selective disclosure
+                const credential = wallet.credentials.find((c: StoredCredential) => c.id === share.credentialId);
+                if (!credential) {
+                    return { valid: false, error: 'Credential not found' };
+                }
+
+                // Apply selective disclosure
+                const disclosedData = this.applySelectiveDisclosure(credential.data, share.disclosedFields);
+
+                // Notify wallet owner
+                this.addNotification(userId, {
+                    type: 'share_access',
+                    title: 'Credential Accessed',
+                    message: `Your ${credential.type[0]} was verified${accessInfo.organization ? ` by ${accessInfo.organization}` : ''}`,
+                    data: { shareId, accessInfo },
+                });
+                await queuePersist();
+
+                return {
+                    valid: true,
+                    credential: {
+                        id: credential.id,
+                        type: credential.type,
+                        issuer: credential.issuer,
+                        issuanceDate: credential.issuanceDate,
+                        data: disclosedData,
+                        anchorStatus: credential.anchorStatus,
+                        hash: credential.hash,
+                    },
+                };
+            }
+        }
+
+        return { valid: false, error: 'Share not found' };
     }
 
     /**
      * Revoke a share
      */
     async revokeShare(userId: number, shareId: string): Promise<boolean> {
-        return walletSharingService.revokeShare(userId, shareId);
+        const wallet = await this.getOrCreateWallet(userId);
+        const share = wallet.shares.find(s => s.id === shareId);
+
+        if (share) {
+            share.revoked = true;
+
+            wallet.consentLogs.push({
+                id: `consent-${Date.now()}`,
+                credentialId: share.credentialId,
+                action: 'revoke',
+                disclosedFields: share.disclosedFields,
+                purpose: 'share_revoked',
+                timestamp: new Date(),
+            });
+            await queuePersist();
+
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -183,7 +577,7 @@ export class WalletService {
         };
 
         wallet.consentGrants.unshift(grant);
-        await walletStorageService.queuePersist();
+        await queuePersist();
         return grant;
     }
 
@@ -201,7 +595,7 @@ export class WalletService {
 
         if (!consent.revocation_ts) {
             consent.revocation_ts = new Date().toISOString();
-            await walletStorageService.queuePersist();
+            await queuePersist();
         }
         return consent;
     }
@@ -247,7 +641,7 @@ export class WalletService {
             record.status = 'completed';
             record.completed_at = new Date().toISOString();
         }
-        await walletStorageService.queuePersist();
+        await queuePersist();
 
         return record;
     }
@@ -263,7 +657,7 @@ export class WalletService {
         detectedAt?: string;
         metadata?: Record<string, unknown>;
     }): Promise<CertInIncidentRecord> {
-        await walletStorageService.ensureHydrated();
+        await ensureHydrated();
         const detectedAt = input.detectedAt || new Date().toISOString();
         const detectedDate = new Date(detectedAt);
         const reportDueAt = new Date(detectedDate.getTime() + 6 * 60 * 60 * 1000).toISOString();
@@ -282,14 +676,15 @@ export class WalletService {
             updated_at: now,
         };
 
-        await walletStorageService.createCertInIncident(incident);
+        certInIncidents.set(incident.id, incident);
+        await queuePersist();
         return incident;
     }
 
     async listCertInIncidents(): Promise<Array<CertInIncidentRecord & { seconds_to_report_due: number }>> {
-        const incidents = await walletStorageService.listCertInIncidents();
+        await ensureHydrated();
         const now = Date.now();
-        return incidents.map((incident) => ({
+        return Array.from(certInIncidents.values()).map((incident) => ({
             ...incident,
             seconds_to_report_due: Math.max(0, Math.floor((new Date(incident.report_due_at).getTime() - now) / 1000)),
         }));
@@ -311,7 +706,7 @@ export class WalletService {
         const notification = wallet.notifications.find(n => n.id === notificationId);
         if (notification) {
             notification.read = true;
-            await walletStorageService.queuePersist();
+            await queuePersist();
         }
     }
 
@@ -322,7 +717,7 @@ export class WalletService {
         const wallet = await this.getOrCreateWallet(userId);
         const backupKey = crypto.randomBytes(32).toString('hex');
 
-        const backupData = walletEncryptionService.encrypt(JSON.stringify({
+        const backupData = this.encrypt(JSON.stringify({
             userId: wallet.userId,
             did: wallet.did,
             credentials: wallet.credentials.map(c => ({
@@ -332,8 +727,8 @@ export class WalletService {
             exportedAt: new Date().toISOString(),
         }), backupKey);
 
-        wallet.backupKey = walletEncryptionService.hashCredential(backupKey); // Store hash only
-        await walletStorageService.queuePersist();
+        wallet.backupKey = this.hashCredential(backupKey); // Store hash only
+        await queuePersist();
 
         return { backupData, backupKey };
     }
@@ -342,7 +737,7 @@ export class WalletService {
      * Restore from backup
      */
     async restoreFromBackup(backupData: string, backupKey: string): Promise<WalletState> {
-        const decrypted = walletEncryptionService.decrypt(backupData, backupKey);
+        const decrypted = this.decrypt(backupData, backupKey);
         const data = JSON.parse(decrypted);
 
         const wallet = await this.getOrCreateWallet(data.userId, data.did);
@@ -352,7 +747,7 @@ export class WalletService {
                 wallet.credentials.push(cred);
             }
         }
-        await walletStorageService.queuePersist();
+        await queuePersist();
 
         return wallet;
     }
@@ -390,8 +785,67 @@ export class WalletService {
 
     // ============== Private Helpers ==============
 
-    private async addNotification(userId: number, notification: Omit<WalletNotification, 'id' | 'timestamp' | 'read'>) {
-        const wallet = await walletStorageService.getOrCreateWallet(userId);
+    private encrypt(plaintext: string, key?: string): string {
+        const useKey = key || this.encryptionKey;
+        const keyBuffer = Buffer.from(useKey.slice(0, 64), 'hex');
+        const iv = crypto.randomBytes(16);
+        const cipher = crypto.createCipheriv('aes-256-gcm', keyBuffer, iv);
+        let encrypted = cipher.update(plaintext, 'utf8', 'hex');
+        encrypted += cipher.final('hex');
+        const authTag = cipher.getAuthTag();
+        return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
+    }
+
+    private decrypt(encrypted: string, key?: string): string {
+        const useKey = key || this.encryptionKey;
+        const [ivHex, authTagHex, ciphertext] = encrypted.split(':');
+        const keyBuffer = Buffer.from(useKey.slice(0, 64), 'hex');
+        const iv = Buffer.from(ivHex, 'hex');
+        const authTag = Buffer.from(authTagHex, 'hex');
+        const decipher = crypto.createDecipheriv('aes-256-gcm', keyBuffer, iv);
+        decipher.setAuthTag(authTag);
+        let decrypted = decipher.update(ciphertext, 'hex', 'utf8');
+        decrypted += decipher.final('utf8');
+        return decrypted;
+    }
+
+    private hashCredential(data: any): string {
+        const canonical = JSON.stringify(data, Object.keys(data).sort());
+        return crypto.createHash('sha256').update(canonical).digest('hex');
+    }
+
+    private generateShareToken(): string {
+        return crypto.randomBytes(32).toString('base64url');
+    }
+
+    private applySelectiveDisclosure(data: any, disclosedFields: string[]): any {
+        if (disclosedFields.length === 0) return data;
+
+        const result: any = {};
+        for (const field of disclosedFields) {
+            const parts = field.split('.');
+            let source = data;
+            let target = result;
+
+            for (let i = 0; i < parts.length; i++) {
+                const part = parts[i];
+                if (i === parts.length - 1) {
+                    if (source && source[part] !== undefined) {
+                        target[part] = source[part];
+                    }
+                } else {
+                    if (source) source = source[part];
+                    if (!target[part]) target[part] = {};
+                    target = target[part];
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private addNotification(userId: number, notification: Omit<WalletNotification, 'id' | 'timestamp' | 'read'>) {
+        const wallet = wallets.get(userId);
         if (wallet) {
             wallet.notifications.push({
                 ...notification,
@@ -435,9 +889,8 @@ export class WalletService {
     }
 
     private async simulateAnchor(userId: number, credentialId: string) {
-        // Ensure hydrated before accessing (though usually it's already hydrated if simulateAnchor is called after storeCredential)
-        await walletStorageService.ensureHydrated();
-        const wallet = await walletStorageService.getOrCreateWallet(userId);
+        await ensureHydrated();
+        const wallet = wallets.get(userId);
         if (wallet) {
             const credential = wallet.credentials.find(c => c.id === credentialId);
             if (credential) {
@@ -445,13 +898,13 @@ export class WalletService {
                 credential.anchorTxHash = `0x${crypto.randomBytes(32).toString('hex')}`;
                 credential.blockNumber = Math.floor(Math.random() * 1000000) + 50000000;
 
-                await this.addNotification(userId, {
+                this.addNotification(userId, {
                     type: 'credential_received',
                     title: 'Credential Anchored',
                     message: `Your credential has been anchored to the blockchain`,
                     data: { credentialId, txHash: credential.anchorTxHash },
                 });
-                await walletStorageService.queuePersist();
+                await queuePersist();
             }
         }
     }
@@ -460,5 +913,8 @@ export class WalletService {
 export const walletService = new WalletService();
 
 export function resetWalletServiceStoreForTests(): void {
-    walletStorageService.reset();
+    wallets.clear();
+    certInIncidents.clear();
+    hydrated = false;
+    hydrationPromise = null;
 }

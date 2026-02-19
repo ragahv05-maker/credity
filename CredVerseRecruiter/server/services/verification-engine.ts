@@ -215,27 +215,8 @@ export class VerificationEngine {
                 return this.createFailedResult(verificationId, 'Could not parse credential');
             }
 
-            // Execute independent checks in parallel
-            const [
-                signatureCheck,
-                issuerCheck,
-                revocationCheck,
-                anchorCheck,
-                didCheck
-            ] = await Promise.all([
-                this.verifySignature(credential),
-                this.verifyIssuer(credential),
-                this.checkRevocation(credential),
-                this.checkOnChainAnchor(credential),
-                this.resolveDID(credential)
-            ]);
-
-            // Check 3: Expiration Check (Sync)
-            const expirationCheck = this.checkExpiration(credential);
-
-            // Process results in original order to maintain logic consistency
-
             // Check 1: Signature Validation
+            const signatureCheck = await this.verifySignature(credential);
             checks.push(signatureCheck);
             if (signatureCheck.status === 'failed') {
                 overallStatus = 'failed';
@@ -243,6 +224,7 @@ export class VerificationEngine {
             }
 
             // Check 2: Issuer Verification
+            const issuerCheck = await this.verifyIssuer(credential);
             checks.push(issuerCheck);
             if (issuerCheck.status === 'failed') {
                 overallStatus = 'suspicious';
@@ -252,6 +234,7 @@ export class VerificationEngine {
             }
 
             // Check 3: Expiration Check
+            const expirationCheck = this.checkExpiration(credential);
             checks.push(expirationCheck);
             if (expirationCheck.status === 'failed') {
                 overallStatus = 'failed';
@@ -259,6 +242,7 @@ export class VerificationEngine {
             }
 
             // Check 4: Revocation Check
+            const revocationCheck = await this.checkRevocation(credential);
             checks.push(revocationCheck);
             if (revocationCheck.status === 'failed') {
                 overallStatus = 'failed';
@@ -266,6 +250,7 @@ export class VerificationEngine {
             }
 
             // Check 5: On-chain Anchor Check
+            const anchorCheck = await this.checkOnChainAnchor(credential);
             checks.push(anchorCheck);
             if (anchorCheck.status === 'failed') {
                 overallStatus = 'failed';
@@ -275,6 +260,7 @@ export class VerificationEngine {
             }
 
             // Check 6: DID Document Resolution
+            const didCheck = await this.resolveDID(credential);
             checks.push(didCheck);
             if (didCheck.status === 'failed') {
                 if (overallStatus !== 'failed') overallStatus = 'suspicious';
