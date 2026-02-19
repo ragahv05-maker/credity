@@ -1,6 +1,6 @@
 {
   "name": "@credverse/trust",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "SDK-first Trust API client for Credity Reputation Rail verticals",
   "type": "module",
   "main": "./dist/index.js",
