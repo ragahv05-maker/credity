@@ -1,24 +1,92 @@
-import {
-  type User,
-  type InsertUser,
-  type Tenant,
-  type InsertTenant,
-  type ApiKey,
-  type InsertApiKey,
-  type Issuer,
-  type InsertIssuer,
-  type Template,
-  type InsertTemplate,
-  type Credential,
-  type InsertCredential,
-  type Student,
-  type TeamMember,
-  type VerificationLog,
-  type TemplateDesign,
-  type ActivityLog,
-} from "@shared/schema";
+import { type User, type InsertUser, type Tenant, type InsertTenant, type ApiKey, type InsertApiKey, type Issuer, type InsertIssuer, type Template, type InsertTemplate, type Credential, type InsertCredential } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { PostgresStateStore } from "@credverse/shared-auth";
+
+// Extended types for full functionality
+export interface Student {
+  id: string;
+  tenantId: string;
+  name: string;
+  email: string;
+  studentId: string;
+  program: string;
+  enrollmentYear: string;
+  status: "Active" | "Alumni" | "Suspended";
+  createdAt: Date;
+}
+
+export interface TeamMember {
+  id: string;
+  tenantId: string;
+  name: string;
+  email: string;
+  role: "Admin" | "Issuer" | "Viewer";
+  status: "Active" | "Pending" | "Inactive";
+  invitedAt: Date;
+  joinedAt: Date | null;
+}
+
+export interface VerificationLog {
+  id: string;
+  tenantId: string;
+  credentialId: string;
+  verifierName: string;
+  verifierLocation: string;
+  timestamp: Date;
+  status: "success" | "failed" | "suspicious";
+  ipAddress: string;
+}
+
+export interface TemplateField {
+  id: string;
+  type: "text" | "image" | "signature" | "qrcode" | "date" | "table";
+  label: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  properties: Record<string, any>;
+}
+
+export interface TemplateDesign {
+  id: string;
+  tenantId: string;
+  name: string;
+  category: string;
+  type: string;
+  status: "Active" | "Draft" | "Archived";
+  fields: TemplateField[];
+  backgroundColor: string;
+  width: number;
+  height: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface IssuerStorageState {
+  users: Array<[string, User]>;
+  tenants: Array<[string, Tenant]>;
+  apiKeys: Array<[string, ApiKey]>;
+  issuers: Array<[string, Issuer]>;
+  templates: Array<[string, Template]>;
+  credentials: Array<[string, Credential]>;
+  students: Array<[string, Student]>;
+  teamMembers: Array<[string, TeamMember]>;
+  verificationLogs: Array<[string, VerificationLog]>;
+  templateDesigns: Array<[string, TemplateDesign]>;
+  activityLogs: Array<[string, any]>;
+}
+
+function parseDate(value: unknown, fallback = new Date()): Date {
+  if (value instanceof Date) return value;
+  if (typeof value === "string" || typeof value === "number") {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed;
+    }
+  }
+  return fallback;
+}
 
 export interface IStorage {
   // User
@@ -28,7 +96,6 @@ export interface IStorage {
 
   // Tenant
   getTenant(id: string): Promise<Tenant | undefined>;
-  getTenantByName(name: string): Promise<Tenant | undefined>;
   createTenant(tenant: InsertTenant): Promise<Tenant>;
 
   // API Key
@@ -50,68 +117,6 @@ export interface IStorage {
   getCredential(id: string): Promise<Credential | undefined>;
   createCredential(credential: InsertCredential): Promise<Credential>;
   listCredentials(tenantId: string): Promise<Credential[]>;
-  updateCredential(id: string, data: Partial<Credential>): Promise<Credential | undefined>;
-
-  // Student
-  getStudent(id: string): Promise<Student | undefined>;
-  createStudent(student: Omit<Student, "id" | "createdAt">): Promise<Student>;
-  updateStudent(id: string, data: Partial<Student>): Promise<Student | undefined>;
-  deleteStudent(id: string): Promise<boolean>;
-  listStudents(tenantId: string): Promise<Student[]>;
-  bulkCreateStudents(students: Omit<Student, "id" | "createdAt">[]): Promise<Student[]>;
-
-  // Team Member
-  getTeamMember(id: string): Promise<TeamMember | undefined>;
-  createTeamMember(member: Omit<TeamMember, "id" | "invitedAt" | "joinedAt">): Promise<TeamMember>;
-  updateTeamMember(id: string, data: Partial<TeamMember>): Promise<TeamMember | undefined>;
-  deleteTeamMember(id: string): Promise<boolean>;
-  listTeamMembers(tenantId: string): Promise<TeamMember[]>;
-
-  // Verification Log
-  createVerificationLog(data: {
-    tenantId: string;
-    credentialId: string;
-    verifierName: string;
-    verifierIp: string;
-    location: string;
-    status: "verified" | "failed" | "suspicious";
-    reason?: string;
-  }): Promise<VerificationLog>;
-  listVerificationLogs(tenantId: string): Promise<VerificationLog[]>;
-  getVerificationStats(tenantId: string): Promise<{ total: number; today: number; suspicious: number }>;
-
-  // Template Design
-  getTemplateDesign(id: string): Promise<TemplateDesign | undefined>;
-  createTemplateDesign(data: Omit<TemplateDesign, "id" | "createdAt" | "updatedAt">): Promise<TemplateDesign>;
-  updateTemplateDesign(id: string, data: Partial<TemplateDesign>): Promise<TemplateDesign | undefined>;
-  deleteTemplateDesign(id: string): Promise<boolean>;
-  listTemplateDesigns(tenantId: string): Promise<TemplateDesign[]>;
-  duplicateTemplateDesign(id: string): Promise<TemplateDesign | undefined>;
-
-  // Activity Log
-  createActivityLog(data: Omit<ActivityLog, "id" | "timestamp">): Promise<ActivityLog>;
-  listActivityLogs(tenantId: string, limit?: number): Promise<ActivityLog[]>;
-}
-
-type IssuerStorageState = {
-  users: Array<[string, User]>;
-  tenants: Array<[string, Tenant]>;
-  apiKeys: Array<[string, ApiKey]>;
-  issuers: Array<[string, Issuer]>;
-  templates: Array<[string, Template]>;
-  credentials: Array<[string, Credential]>;
-  students: Array<[string, Student]>;
-  teamMembers: Array<[string, TeamMember]>;
-  verificationLogs: Array<[string, VerificationLog]>;
-  templateDesigns: Array<[string, TemplateDesign]>;
-  activityLogs: Array<[string, ActivityLog]>;
-};
-
-function parseDate(value: any): Date {
-  if (value instanceof Date) return value;
-  if (typeof value === "string") return new Date(value);
-  if (typeof value === "number") return new Date(value);
-  return new Date();
 }
 
 export class MemStorage implements IStorage {
@@ -121,11 +126,13 @@ export class MemStorage implements IStorage {
   private issuers: Map<string, Issuer>;
   private templates: Map<string, Template>;
   private credentials: Map<string, Credential>;
+
+  // New collections
   private students: Map<string, Student>;
   private teamMembers: Map<string, TeamMember>;
   private verificationLogs: Map<string, VerificationLog>;
   private templateDesigns: Map<string, TemplateDesign>;
-  private activityLogs: Map<string, ActivityLog>;
+  private activityLogs: Map<string, any>;
 
   constructor() {
     this.users = new Map();
@@ -153,29 +160,7 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
     });
 
-    // Seed API key only for explicit bootstrap/test use.
-    const isTestEnv = process.env.NODE_ENV === "test" || process.env.VITEST === "true";
-    const bootstrapApiKey = process.env.ISSUER_BOOTSTRAP_API_KEY || (isTestEnv ? "test-api-key" : null);
-    if (bootstrapApiKey) {
-      this.apiKeys.set("key-1", {
-        id: "key-1",
-        tenantId: tenantId,
-        keyHash: bootstrapApiKey,
-        permissions: ["all"],
-        expiresAt: null,
-        createdAt: new Date()
-      });
-    }
-
-    // Seed Issuer
-    this.issuers.set("issuer-1", {
-      id: "issuer-1",
-      tenantId: tenantId,
-      name: "Demo University Registrar",
-      did: "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnn3Zua2F72",
-      status: "Active",
-      createdAt: new Date()
-    });
+    this.ensureBootstrapApiKey();
 
     // Seed Students
     const sampleStudents: Omit<Student, "id" | "createdAt">[] = [
@@ -193,13 +178,27 @@ export class MemStorage implements IStorage {
     // Seed Team Members
     const sampleTeam: Omit<TeamMember, "id" | "invitedAt" | "joinedAt">[] = [
       { tenantId, name: "Admin User", email: "admin@university.edu", role: "Admin", status: "Active" },
-      { tenantId, name: "Registrar Office", email: "registrar@university.edu", role: "Issuer", status: "Active" },
-      { tenantId, name: "Exam Controller", email: "exams@university.edu", role: "Verifier", status: "Pending" },
+      { tenantId, name: "Sarah Jenkins", email: "sarah.j@university.edu", role: "Issuer", status: "Active" },
+      { tenantId, name: "Dr. K. Mehta", email: "dean.academics@university.edu", role: "Issuer", status: "Active" },
+      { tenantId, name: "Registrar Office", email: "registrar@university.edu", role: "Viewer", status: "Active" },
     ];
-    sampleTeam.forEach((m, i) => {
-      const id = `member-${i + 1}`;
-      this.teamMembers.set(id, { ...m, id, invitedAt: new Date(), joinedAt: new Date(), status: m.status });
+    sampleTeam.forEach((t, i) => {
+      const id = `team-${i + 1}`;
+      this.teamMembers.set(id, { ...t, id, invitedAt: new Date(), joinedAt: new Date() });
     });
+
+    // Seed Default Issuer (Demo University)
+    const demoIssuer: Issuer = {
+      id: "issuer-1",
+      did: "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnn3Zua2F72",
+      name: "Demo University",
+      domain: "university.edu",
+      trustStatus: "trusted",
+      meta: { logo: "https://via.placeholder.com/50", description: "Official Demo University Issuer" },
+      tenantId: tenantId,
+      createdAt: new Date()
+    };
+    this.issuers.set(demoIssuer.id, demoIssuer);
 
     // Seed Template Designs
     const sampleTemplates: Omit<TemplateDesign, "id" | "createdAt" | "updatedAt">[] = [
@@ -225,24 +224,36 @@ export class MemStorage implements IStorage {
         id,
         tenantId: t.tenantId,
         name: t.name,
-        description: `${t.type} - ${t.category}`,
-        schema: {
-          $schema: "http://json-schema.org/draft-07/schema#",
-          type: "object",
-          properties: {
-            studentName: { type: "string", title: "Student Name" },
-            studentId: { type: "string", title: "Student ID" },
-            program: { type: "string", title: "Program" },
-            completionYear: { type: "string", title: "Year of Completion" },
-            grade: { type: "string", title: "Grade/CGPA" }
-          },
-          required: ["studentName", "studentId", "program"]
-        },
-        version: "1.0.0",
         createdAt: new Date(),
+        version: "1.0.0",
+        schema: "credential-schema-v1",
         disclosure: {}
-      });
+      } as any);
     });
+  }
+
+  ensureBootstrapApiKey(): boolean {
+    const isTestEnv = process.env.NODE_ENV === "test" || process.env.VITEST === "true";
+    const bootstrapApiKey = process.env.ISSUER_BOOTSTRAP_API_KEY || (isTestEnv ? "test-api-key" : null);
+    if (!bootstrapApiKey) {
+      return false;
+    }
+
+    const existing = Array.from(this.apiKeys.values()).find((key) => key.keyHash === bootstrapApiKey);
+    if (existing) {
+      return false;
+    }
+
+    const tenantId = "550e8400-e29b-41d4-a716-446655440000";
+    this.apiKeys.set(`bootstrap-${Date.now()}`, {
+      id: `bootstrap-${Date.now()}`,
+      tenantId,
+      keyHash: bootstrapApiKey,
+      permissions: ["all"],
+      expiresAt: null,
+      createdAt: new Date(),
+    });
+    return true;
   }
 
   // User
@@ -252,13 +263,13 @@ export class MemStorage implements IStorage {
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     return Array.from(this.users.values()).find(
-      (user) => user.username === username
+      (user) => user.username === username,
     );
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
-    const user: User = { ...insertUser, id, createdAt: new Date() };
+    const user: User = { ...insertUser, id, role: insertUser.role || "user", tenantId: insertUser.tenantId || null, createdAt: new Date() };
     this.users.set(id, user);
     return user;
   }
@@ -268,15 +279,9 @@ export class MemStorage implements IStorage {
     return this.tenants.get(id);
   }
 
-  async getTenantByName(name: string): Promise<Tenant | undefined> {
-    return Array.from(this.tenants.values()).find(
-      (tenant) => tenant.name === name
-    );
-  }
-
   async createTenant(insertTenant: InsertTenant): Promise<Tenant> {
     const id = randomUUID();
-    const tenant: Tenant = { ...insertTenant, id, createdAt: new Date() };
+    const tenant: Tenant = { ...insertTenant, id, createdAt: new Date(), plan: "free" };
     this.tenants.set(id, tenant);
     return tenant;
   }
@@ -294,7 +299,8 @@ export class MemStorage implements IStorage {
       ...insertApiKey,
       id,
       createdAt: new Date(),
-      expiresAt: insertApiKey.expiresAt ?? null, // Handle optional expiresAt
+      permissions: insertApiKey.permissions ?? [],
+      expiresAt: insertApiKey.expiresAt ?? null
     };
     this.apiKeys.set(id, apiKey);
     return apiKey;
@@ -306,14 +312,21 @@ export class MemStorage implements IStorage {
   }
 
   async getIssuerByDid(did: string): Promise<Issuer | undefined> {
-    return Array.from(this.issuers.values()).find(
-      (issuer) => issuer.did === did
-    );
+    return Array.from(this.issuers.values()).find(i => i.did === did);
   }
 
   async createIssuer(insertIssuer: InsertIssuer): Promise<Issuer> {
     const id = randomUUID();
-    const issuer: Issuer = { ...insertIssuer, id, createdAt: new Date() };
+    const issuer: Issuer = {
+      id,
+      name: insertIssuer.name,
+      tenantId: insertIssuer.tenantId,
+      domain: insertIssuer.domain,
+      did: insertIssuer.did ?? null,
+      trustStatus: "pending",
+      meta: insertIssuer.meta ?? null,
+      createdAt: new Date()
+    };
     this.issuers.set(id, issuer);
     return issuer;
   }
@@ -343,7 +356,9 @@ export class MemStorage implements IStorage {
   }
 
   async listTemplates(tenantId: string): Promise<Template[]> {
-    return Array.from(this.templates.values()).filter(t => t.tenantId === tenantId);
+    return Array.from(this.templates.values()).filter(
+      (template) => template.tenantId === tenantId
+    );
   }
 
   // Credential
@@ -353,7 +368,27 @@ export class MemStorage implements IStorage {
 
   async createCredential(insertCredential: InsertCredential): Promise<Credential> {
     const id = randomUUID();
-    const credential: Credential = { ...insertCredential, id, createdAt: new Date() };
+    const credential: Credential = {
+      ...insertCredential,
+      id,
+      createdAt: new Date(),
+      format: (insertCredential as any).format ?? "vc+jwt",
+      issuerDid: (insertCredential as any).issuerDid ?? null,
+      subjectDid: (insertCredential as any).subjectDid ?? null,
+      statusListId: (insertCredential as any).statusListId ?? null,
+      statusListIndex: (insertCredential as any).statusListIndex ?? null,
+      anchorBatchId: (insertCredential as any).anchorBatchId ?? null,
+      anchorProof: (insertCredential as any).anchorProof ?? null,
+      holderBinding: (insertCredential as any).holderBinding ?? null,
+      issuanceFlow: (insertCredential as any).issuanceFlow ?? "legacy",
+      vcJwt: insertCredential.vcJwt ?? null,
+      ipfsHash: insertCredential.ipfsHash ?? null,
+      anchorId: insertCredential.anchorId ?? null,
+      revoked: false,
+      txHash: null,
+      blockNumber: null,
+      credentialHash: null
+    };
     this.credentials.set(id, credential);
     return credential;
   }
@@ -364,12 +399,32 @@ export class MemStorage implements IStorage {
     );
   }
 
-  async updateCredential(id: string, data: Partial<Credential>): Promise<Credential | undefined> {
+  async revokeCredential(id: string): Promise<void> {
     const credential = this.credentials.get(id);
-    if (!credential) return undefined;
-    const updated = { ...credential, ...data };
-    this.credentials.set(id, updated);
-    return updated;
+    if (credential) {
+      credential.revoked = true;
+      this.credentials.set(id, credential);
+    }
+  }
+
+  async updateCredentialBlockchain(id: string, data: { txHash?: string; blockNumber?: number; credentialHash?: string }): Promise<void> {
+    const credential = this.credentials.get(id);
+    if (credential) {
+      (credential as any).txHash = data.txHash;
+      (credential as any).blockNumber = data.blockNumber;
+      (credential as any).credentialHash = data.credentialHash;
+      this.credentials.set(id, credential);
+    }
+  }
+
+  async createActivityLog(data: { tenantId: string; type: string; title: string; description: string; metadata?: any }): Promise<void> {
+    const id = randomUUID();
+    const log = {
+      id,
+      ...data,
+      timestamp: new Date(),
+    };
+    this.activityLogs.set(id, log);
   }
 
   // ==================== STUDENTS ====================
@@ -521,21 +576,6 @@ export class MemStorage implements IStorage {
     return duplicate;
   }
 
-  // ==================== ACTIVITY LOGS ====================
-  async createActivityLog(data: Omit<ActivityLog, "id" | "timestamp">): Promise<ActivityLog> {
-    const id = randomUUID();
-    const log: ActivityLog = { ...data, id, timestamp: new Date() };
-    this.activityLogs.set(id, log);
-    return log;
-  }
-
-  async listActivityLogs(tenantId: string, limit: number = 50): Promise<ActivityLog[]> {
-    return Array.from(this.activityLogs.values())
-      .filter(l => l.tenantId === tenantId)
-      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-      .slice(0, limit);
-  }
-
   exportState(): IssuerStorageState {
     return {
       users: Array.from(this.users.entries()),
@@ -636,24 +676,15 @@ function createPersistedStorage(base: MemStorage, dbUrl?: string): MemStorage {
         const loaded = await stateStore.load();
         if (loaded) {
           base.importState(loaded);
-          // Re-seed bootstrap key if needed to survive DB wipes/restores during testing
-          const isTestEnv = process.env.NODE_ENV === "test" || process.env.VITEST === "true";
-          const bootstrapApiKey = process.env.ISSUER_BOOTSTRAP_API_KEY || (isTestEnv ? "test-api-key" : null);
-          if (bootstrapApiKey) {
-             const existing = await base.getApiKey(bootstrapApiKey);
-             if (!existing) {
-                 const tenantId = "550e8400-e29b-41d4-a716-446655440000";
-                 await base.createApiKey({
-                    tenantId,
-                    keyHash: bootstrapApiKey,
-                    permissions: ["all"],
-                    expiresAt: null
-                 });
-             }
-          }
         } else {
           await stateStore.save(base.exportState());
         }
+
+        const bootstrapAdded = base.ensureBootstrapApiKey();
+        if (bootstrapAdded) {
+          await stateStore.save(base.exportState());
+        }
+
         hydrated = true;
       })();
     }
