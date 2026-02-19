@@ -14,6 +14,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "pretest": "cd ../packages/trust-sdk && npm install && npm run build",
     "test": "vitest run --testTimeout=15000",
     "test:watch": "vitest",
     "test:sepolia-smoke": "RUN_SEPOLIA_SMOKE=true vitest run tests/sepolia-smoke.test.ts --testTimeout=180000",
@@ -50,7 +51,7 @@
     "@radix-ui/react-toggle": "^1.1.10",
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
-    "@sentry/node": "^10.29.0",
+    "@sentry/node": "^10.39.0",
     "@tanstack/react-query": "^5.60.5",
     "@types/papaparse": "^5.5.1",
     "bcryptjs": "^3.0.3",
@@ -138,5 +139,8 @@
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
+  },
+  "overrides": {
+    "minimatch": "^10.0.0"
   }
 }
