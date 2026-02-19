@@ -186,3 +186,15 @@ export function getUserLivenessStatus(userId: string): { verified: boolean; last
 export function generateFaceEmbedding(frameData: string): string {
     return `embedding_${Date.now()}_${Math.random().toString(36).substr(2, 16)}`;
 }
+
+// Export a default object for backward compatibility
+export const livenessService = {
+    startLivenessSession,
+    getCurrentChallenge,
+    completeChallenge,
+    getSessionResult,
+    verifyFaceMatch,
+    detectSpoofing,
+    getUserLivenessStatus,
+    generateFaceEmbedding
+};

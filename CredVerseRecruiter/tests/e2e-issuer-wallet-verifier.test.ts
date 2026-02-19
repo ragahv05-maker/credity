@@ -1,8 +1,7 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import express from 'express';
-import { createServer, type Server } from 'http';
+import { createServer, Server } from 'http';
 import request from 'supertest';
-
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { registerRoutes as registerIssuerRoutes } from '../../CredVerseIssuer 3/server/routes';
 import { registerRoutes as registerWalletRoutes } from '../../BlockWalletDigi/server/routes';
 import { registerRoutes as registerVerifierRoutes } from '../server/routes';
@@ -93,8 +92,10 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
           studentId: `E2E-${params.suffix}`,
         },
         credentialData: {
-          credentialName: 'Bachelor of Technology',
-          major: 'Computer Science',
+          studentName: `E2E Candidate ${params.suffix}`,
+          studentId: `E2E-${params.suffix}`,
+          program: 'Computer Science',
+          completionYear: '2025',
           grade: 'A',
         },
       }),
