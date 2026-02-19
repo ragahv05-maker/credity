@@ -160,7 +160,19 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
     });
 
-    this.ensureBootstrapApiKey();
+    // Seed API key only for explicit bootstrap/test use.
+    const isTestEnv = process.env.NODE_ENV === "test" || process.env.VITEST === "true";
+    const bootstrapApiKey = process.env.ISSUER_BOOTSTRAP_API_KEY || (isTestEnv ? "test-api-key" : null);
+    if (bootstrapApiKey) {
+      this.apiKeys.set("key-1", {
+        id: "key-1",
+        tenantId: tenantId,
+        keyHash: bootstrapApiKey,
+        permissions: ["all"],
+        expiresAt: null,
+        createdAt: new Date()
+      });
+    }
 
     // Seed Students
     const sampleStudents: Omit<Student, "id" | "createdAt">[] = [
@@ -232,29 +244,6 @@ export class MemStorage implements IStorage {
     });
   }
 
-  ensureBootstrapApiKey(): boolean {
-    const isTestEnv = process.env.NODE_ENV === "test" || process.env.VITEST === "true";
-    const bootstrapApiKey = process.env.ISSUER_BOOTSTRAP_API_KEY || (isTestEnv ? "test-api-key" : null);
-    if (!bootstrapApiKey) {
-      return false;
-    }
-
-    const existing = Array.from(this.apiKeys.values()).find((key) => key.keyHash === bootstrapApiKey);
-    if (existing) {
-      return false;
-    }
-
-    const tenantId = "550e8400-e29b-41d4-a716-446655440000";
-    this.apiKeys.set(`bootstrap-${Date.now()}`, {
-      id: `bootstrap-${Date.now()}`,
-      tenantId,
-      keyHash: bootstrapApiKey,
-      permissions: ["all"],
-      expiresAt: null,
-      createdAt: new Date(),
-    });
-    return true;
-  }
 
   // User
   async getUser(id: string): Promise<User | undefined> {
@@ -679,12 +668,6 @@ function createPersistedStorage(base: MemStorage, dbUrl?: string): MemStorage {
         } else {
           await stateStore.save(base.exportState());
         }
-
-        const bootstrapAdded = base.ensureBootstrapApiKey();
-        if (bootstrapAdded) {
-          await stateStore.save(base.exportState());
-        }
-
         hydrated = true;
       })();
     }

@@ -5,7 +5,7 @@ import { authMiddleware } from "../services/auth-service";
 
 const router = Router();
 
-function resolveUserId(req: { user?: { userId?: number | string } }): number | null {
+function resolveUserId(req: { user?: { userId?: number } }): number | null {
     const userId = req.user?.userId;
     if (typeof userId !== "number" || !Number.isInteger(userId) || userId <= 0) {
         return null;

@@ -203,14 +203,8 @@ export function hashApiKey(apiKey: string): string {
 // Express middleware types
 declare global {
     namespace Express {
-        interface User {
-            userId: string | number;
-            username: string;
-            role: string | null;
-            type?: 'access' | 'refresh';
-            tenantId?: string | null;
-            // Also include id for compatibility if needed
-            id?: string | number;
+        interface Request {
+            user?: TokenPayload;
         }
     }
 }

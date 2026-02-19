@@ -1,21 +1,9 @@
-# Context Compression (Midweek Light)
+# Context Compression (High-Signal)
 
-- **Project status:** Credity release remains **NO-GO** until all P0 gates are green and release-linked evidence is fresh.
-- **Authority lock:** Go/No-Go is solo authority (Raghav); release is blocked without signed decision record in `Decision_Logs`.
-- **Active priority:** Close foundation gate instability (OID4VP nonce mismatch path) with deterministic repro and source-level fix.
-- **Active priority:** Maintain L3+ evidence-only completion across Issuer, Consumer/Wallet, and Recruiter lanes.
-- **Active priority:** Complete Reputation Rail hardening from partial to releasable, preserving contract consistency.
-- **Active priority:** Complete SafeDate trust-summary lane hardening from partial to releasable.
-- **Active priority:** Keep AEOS memory continuity durable (operational + decision logs) for shutdown-safe resumption.
-- **Active priority:** Build/maintain PRD feature tracker artifacts (CSV/JSON + dashboard KPI) tied to verifiable evidence.
-- **Blocker:** Foundation local gate nonce mismatch remains a release-critical blocker until fully resolved and re-validated.
-- **Blocker:** Hosted launch and contract-security evidence freshness is pending for current release SHA.
-- **Blocker:** Production secret manager/secrets finalization is still external dependency.
-- **Blocker:** Permanent hosting/domain/DNS credentials remain external dependency.
-- **Blocker:** Final irreversible chain/wallet signing approvals remain external dependency.
-- **Next action:** Re-run deterministic repro for nonce mismatch, patch canonical decision point only, add regression tests, and re-run gates.
-- **Next action:** Refresh hosted evidence set against current release SHA and link artifacts to release board.
-- **Next action:** Keep pod-level progress updates synchronized inside `AEOS_Memory` after material changes.
-- **Critical assumption:** Evidence-before-claim remains non-negotiable for all completion and release assertions.
-- **Critical assumption:** Root-fix framework applies to all defects (no speculative patches, no temporary fake-success paths).
-- **Critical assumption:** Strategic direction remains India-first trust infrastructure (DID/VC compatible, ZK-native trajectory) with no major shift this week.
+- **Project:** Credity (monorepo) — issuer + wallet + recruiter/verifier + public gateway; shared auth module.
+- **Strategic intent:** India-first verification + fraud prevention (“UPI for trust”) with **W3C DID/VC** compatibility and **ZK-native** trajectory; **evidence-before-claim** is non-negotiable.
+- **Release reality:** Currently **NO-GO** until P0 gates are green.
+- **Primary technical blocker:** **foundation gate nonce mismatch** in OID4VP response flow (must reproduce deterministically, patch, and re-run gates).
+- **Evidence gap:** hosted launch / contract-security evidence freshness needs to match current release SHA (link artifacts to board).
+- **External blockers:** prod secrets/secret manager, hosting/domain/DNS creds, irreversible chain/wallet signing approvals.
+- **Operating cadence:** keep decisions + state inside `AEOS_Memory`; weekly compaction; update immediately after any material code/release decision.

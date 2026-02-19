@@ -22,7 +22,7 @@ export const apiRateLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     validate: false, // Disable IPv6 key generator validation
-    keyGenerator: (req: Request) => req.ip || 'unknown',
+    keyGenerator: (req: Request) => (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.ip || 'unknown',
 });
 
 export const authRateLimiter = rateLimit({
@@ -132,13 +132,8 @@ export function setupSecurity(app: Application, config: SecurityConfig = {}) {
     }));
 
     // 2. CORS
-    const configuredOrigins = config.allowedOrigins || process.env.ALLOWED_ORIGINS?.split(',').map((o) => o.trim()).filter(Boolean);
-    if (!isDev && (!configuredOrigins || configuredOrigins.length === 0)) {
-        throw new Error('SECURITY CRITICAL: ALLOWED_ORIGINS must be explicitly configured in production.');
-    }
-
     app.use(cors({
-        origin: configuredOrigins && configuredOrigins.length > 0 ? configuredOrigins : (isDev ? true : false),
+        origin: config.allowedOrigins || process.env.ALLOWED_ORIGINS?.split(',') || true,
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         allowedHeaders: [

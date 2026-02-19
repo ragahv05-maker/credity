@@ -10,7 +10,7 @@ export type {
     TokenPair,
     VerifyTokenResult,
     AuthConfig
-} from './types.js';
+} from './types';
 
 // Password utilities
 export {
@@ -18,7 +18,7 @@ export {
     comparePassword,
     validatePasswordStrength,
     type PasswordValidationResult
-} from './password.js';
+} from './password';
 
 // JWT utilities
 export {
@@ -33,7 +33,7 @@ export {
     invalidateRefreshToken,
     refreshAccessToken,
     getAuthConfig,
-} from './jwt.js';
+} from './jwt';
 
 // Express middleware
 export {
@@ -41,7 +41,7 @@ export {
     optionalAuthMiddleware,
     requireRole,
     checkRateLimit,
-} from './middleware.js';
+} from './middleware';
 
 // Security middleware
 export {
@@ -52,19 +52,19 @@ export {
     deepSanitize,
     sanitizationMiddleware,
     suspiciousRequestDetector,
-} from './security.js';
+} from './security';
 
 // Idempotency middleware
 export {
     idempotencyMiddleware,
-} from './idempotency.js';
+} from './idempotency';
 
 // Signed webhook helpers
 export {
     signWebhook,
     verifyWebhookSignature,
     type SignedWebhookPayload,
-} from './webhooks.js';
+} from './webhooks';
 
 // Shared contracts
 export type {
@@ -87,13 +87,13 @@ export type {
     ProofVerificationRequestContract,
     ProofVerificationResultContract,
     RevocationWitnessContract,
-} from './contracts.js';
+} from './contracts';
 
 // Reputation contracts (WorkScore/SafeDate)
 export {
     REASON_CODE_VALUES,
     toSafeDateBadgeLevel,
-} from './reputation-contracts.js';
+} from './reputation-contracts';
 export type {
     KnownReasonCode,
     ReasonCode,
@@ -102,7 +102,7 @@ export type {
     VerificationEvidence,
     CandidateVerificationSummary,
     SafeDateBadge,
-} from './reputation-contracts.js';
+} from './reputation-contracts';
 
 // Recruiter evaluation contracts (WorkScore/SafeDate)
 export {
@@ -110,7 +110,7 @@ export {
     WORKSCORE_REASON_CODES,
     SAFEDATE_WEIGHTS,
     SAFEDATE_REASON_CODES,
-} from './recruiter-evaluation-contracts.js';
+} from './recruiter-evaluation-contracts';
 export type {
     WorkScoreComponent,
     WorkScoreReasonCode,
@@ -128,31 +128,31 @@ export type {
     SafeDateEvidence,
     SafeDateEvaluationRequestContract,
     SafeDateEvaluationContract,
-} from './recruiter-evaluation-contracts.js';
+} from './recruiter-evaluation-contracts';
 
 // Blockchain network/runtime helpers
 export type {
     SupportedChainNetwork,
     ChainRuntimeConfig,
-} from './blockchain-network.js';
+} from './blockchain-network';
 export {
     resolveChainNetwork,
     getChainRuntimeConfig,
     resolveChainRpcUrl,
     getChainWritePolicy,
-} from './blockchain-network.js';
+} from './blockchain-network';
 
 // PostgreSQL-backed state persistence helper
 export {
     PostgresStateStore,
-} from './postgres-state-store.js';
+} from './postgres-state-store';
 
 // Audit chain helpers
 export type {
     AuditEventRecord,
-} from './audit-chain.js';
+} from './audit-chain';
 export {
     appendAuditEvent,
     computeAuditEventHash,
     verifyAuditChain,
-} from './audit-chain.js';
+} from './audit-chain';

@@ -69,7 +69,9 @@ export function enrollBiometrics(
         status: 'active'
     };
 
+    console.log('[Biometrics] Enrolling user:', userId, 'type:', type);
     enrollments.set(userId, enrollment);
+    console.log('[Biometrics] Enrollments now:', Array.from(enrollments.keys()));
     return enrollment;
 }
 
@@ -191,7 +193,10 @@ export function getBiometricStatus(userId: string): {
     type: string | null;
     lastVerified: Date | null;
 } {
+    console.log('[Biometrics] Getting status for user:', userId);
+    console.log('[Biometrics] Available enrollments:', Array.from(enrollments.keys()));
     const enrollment = enrollments.get(userId);
+    console.log('[Biometrics] Found enrollment:', enrollment ? 'yes' : 'no');
 
     if (!enrollment || enrollment.status !== 'active') {
         return {
