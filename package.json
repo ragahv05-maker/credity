@@ -28,6 +28,8 @@
     "check:shared-auth": "cd packages/shared-auth && npm run build",
     "check:trust-sdk": "cd packages/trust-sdk && npm run build",
     "prepare": "husky",
+    "build": "node scripts/railway-service-dispatch.mjs build",
+    "start": "node scripts/railway-service-dispatch.mjs start",
     "mobile:dev": "cd apps/mobile && npm run start",
     "mobile:android": "cd apps/mobile && npm run android",
     "mobile:ios": "cd apps/mobile && npm run ios",

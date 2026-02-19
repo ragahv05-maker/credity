@@ -18,13 +18,16 @@ import { createServer } from "http";
 const app = express();
 const httpServer = createServer(app);
 
-const requireDatabase = process.env.NODE_ENV === 'production' || process.env.REQUIRE_DATABASE === 'true';
+const requireDatabase = process.env.REQUIRE_DATABASE === 'true';
 if (requireDatabase && !process.env.DATABASE_URL) {
   console.error('[Startup] REQUIRE_DATABASE policy is enabled but DATABASE_URL is missing.');
   process.exit(1);
 }
 if (requireDatabase) {
   console.log('[Startup] Database persistence policy is enforced.');
+}
+if (process.env.NODE_ENV === 'production' && !requireDatabase) {
+  console.warn('[Startup] REQUIRE_DATABASE is not enabled; service will run without mandatory DATABASE_URL gate.');
 }
 
 initAuth({
@@ -40,14 +43,9 @@ declare module "http" {
 }
 
 // Setup shared security
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
-  'http://localhost:5000',
-  'http://localhost:5001',
-  'http://localhost:5002',
-  'http://localhost:5003',
-  'http://localhost:5173',
-  'http://localhost:3000'
-];
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map((origin) => origin.trim()).filter(Boolean)
+  : undefined;
 
 setupSecurity(app, { allowedOrigins });
 
@@ -73,6 +71,32 @@ export function log(message: string, source = "express") {
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 
+function redactSensitive(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => redactSensitive(item));
+  }
+  if (!value || typeof value !== 'object') {
+    return value;
+  }
+
+  const redacted: Record<string, unknown> = {};
+  for (const [key, nestedValue] of Object.entries(value as Record<string, unknown>)) {
+    const lowered = key.toLowerCase();
+    if (
+      lowered.includes('token') ||
+      lowered.includes('authorization') ||
+      lowered.includes('password') ||
+      lowered.includes('secret') ||
+      lowered.includes('cookie')
+    ) {
+      redacted[key] = '[REDACTED]';
+      continue;
+    }
+    redacted[key] = redactSensitive(nestedValue);
+  }
+  return redacted;
+}
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -89,7 +113,7 @@ app.use((req, res, next) => {
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+        logLine += ` :: ${JSON.stringify(redactSensitive(capturedJsonResponse))}`;
       }
 
       log(logLine);
@@ -122,7 +146,8 @@ app.use((req, res, next) => {
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || "5000", 10);
+  const parsedPort = Number(process.env.PORT);
+  const port = Number.isFinite(parsedPort) && parsedPort > 0 ? parsedPort : 5000;
   httpServer.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
   });

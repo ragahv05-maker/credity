@@ -46,6 +46,11 @@ tmp/
 temp/
 cr_backup/
 
+# Local auth/debug dumps with bearer tokens
+register_output.json
+register_recruiter.json
+result.txt
+
 # Tooling/state backups from legacy imports
 **/.git_backup/
 **/.local/
@@ -57,3 +62,4 @@ cr_backup/
 # Contract build artifacts
 **/contracts/artifacts/
 **/contracts/cache/
+.vercel
