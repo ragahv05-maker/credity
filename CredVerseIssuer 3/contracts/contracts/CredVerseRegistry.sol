@@ -13,6 +13,11 @@ import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 contract CredVerseRegistry is AccessControl, ReentrancyGuard, Pausable {
     bytes32 public constant ISSUER_ROLE = keccak256("ISSUER_ROLE");
 
+    /// @dev Maximum allowed length for issuer DID strings (prevents gas griefing)
+    uint256 public constant MAX_DID_LENGTH = 256;
+    /// @dev Maximum allowed length for issuer domain strings (prevents gas griefing)
+    uint256 public constant MAX_DOMAIN_LENGTH = 256;
+
     struct Issuer {
         bool isRegistered;
         string did;
@@ -45,6 +50,7 @@ contract CredVerseRegistry is AccessControl, ReentrancyGuard, Pausable {
     error CredentialNotAnchored(bytes32 credentialHash);
     error UnauthorizedCredentialRevocation(address caller, bytes32 credentialHash);
     error InvalidIssuerMetadata();
+    error IssuerMetadataTooLong(uint256 didLength, uint256 domainLength);
     error InvalidAddress();
     error InvalidHash();
     error ContractPaused();
@@ -96,6 +102,9 @@ contract CredVerseRegistry is AccessControl, ReentrancyGuard, Pausable {
         }
         if (bytes(_did).length == 0 || bytes(_domain).length == 0) {
             revert InvalidIssuerMetadata();
+        }
+        if (bytes(_did).length > MAX_DID_LENGTH || bytes(_domain).length > MAX_DOMAIN_LENGTH) {
+            revert IssuerMetadataTooLong(bytes(_did).length, bytes(_domain).length);
         }
         if (issuers[_issuerAddress].isRegistered) {
             revert IssuerAlreadyRegistered(_issuerAddress);

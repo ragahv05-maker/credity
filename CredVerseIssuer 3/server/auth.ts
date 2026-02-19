@@ -1,6 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
-import { verifyAccessToken } from "@credverse/shared-auth";
+import { verifyAccessToken, comparePassword } from "@credverse/shared-auth";
+import passport from "passport";
+import { Strategy as LocalStrategy } from "passport-local";
+import type { Express } from "express";
 
 // Simple in-memory rate limiter for MVP
 const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
@@ -32,10 +35,6 @@ function pruneRateLimitMap(now: number): void {
             break;
         }
     }
-}
-
-function readOptionalString(value: unknown): string | undefined {
-    return typeof value === "string" && value.trim().length > 0 ? value : undefined;
 }
 
 async function resolveApiKeyTenant(keyHeader: string): Promise<{ tenantId: string; keyHash: string; error?: string }> {
@@ -102,7 +101,7 @@ export async function apiKeyMiddleware(req: Request, res: Response, next: NextFu
 
 /**
  * Allow either API key auth or JWT auth for mobile/app flows.
- * For JWT auth in non-production, tenantId may be provided via request body/query.
+ * Tenant context is always derived from trusted auth material (API key/JWT), never body/query.
  */
 export async function apiKeyOrAuthMiddleware(req: Request, res: Response, next: NextFunction) {
     const apiKeyHeader = req.headers["x-api-key"];
@@ -133,20 +132,61 @@ export async function apiKeyOrAuthMiddleware(req: Request, res: Response, next: 
     }
 
     (req as any).user = payload;
-    const bodyTenantId = readOptionalString((req as any).body?.tenantId);
-    const queryTenantId = readOptionalString((req as any).query?.tenantId);
-    const tokenTenantId = readOptionalString((payload as any).tenantId);
-    const tenantId =
-        tokenTenantId
-        || (process.env.NODE_ENV !== "production" ? bodyTenantId || queryTenantId : undefined)
-        || String(payload.userId);
+    const tokenTenantId = typeof (payload as any).tenantId === "string" && (payload as any).tenantId.trim().length > 0
+        ? String((payload as any).tenantId).trim()
+        : undefined;
 
-    (req as any).tenantId = tenantId;
+    // SECURITY: never derive tenant context from client-controlled body/query fields.
+    (req as any).tenantId = tokenTenantId || String(payload.userId);
     next();
 }
 
+export function setupPassport(app: Express) {
+  passport.use(new LocalStrategy(async (username, password, done) => {
+    try {
+      const user = await storage.getUserByUsername(username);
+      if (!user) {
+        return done(null, false, { message: "Incorrect username." });
+      }
+      const isValid = await comparePassword(password, user.password);
+      if (!isValid) {
+        return done(null, false, { message: "Incorrect password." });
+      }
+      // Ensure user object matches Express.User interface (requires userId)
+      return done(null, { ...user, userId: user.id });
+    } catch (err) {
+      return done(err);
+    }
+  }));
+
+  passport.serializeUser((user: any, done) => {
+    done(null, user.id);
+  });
+
+  passport.deserializeUser(async (id: string, done) => {
+    try {
+      const user = await storage.getUser(id);
+      if (user) {
+        // Adapt user object to match TokenPayload structure used elsewhere
+        // TokenPayload has userId, existing code uses req.user.userId
+        const adaptedUser = { ...user, userId: user.id };
+        // Remove password hash from session user
+        delete (adaptedUser as any).password;
+        done(null, adaptedUser);
+      } else {
+        done(null, false);
+      }
+    } catch (err) {
+      done(err);
+    }
+  });
+}
+
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
-    // TODO: Integrate with Passport.js or similar for real user sessions
+    if (req.isAuthenticated()) {
+        return next();
+    }
+
     // For now, we'll assume if tenantId is present (via API key), it's "authenticated" for API access
     // Or if it's a browser session, we'd check req.session
     if ((req as any).tenantId || (req as any).user) {

@@ -37,7 +37,7 @@ export interface AuthUser {
 }
 
 export interface TokenPayload {
-    userId: number;
+    userId: number | string;
     username: string;
     role: string;
     type: 'access' | 'refresh';
@@ -194,7 +194,7 @@ export function refreshAccessToken(refreshToken: string): { accessToken: string;
     invalidateRefreshToken(refreshToken);
 
     const user: AuthUser = {
-        id: payload.userId,
+        id: payload.userId as number,
         username: payload.username,
         role: payload.role as AuthUser['role'],
     };
