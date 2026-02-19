@@ -1,16 +1,36 @@
-FROM node:20-bullseye-slim AS build
-WORKDIR /app
-COPY . .
-RUN npm --prefix packages/shared-auth ci \
- && npm --prefix packages/shared-auth run build \
- && npm --prefix CredVerseRecruiter ci --legacy-peer-deps \
- && npm --prefix CredVerseRecruiter run build
+FROM node:20-slim AS builder
 
-FROM node:20-bullseye-slim AS runtime
 WORKDIR /app
+
+# Copy shared dependencies first (for layer caching)
+COPY packages/shared-auth ./packages/shared-auth
+
+# Build shared-auth
+WORKDIR /app/packages/shared-auth
+RUN npm install && npm run build
+
+# Copy service code
+WORKDIR /app
+COPY CredVerseRecruiter ./service
+
+# Install service dependencies (shared-auth resolves via file: link)
+WORKDIR /app/service
+RUN npm install --legacy-peer-deps
+
+# Build the service (esbuild bundles shared-auth into output)
+RUN npm run build
+
+# --- Production stage ---
+FROM node:20-slim AS runner
+
+WORKDIR /app
+
+# Copy only the built output and production node_modules
+COPY --from=builder /app/service/dist ./dist
+COPY --from=builder /app/service/node_modules ./node_modules
+COPY --from=builder /app/service/package.json ./package.json
+
 ENV NODE_ENV=production
-COPY --from=build /app/CredVerseRecruiter/dist ./dist
-COPY --from=build /app/CredVerseRecruiter/package*.json ./
-RUN npm ci --omit=dev --legacy-peer-deps
-EXPOSE 8080
-CMD ["npm","start"]
+EXPOSE 5000
+
+CMD ["npm", "run", "start"]

@@ -20,35 +20,29 @@ async function buildAll() {
     console.log("📦 Building frontend...");
     await viteBuild();
 
-    const skipServerBuild = process.env.SKIP_SERVER_BUILD === "true" || process.env.VERCEL === "1";
+    console.log("⚙️  Building server...");
+    const pkg = JSON.parse(await readFile("package.json", "utf-8"));
+    const allDeps = [
+        ...Object.keys(pkg.dependencies || {}),
+        ...Object.keys(pkg.devDependencies || {}),
+    ];
+    const externals = allDeps.filter((dep) => !allowlist.includes(dep));
 
-    if (skipServerBuild) {
-        console.log("⚠️  Skipping server bundle build for Vercel static/serverless deployment...");
-    } else {
-        console.log("⚙️  Building server...");
-        const pkg = JSON.parse(await readFile("package.json", "utf-8"));
-        const allDeps = [
-            ...Object.keys(pkg.dependencies || {}),
-            ...Object.keys(pkg.devDependencies || {}),
-        ];
-        const externals = allDeps.filter((dep) => !allowlist.includes(dep));
+    await mkdir("dist/server", { recursive: true });
 
-        await mkdir("dist/server", { recursive: true });
-
-        await esbuild({
-            entryPoints: ["server/index.ts"],
-            platform: "node",
-            bundle: true,
-            format: "esm",
-            outfile: "dist/server/index.js",
-            define: {
-                "process.env.NODE_ENV": '"production"',
-            },
-            minify: true,
-            external: externals,
-            logLevel: "info",
-        });
-    }
+    await esbuild({
+        entryPoints: ["server/index.ts"],
+        platform: "node",
+        bundle: true,
+        format: "esm",
+        outfile: "dist/server/index.js",
+        define: {
+            "process.env.NODE_ENV": '"production"',
+        },
+        minify: true,
+        external: externals,
+        logLevel: "info",
+    });
 
     console.log("✅ Build complete!");
 }

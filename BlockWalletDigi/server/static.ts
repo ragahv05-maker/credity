@@ -5,10 +5,9 @@ import path from "path";
 export function serveStatic(app: Express) {
   const distPath = path.resolve(__dirname, "public");
   if (!fs.existsSync(distPath)) {
-    console.warn(
-      `[static] build directory not found at ${distPath}; serving API-only mode`,
+    throw new Error(
+      `Could not find the build directory: ${distPath}, make sure to build the client first`,
     );
-    return;
   }
 
   app.use(express.static(distPath));
