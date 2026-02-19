@@ -29,7 +29,9 @@ export function Nav() {
             const isActive = location === item.href;
             return (
               <Link key={item.href} href={item.href}>
-                <a className={cn(
+                <a
+                  aria-label={item.label}
+                  className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
                   isActive 
                     ? "bg-primary/10 text-primary shadow-[0_0_15px_-3px_var(--color-primary)]" 

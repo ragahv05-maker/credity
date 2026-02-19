@@ -37,10 +37,6 @@ function pruneRateLimitMap(now: number): void {
     }
 }
 
-function readOptionalString(value: unknown): string | undefined {
-    return typeof value === "string" && value.trim().length > 0 ? value : undefined;
-}
-
 async function resolveApiKeyTenant(keyHeader: string): Promise<{ tenantId: string; keyHash: string; error?: string }> {
     const keyHash = keyHeader;
 
@@ -105,7 +101,7 @@ export async function apiKeyMiddleware(req: Request, res: Response, next: NextFu
 
 /**
  * Allow either API key auth or JWT auth for mobile/app flows.
- * For JWT auth in non-production, tenantId may be provided via request body/query.
+ * Tenant context is always derived from trusted auth material (API key/JWT), never body/query.
  */
 export async function apiKeyOrAuthMiddleware(req: Request, res: Response, next: NextFunction) {
     const apiKeyHeader = req.headers["x-api-key"];
@@ -136,15 +132,12 @@ export async function apiKeyOrAuthMiddleware(req: Request, res: Response, next: 
     }
 
     (req as any).user = payload;
-    const bodyTenantId = readOptionalString((req as any).body?.tenantId);
-    const queryTenantId = readOptionalString((req as any).query?.tenantId);
-    const tokenTenantId = readOptionalString((payload as any).tenantId);
-    const tenantId =
-        tokenTenantId
-        || (process.env.NODE_ENV !== "production" ? bodyTenantId || queryTenantId : undefined)
-        || String(payload.userId);
+    const tokenTenantId = typeof (payload as any).tenantId === "string" && (payload as any).tenantId.trim().length > 0
+        ? String((payload as any).tenantId).trim()
+        : undefined;
 
-    (req as any).tenantId = tenantId;
+    // SECURITY: never derive tenant context from client-controlled body/query fields.
+    (req as any).tenantId = tokenTenantId || String(payload.userId);
     next();
 }
 
