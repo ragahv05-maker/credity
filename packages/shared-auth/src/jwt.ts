@@ -2,7 +2,7 @@
  * JWT token generation and verification utilities
  */
 import jwt from 'jsonwebtoken';
-import type { AuthUser, TokenPayload, TokenPair, AuthConfig, VerifyTokenResult } from './types';
+import type { AuthUser, TokenPayload, TokenPair, AuthConfig, VerifyTokenResult } from './types.js';
 
 const DEFAULT_ACCESS_EXPIRY = '15m';
 const DEFAULT_REFRESH_EXPIRY = '7d';

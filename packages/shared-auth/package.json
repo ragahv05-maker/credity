@@ -16,6 +16,7 @@
     "scripts": {
         "build": "tsc",
         "dev": "tsc --watch",
+        "test": "npm run build && node --test ./tests/*.test.mjs",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
         "format": "prettier --write .",
