@@ -4,12 +4,13 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
+    "preinstall": "npm install --prefix ../packages/shared-auth && npm install --prefix ../packages/trust-sdk",
     "dev:client": "vite dev --port 5000",
     "dev": "NODE_ENV=development tsx server/index.ts",
-    "build": "tsx script/build.ts",
+    "build:deps": "cd ../packages/shared-auth && npm install && npm run build && cd ../trust-sdk && npm install && npm run build",
+    "build": "npm run build:deps && tsx script/build.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "npm run build:deps && tsc",
-    "build:deps": "cd ../packages/shared-auth && npm install && npm run build && cd ../trust-sdk && npm install && npm run build",
     "db:push": "drizzle-kit push",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -141,6 +142,6 @@
     "bufferutil": "^4.0.8"
   },
   "overrides": {
-    "minimatch": "^10.0.0"
+    "minimatch": "^10.2.1"
   }
 }

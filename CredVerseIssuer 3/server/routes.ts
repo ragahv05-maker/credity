@@ -24,6 +24,12 @@ import { issuanceService } from "./services/issuance";
 import { blockchainService } from "./services/blockchain-service";
 
 import { setupSecurity } from "@credverse/shared-auth";
+import session from "express-session";
+import pgSession from "connect-pg-simple";
+import passport from "passport";
+import createMemoryStore from "memorystore";
+import { setupPassport } from "./auth";
+import { getPool } from "./db";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -31,6 +37,35 @@ export async function registerRoutes(
 ): Promise<Server> {
   // Apply shared security middleware (Helmet, CORS, Rate Limit, WAF)
   setupSecurity(app);
+
+  // Setup Session and Passport
+  const PgStore = pgSession(session);
+  const MemoryStore = createMemoryStore(session);
+
+  const sessionStore = process.env.DATABASE_URL
+    ? new PgStore({
+        pool: getPool()!,
+        createTableIfMissing: true,
+      })
+    : new MemoryStore({
+        checkPeriod: 86400000 // prune expired entries every 24h
+      });
+
+  app.use(session({
+    store: sessionStore,
+    secret: process.env.SESSION_SECRET || 'dev-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    }
+  }));
+
+  app.use(passport.initialize());
+  app.use(passport.session());
+  setupPassport(app);
 
   // Initialize queue service for bulk operations
   const queueAvailable = await initQueueService();

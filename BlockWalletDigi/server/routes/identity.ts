@@ -17,6 +17,7 @@ import * as livenessService from '../services/liveness-service';
 import * as biometricsService from '../services/biometrics-service';
 import * as documentService from '../services/document-scanner-service';
 import { aiService } from '../services/ai-service';
+import { logger, logError } from '../services/logger';
 
 const router = Router();
 
@@ -45,7 +46,7 @@ router.post('/liveness/start', async (req: Request, res: Response) => {
             expiresAt: session.expiresAt
         });
     } catch (error: any) {
-        console.error('Liveness start error:', error);
+        logError(error, { context: 'Liveness start error' });
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -85,7 +86,7 @@ router.post('/liveness/challenge', async (req: Request, res: Response) => {
             result: result.sessionComplete ? livenessService.getSessionResult(sessionId) : null
         });
     } catch (error: any) {
-        console.error('Liveness challenge error:', error);
+        logError(error, { context: 'Liveness challenge error' });
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -110,16 +111,15 @@ router.post('/liveness/complete', async (req: Request, res: Response) => {
 
         // If frame data is provided, use AI to verify liveness
         if (frameData) {
-            console.log('Analyzing liveness frame with AI...');
             const analysis = await aiService.analyzeLivenessFrame(frameData);
 
             aiDetails = analysis;
 
             if (!analysis.isReal || analysis.spoofingDetected || !analysis.faceDetected) {
-                console.log('AI Liveness Check Failed:', analysis);
+                logger.warn({ analysis }, 'AI Liveness Check Failed');
                 isVerified = false;
             } else {
-                console.log('AI Liveness Check Passed:', analysis);
+                logger.info({ analysis }, 'AI Liveness Check Passed');
                 isVerified = true;
             }
         }
@@ -155,7 +155,7 @@ router.post('/liveness/complete', async (req: Request, res: Response) => {
             });
         }
     } catch (error: any) {
-        console.error('Liveness complete error:', error);
+        logError(error, { context: 'Liveness complete error' });
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -182,7 +182,7 @@ router.get('/liveness/:sessionId', async (req: Request, res: Response) => {
             result
         });
     } catch (error: any) {
-        console.error('Get liveness result error:', error);
+        logError(error, { context: 'Get liveness result error' });
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -212,7 +212,7 @@ router.get('/biometrics/status', async (req: Request, res: Response) => {
             } : null
         });
     } catch (error: any) {
-        console.error('Biometrics status error:', error);
+        logError(error, { context: 'Biometrics status error' });
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -248,7 +248,7 @@ router.post('/biometrics/enroll', async (req: Request, res: Response) => {
             }
         });
     } catch (error: any) {
-        console.error('Biometrics enroll error:', error);
+        logError(error, { context: 'Biometrics enroll error' });
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -298,7 +298,7 @@ router.post('/biometrics/verify', async (req: Request, res: Response) => {
             fallbackAvailable: request.fallbackAvailable
         });
     } catch (error: any) {
-        console.error('Biometrics verify error:', error);
+        logError(error, { context: 'Biometrics verify error' });
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -355,7 +355,7 @@ router.post('/document/scan', async (req: Request, res: Response) => {
             processingTimeMs: result.processingTimeMs
         });
     } catch (error: any) {
-        console.error('Document scan error:', error);
+        logError(error, { context: 'Document scan error' });
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -381,7 +381,7 @@ router.get('/documents', async (req: Request, res: Response) => {
             }))
         });
     } catch (error: any) {
-        console.error('Get documents error:', error);
+        logError(error, { context: 'Get documents error' });
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -433,7 +433,7 @@ router.get('/status', async (req: Request, res: Response) => {
             }
         });
     } catch (error: any) {
-        console.error('Get identity status error:', error);
+        logError(error, { context: 'Get identity status error' });
         res.status(500).json({ success: false, error: error.message });
     }
 });
