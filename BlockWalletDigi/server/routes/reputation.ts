@@ -1,16 +1,16 @@
 import { Router, Request, Response } from 'express';
 import { storage } from '../storage';
-import * as livenessService from '../services/liveness-service';
-import * as documentService from '../services/document-scanner-service';
+import { livenessService } from '../services/liveness-service';
+import { documentService } from '../services/document-service';
 import {
+    listReputationEvents,
     calculateReputationScore,
     calculateSafeDateScore,
-    deriveSafeDateInputs,
-    listReputationEvents,
-    ReputationCategory,
-    ReputationEventInput,
-    ReputationEventRecord,
     upsertReputationEvent,
+    deriveSafeDateInputs,
+    type ReputationEventRecord,
+    type ReputationCategory,
+    type ReputationEventInput,
 } from '../services/reputation-rail-service';
 import { CredVerse, type CandidateVerificationSummary, type VerificationEvidence, type ReputationScoreContract, type SafeDateScoreContract } from '@credverse/trust';
 import { type ReasonCode } from '@credverse/shared-auth'; // ReasonCode not yet exported by trust-sdk
@@ -117,7 +117,7 @@ async function buildCandidateVerificationSummary(userId: number): Promise<Candid
             score: reputationScore.score,
             max_score: 1000,
             computed_at: reputationScore.computed_at,
-            breakdown: reputationScore.category_breakdown.map((entry) => ({
+            breakdown: reputationScore.category_breakdown.map((entry: any) => ({
                 ...entry,
                 weight: normalizeBreakdownWeight(entry.weight),
             })),
