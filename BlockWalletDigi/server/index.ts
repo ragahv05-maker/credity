@@ -14,6 +14,7 @@ import { initAuth } from "@credverse/shared-auth";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import { sanitizeForLogging } from "./utils/logger-sanitizer";
 
 const app = express();
 const httpServer = createServer(app);
@@ -89,7 +90,7 @@ app.use((req, res, next) => {
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+        logLine += ` :: ${JSON.stringify(sanitizeForLogging(capturedJsonResponse))}`;
       }
 
       log(logLine);
