@@ -41,12 +41,18 @@ vi.mock('../server/storage', () => ({
   },
 }));
 
+// Fix mock to match structure used in reputation.ts (livenessService.getUserLivenessStatus)
 vi.mock('../server/services/liveness-service', () => ({
-  getUserLivenessStatus,
+  livenessService: {
+    getUserLivenessStatus,
+  },
 }));
 
-vi.mock('../server/services/document-scanner-service', () => ({
-  getDocumentVerificationStatus,
+// Fix mock to match structure used in reputation.ts (documentService.getDocumentVerificationStatus)
+vi.mock('../server/services/document-service', () => ({
+  documentService: {
+    getDocumentVerificationStatus,
+  },
 }));
 
 async function createApp() {

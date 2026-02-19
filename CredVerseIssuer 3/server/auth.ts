@@ -184,18 +184,18 @@ export function setupPassport(app: Express) {
 
 /**
  * Middleware to enforce authentication.
- * Supports multiple authentication mechanisms:
- * 1. Passport Session (req.isAuthenticated())
- * 2. API Key (req.tenantId set by middleware)
- * 3. JWT Token (req.user set by middleware)
+ * Checks for:
+ * 1. Passport session (req.isAuthenticated())
+ * 2. API Key context (req.tenantId)
+ * 3. JWT context (req.user)
  */
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
-    // Check for active Passport session
+    // 1. Check for active Passport session
     if (req.isAuthenticated()) {
         return next();
     }
 
-    // Check if API Key or Token middleware has already authenticated the request
+    // 2. Check for API Key context or JWT context (from upstream middleware)
     if ((req as any).tenantId || (req as any).user) {
         return next();
     }
