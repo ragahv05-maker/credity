@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import express from 'express';
-import mobileProxyRoutes from './mobile-proxy';
+import mobileProxyRoutes, { __resetClaimsRateBucketsForTests } from './mobile-proxy';
 
 const originalFetch = globalThis.fetch;
 const authHeaders = { Authorization: 'Bearer test-token' };
@@ -21,6 +21,7 @@ async function withProxyServer<T>(
         mockFetch?: (input: RequestInfo | URL, init?: RequestInit, calls?: MockFetchCall[]) => Promise<Response>;
     },
 ): Promise<T> {
+    __resetClaimsRateBucketsForTests();
     const calls: MockFetchCall[] = [];
     globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
         calls.push({ input: String(input), init });
@@ -280,7 +281,7 @@ test('mobile proxy maps upstream network and timeout errors', async () => {
             const timeoutBody = await timeout.json();
             assert.equal(timeoutBody.error, 'Upstream timeout');
 
-            const invalid = await localFetch(`${baseUrl}/api/mobile/wallet/v1/wallet/invalid`);
+            const invalid = await localFetch(`${baseUrl}/api/mobile/wallet/v1/wallet/invalid`, { headers: authHeaders });
             assert.equal(invalid.status, 502);
             const invalidBody = await invalid.json();
             assert.equal(invalidBody.error, 'Invalid upstream response');
