@@ -14,6 +14,7 @@ import { initAuth } from "@credverse/shared-auth";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import { sanitizeForLogging } from "./utils/logger-sanitizer";
 
 const app = express();
 const httpServer = createServer(app);
@@ -71,32 +72,6 @@ export function log(message: string, source = "express") {
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 
-function redactSensitive(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    return value.map((item) => redactSensitive(item));
-  }
-  if (!value || typeof value !== 'object') {
-    return value;
-  }
-
-  const redacted: Record<string, unknown> = {};
-  for (const [key, nestedValue] of Object.entries(value as Record<string, unknown>)) {
-    const lowered = key.toLowerCase();
-    if (
-      lowered.includes('token') ||
-      lowered.includes('authorization') ||
-      lowered.includes('password') ||
-      lowered.includes('secret') ||
-      lowered.includes('cookie')
-    ) {
-      redacted[key] = '[REDACTED]';
-      continue;
-    }
-    redacted[key] = redactSensitive(nestedValue);
-  }
-  return redacted;
-}
-
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -113,7 +88,7 @@ app.use((req, res, next) => {
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(redactSensitive(capturedJsonResponse))}`;
+        logLine += ` :: ${JSON.stringify(sanitizeForLogging(capturedJsonResponse))}`;
       }
 
       log(logLine);
