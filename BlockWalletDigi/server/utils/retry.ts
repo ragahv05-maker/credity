@@ -62,6 +62,7 @@ export async function retry<T>(
                 opts.onRetry(attempt + 1, lastError);
             }
 
+            console.log(`[Retry] Attempt ${attempt + 1} failed, retrying in ${delay}ms...`);
             await sleep(delay);
         }
     }
@@ -129,6 +130,7 @@ export class CircuitBreaker {
         if (this.state === 'open') {
             if (Date.now() - (this.lastFailureTime ?? 0) > this.resetTimeoutMs) {
                 this.state = 'half-open';
+                console.log('[CircuitBreaker] Moving to half-open state');
             } else {
                 throw new Error('Circuit breaker is open');
             }
@@ -148,6 +150,7 @@ export class CircuitBreaker {
         this.failures = 0;
         if (this.state === 'half-open') {
             this.state = 'closed';
+            console.log('[CircuitBreaker] Circuit closed');
         }
     }
 
@@ -157,6 +160,7 @@ export class CircuitBreaker {
 
         if (this.failures >= this.failureThreshold) {
             this.state = 'open';
+            console.log('[CircuitBreaker] Circuit opened after', this.failures, 'failures');
         }
     }
 

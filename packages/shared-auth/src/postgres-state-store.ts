@@ -1,11 +1,9 @@
 import { Pool } from 'pg';
-import crypto from 'crypto';
 
 interface StoreOptions {
     databaseUrl: string;
     serviceKey: string;
     tableName?: string;
-    pool?: Pool;
 }
 
 export class PostgresStateStore<TState extends object> {
@@ -14,25 +12,14 @@ export class PostgresStateStore<TState extends object> {
     private readonly tableName: string;
     private initPromise: Promise<void> | null = null;
 
-    // Optimization state
-    private lastHash: string | null = null;
-    private isSaving = false;
-    private pendingState: TState | null = null;
-    private pendingResolvers: Array<() => void> = [];
-    private pendingRejectors: Array<(err: Error) => void> = [];
-
     constructor(options: StoreOptions) {
-        if (options.pool) {
-            this.pool = options.pool;
-        } else {
-            this.pool = new Pool({
-                connectionString: options.databaseUrl,
-                max: 5,
-                idleTimeoutMillis: 30_000,
-                connectionTimeoutMillis: 5_000,
-                ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined,
-            });
-        }
+        this.pool = new Pool({
+            connectionString: options.databaseUrl,
+            max: 5,
+            idleTimeoutMillis: 30_000,
+            connectionTimeoutMillis: 5_000,
+            ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined,
+        });
         this.serviceKey = options.serviceKey;
         this.tableName = options.tableName || 'credverse_state_store';
     }
@@ -64,42 +51,11 @@ export class PostgresStateStore<TState extends object> {
         if (result.rowCount === 0) {
             return null;
         }
-        const state = (result.rows[0]?.payload as TState) || null;
-        if (state) {
-             this.lastHash = crypto.createHash('sha256').update(JSON.stringify(state)).digest('hex');
-        }
-        return state;
+        return (result.rows[0]?.payload as TState) || null;
     }
 
     async save(state: TState): Promise<void> {
         await this.ensureInitialized();
-
-        const json = JSON.stringify(state);
-        const hash = crypto.createHash('sha256').update(json).digest('hex');
-
-        if (this.lastHash === hash) {
-            return;
-        }
-
-        if (this.isSaving) {
-            this.pendingState = state;
-            return new Promise<void>((resolve, reject) => {
-                this.pendingResolvers.push(resolve);
-                this.pendingRejectors.push(reject);
-            });
-        }
-
-        this.isSaving = true;
-        try {
-            await this.performSave(json);
-            this.lastHash = hash;
-        } finally {
-            this.isSaving = false;
-            this.processPending();
-        }
-    }
-
-    private async performSave(json: string): Promise<void> {
         await this.pool.query(
             `
       INSERT INTO ${this.tableName} (service_key, payload, updated_at)
@@ -107,27 +63,7 @@ export class PostgresStateStore<TState extends object> {
       ON CONFLICT (service_key)
       DO UPDATE SET payload = EXCLUDED.payload, updated_at = EXCLUDED.updated_at
     `,
-            [this.serviceKey, json],
+            [this.serviceKey, JSON.stringify(state)],
         );
-    }
-
-    private processPending() {
-        if (!this.pendingState) return;
-
-        const state = this.pendingState;
-        const resolvers = this.pendingResolvers;
-        const rejectors = this.pendingRejectors;
-
-        this.pendingState = null;
-        this.pendingResolvers = [];
-        this.pendingRejectors = [];
-
-        this.save(state)
-            .then(() => {
-                resolvers.forEach((r) => r());
-            })
-            .catch((err) => {
-                rejectors.forEach((r) => r(err));
-            });
     }
 }

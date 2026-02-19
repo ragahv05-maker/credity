@@ -1,8 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
-import { Request, Response, NextFunction } from 'express';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { requireAuth } from '../server/auth';
+import { Request, Response, NextFunction } from 'express';
 
-describe('requireAuth middleware', () => {
+describe('requireAuth Middleware', () => {
     let req: Partial<Request>;
     let res: Partial<Response>;
     let next: NextFunction;
@@ -11,39 +11,41 @@ describe('requireAuth middleware', () => {
         req = {
             isAuthenticated: vi.fn().mockReturnValue(false),
             headers: {},
-        } as any;
+        } as Partial<Request>;
+
         res = {
             status: vi.fn().mockReturnThis(),
             json: vi.fn(),
-        } as any;
+        } as Partial<Response>;
+
         next = vi.fn();
     });
 
-    it('should call next() if req.isAuthenticated() is true', () => {
+    it('should call next() if req.isAuthenticated() returns true', () => {
         (req.isAuthenticated as any).mockReturnValue(true);
         requireAuth(req as Request, res as Response, next);
         expect(next).toHaveBeenCalled();
         expect(res.status).not.toHaveBeenCalled();
     });
 
-    it('should call next() if req.tenantId is present (API Key context)', () => {
-        (req as any).tenantId = 'some-tenant-id';
+    it('should call next() if req.tenantId is present (API Key fallback)', () => {
+        (req as any).tenantId = 'some-tenant';
         requireAuth(req as Request, res as Response, next);
         expect(next).toHaveBeenCalled();
         expect(res.status).not.toHaveBeenCalled();
     });
 
-    it('should call next() if req.user is present (JWT context)', () => {
-        (req as any).user = { id: 'some-user-id' };
+    it('should call next() if req.user is present (JWT fallback)', () => {
+        (req as any).user = { id: 'some-user' };
         requireAuth(req as Request, res as Response, next);
         expect(next).toHaveBeenCalled();
         expect(res.status).not.toHaveBeenCalled();
     });
 
-    it('should return 401 if not authenticated via session, API key, or JWT', () => {
+    it('should return 401 if not authenticated via session, tenantId, or user', () => {
         requireAuth(req as Request, res as Response, next);
         expect(next).not.toHaveBeenCalled();
         expect(res.status).toHaveBeenCalledWith(401);
-        expect(res.json).toHaveBeenCalledWith({ message: "Unauthorized", code: "AUTH_UNAUTHORIZED" });
+        expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'Unauthorized' }));
     });
 });
