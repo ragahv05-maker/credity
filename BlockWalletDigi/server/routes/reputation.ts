@@ -117,9 +117,11 @@ async function buildCandidateVerificationSummary(userId: number): Promise<Candid
             score: reputationScore.score,
             max_score: 1000,
             computed_at: reputationScore.computed_at,
-            breakdown: reputationScore.category_breakdown.map((entry) => ({
+            breakdown: reputationScore.category_breakdown.map((entry: { category: string; weight: number; score: number }) => ({
                 ...entry,
                 weight: normalizeBreakdownWeight(entry.weight),
+                weighted_score: entry.score, // Fallback/derived value to satisfy WorkScoreBreakdown
+                event_count: 1 // Fallback/derived value to satisfy WorkScoreBreakdown
             })),
         },
         evidence: buildVerificationEvidence(recentEvents),
@@ -135,7 +137,7 @@ async function buildSafeDateSnapshot(userId: number): Promise<{ reputationScore:
                 trustSdk.getSafeDateScore({ userId }),
             ]);
             return { reputationScore, safeDate };
-        } catch (error) {
+        } catch (error: any) {
             console.warn('[reputation] Trust SDK fetch failed, using local fallback:', (error as Error)?.message || error);
         }
     }

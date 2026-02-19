@@ -7,14 +7,15 @@
     "dev:client": "vite dev --port 5000",
     "dev": "NODE_ENV=development tsx server/index.ts",
     "build": "tsx script/build.ts",
+    "build:deps": "cd ../packages/shared-auth && npm install && npm run build && cd ../trust-sdk && npm install && npm run build",
     "start": "NODE_ENV=production node dist/index.cjs",
-    "check": "tsc",
+    "check": "npm run build:deps && tsc",
     "db:push": "drizzle-kit push",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "vitest run --no-file-parallelism",
+    "test": "npm run build:deps && vitest run --no-file-parallelism",
     "test:watch": "vitest"
   },
   "dependencies": {
@@ -74,6 +75,7 @@
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.545.0",
     "memorystore": "^1.6.7",
+    "minimatch": "^10.2.1",
     "next-themes": "^0.4.6",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
@@ -97,6 +99,9 @@
     "ws": "^8.18.0",
     "zod": "^3.25.76",
     "zod-validation-error": "^3.4.0"
+  },
+  "overrides": {
+    "minimatch": "^10.2.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
