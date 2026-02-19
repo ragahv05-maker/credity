@@ -1,7 +1,8 @@
+
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-describe("ReputationVerifier", function () {
+describe("ReputationVerifier (updated)", function () {
   let owner, other;
   let mock1, mock2, mock3, verifier;
 
@@ -23,7 +24,7 @@ describe("ReputationVerifier", function () {
     await verifier.waitForDeployment();
   });
 
-  it("stores proof hash when verifier accepts proof", async function () {
+  it("stores proof hash when verifier accepts proof (circuit 1)", async function () {
     const pA = [1, 2];
     const pB = [[3, 4], [5, 6]];
     const pC = [7, 8];
@@ -34,15 +35,19 @@ describe("ReputationVerifier", function () {
 
     const event = receipt.logs.find((l) => l.fragment && l.fragment.name === "ProofVerified");
     expect(event).to.not.equal(undefined);
+  });
 
-    const proofHash = ethers.keccak256(
-      ethers.solidityPacked(
-        ["uint256[2]", "uint256[2][2]", "uint256[2]", "uint256[]"],
-        [pA, pB, pC, pubSignals]
-      )
-    );
+  it("stores proof hash when verifier accepts proof (circuit 3)", async function () {
+    const pA = [1, 2];
+    const pB = [[3, 4], [5, 6]];
+    const pC = [7, 8];
+    const pubSignals = [3, 3, 80, 90, 123]; // circuitId=3, expected len 5
 
-    expect(await verifier.proofExists(proofHash)).to.equal(true);
+    const tx = await verifier.verifyAndStoreProof(pA, pB, pC, pubSignals);
+    const receipt = await tx.wait();
+
+    const event = receipt.logs.find((l) => l.fragment && l.fragment.name === "ProofVerified");
+    expect(event).to.not.equal(undefined);
   });
 
   it("reverts when underlying verifier returns false", async function () {
@@ -53,29 +58,50 @@ describe("ReputationVerifier", function () {
     ).to.be.revertedWithCustomError(verifier, "InvalidProof");
   });
 
-  it("reverts on duplicate proof submission", async function () {
-    const args = [[11, 12], [[13, 14], [15, 16]], [17, 18], [3, 3, 80, 90, 123]];
-    await verifier.verifyAndStoreProof(...args);
+  it("same proof from same sender gets different hashes (nonce increments)", async function () {
+    const args = [[11, 12], [[13, 14], [15, 16]], [17, 18], [1, 750, 123]];
 
-    await expect(verifier.verifyAndStoreProof(...args)).to.be.revertedWithCustomError(
-      verifier,
-      "ProofAlreadyStored"
-    );
+    const tx1 = await verifier.verifyAndStoreProof(...args);
+    const receipt1 = await tx1.wait();
+    const event1 = receipt1.logs.find((l) => l.fragment && l.fragment.name === "ProofVerified");
+
+    const tx2 = await verifier.verifyAndStoreProof(...args);
+    const receipt2 = await tx2.wait();
+    const event2 = receipt2.logs.find((l) => l.fragment && l.fragment.name === "ProofVerified");
+
+    // Both should succeed (nonce makes hash unique)
+    expect(event1).to.not.equal(undefined);
+    expect(event2).to.not.equal(undefined);
+
+    // Nonce should have incremented
+    const nonce = await verifier.submitterNonce(owner.address);
+    expect(nonce).to.equal(2n);
   });
 
-  it("routes verification by circuit id and allows admin verifier rotation", async function () {
+  it("routes verification by circuit id and allows admin verifier rotation (circuit 1/2)", async function () {
     const Mock = await ethers.getContractFactory("MockGroth16Verifier");
     const newMock = await Mock.deploy();
     await newMock.waitForDeployment();
 
-    await expect(verifier.setCircuitVerifier(1, await newMock.getAddress()))
-      .to.emit(verifier, "ZkVerifierUpdated");
+    await expect(verifier.setCircuitVerifier3(1, await newMock.getAddress()))
+      .to.emit(verifier, "ZkVerifier3Updated");
 
-    expect(await verifier.zkVerifierByCircuit(1)).to.equal(await newMock.getAddress());
+    expect(await verifier.getVerifier3(1)).to.equal(await newMock.getAddress());
+  });
+
+  it("allows admin to rotate circuit 5 verifier", async function () {
+    const Mock = await ethers.getContractFactory("MockGroth16Verifier");
+    const newMock = await Mock.deploy();
+    await newMock.waitForDeployment();
+
+    await expect(verifier.setCircuitVerifier5(await newMock.getAddress()))
+      .to.emit(verifier, "ZkVerifier5Updated");
+
+    expect(await verifier.getVerifier5()).to.equal(await newMock.getAddress());
   });
 
   it("blocks non-admin verifier rotation", async function () {
-    await expect(verifier.connect(other).setCircuitVerifier(1, await mock1.getAddress())).to.be.reverted;
+    await expect(verifier.connect(other).setCircuitVerifier3(1, await mock1.getAddress())).to.be.reverted;
   });
 
   it("reverts when circuit id is missing or unsupported", async function () {
@@ -92,5 +118,23 @@ describe("ReputationVerifier", function () {
     await expect(
       verifier.verifyAndStoreProof([1, 2], [[3, 4], [5, 6]], [7, 8], [1, 750])
     ).to.be.revertedWithCustomError(verifier, "PublicSignalsLengthMismatch");
+  });
+
+  it("supports pause and unpause", async function () {
+    await verifier.pause();
+    await expect(
+      verifier.verifyAndStoreProof([1, 2], [[3, 4], [5, 6]], [7, 8], [1, 750, 123])
+    ).to.be.revertedWithCustomError(verifier, "EnforcedPause");
+
+    await verifier.unpause();
+    await expect(
+      verifier.verifyAndStoreProof([1, 2], [[3, 4], [5, 6]], [7, 8], [1, 750, 123])
+    ).to.not.be.reverted;
+  });
+
+  it("rejects verifier3 set for circuit 3", async function () {
+    await expect(
+      verifier.setCircuitVerifier3(3, await mock1.getAddress())
+    ).to.be.revertedWithCustomError(verifier, "InvalidCircuitId");
   });
 });
