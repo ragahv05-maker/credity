@@ -1,5 +1,5 @@
 import { blockchainService } from './blockchain-service';
-import { PersistentService } from '@credverse/shared-auth';
+import { PostgresStateStore } from '@credverse/shared-auth';
 import { deterministicHash, deterministicHashLegacyTopLevel, parseCanonicalization, parseProofAlgorithm } from './proof-lifecycle';
 
 /**
@@ -41,21 +41,28 @@ export interface BulkVerificationResult {
     completedAt: Date;
 }
 
-// Persisted Types
+// In-memory cache for verification results
+const verificationCache = new Map<string, VerificationResult>();
+const bulkJobs = new Map<string, BulkVerificationResult>();
 type PersistedVerificationResult = Omit<VerificationResult, 'timestamp'> & { timestamp: string };
 type PersistedBulkVerificationResult = Omit<BulkVerificationResult, 'completedAt' | 'results'> & {
     completedAt: string;
     results: PersistedVerificationResult[];
 };
-type VerificationEnginePersistedState = {
+type VerificationEngineState = {
     verificationCache: Array<[string, PersistedVerificationResult]>;
     bulkJobs: Array<[string, PersistedBulkVerificationResult]>;
 };
-
-interface VerificationEngineRuntimeState {
-    verificationCache: Map<string, VerificationResult>;
-    bulkJobs: Map<string, BulkVerificationResult>;
-}
+const hasDatabase = typeof process.env.DATABASE_URL === 'string' && process.env.DATABASE_URL.length > 0;
+const stateStore = hasDatabase
+    ? new PostgresStateStore<VerificationEngineState>({
+        databaseUrl: process.env.DATABASE_URL as string,
+        serviceKey: 'recruiter-verification-engine',
+    })
+    : null;
+let hydrated = false;
+let hydrationPromise: Promise<void> | null = null;
+let persistChain = Promise.resolve();
 
 function serializeVerificationResult(result: VerificationResult): PersistedVerificationResult {
     return {
@@ -87,30 +94,54 @@ function deserializeBulkResult(result: PersistedBulkVerificationResult): BulkVer
     };
 }
 
+async function ensureHydrated(): Promise<void> {
+    if (!stateStore || hydrated) return;
+    if (!hydrationPromise) {
+        hydrationPromise = (async () => {
+            const loaded = await stateStore.load();
+            verificationCache.clear();
+            bulkJobs.clear();
+            for (const [verificationId, result] of loaded?.verificationCache || []) {
+                verificationCache.set(verificationId, deserializeVerificationResult(result));
+            }
+            for (const [jobId, result] of loaded?.bulkJobs || []) {
+                bulkJobs.set(jobId, deserializeBulkResult(result));
+            }
+            hydrated = true;
+        })();
+    }
+    await hydrationPromise;
+}
+
+async function queuePersist(): Promise<void> {
+    if (!stateStore) return;
+    persistChain = persistChain
+        .then(async () => {
+            await stateStore.save({
+                verificationCache: Array.from(verificationCache.entries()).map(([verificationId, result]) => [
+                    verificationId,
+                    serializeVerificationResult(result),
+                ]),
+                bulkJobs: Array.from(bulkJobs.entries()).map(([jobId, result]) => [
+                    jobId,
+                    serializeBulkResult(result),
+                ]),
+            });
+        })
+        .catch((error) => {
+            console.error('[VerificationEngine] Persist failed:', error);
+        });
+    await persistChain;
+}
+
 /**
  * Verification Engine
  */
-export class VerificationEngine extends PersistentService<VerificationEngineRuntimeState, VerificationEnginePersistedState> {
+export class VerificationEngine {
     private walletEndpoint: string;
     private issuerRegistry: Map<string, IssuerInfo>;
 
     constructor() {
-        super({
-            serviceKey: 'recruiter-verification-engine',
-            defaultState: {
-                verificationCache: new Map(),
-                bulkJobs: new Map(),
-            },
-            serialize: (state) => ({
-                verificationCache: Array.from(state.verificationCache.entries()).map(([k, v]) => [k, serializeVerificationResult(v)]),
-                bulkJobs: Array.from(state.bulkJobs.entries()).map(([k, v]) => [k, serializeBulkResult(v)]),
-            }),
-            deserialize: (persisted) => ({
-                verificationCache: new Map(persisted.verificationCache.map(([k, v]) => [k, deserializeVerificationResult(v)])),
-                bulkJobs: new Map(persisted.bulkJobs.map(([k, v]) => [k, deserializeBulkResult(v)])),
-            })
-        });
-
         this.walletEndpoint = process.env.WALLET_ENDPOINT || 'http://localhost:5002';
         this.issuerRegistry = new Map();
         this.initializeIssuerRegistry();
@@ -146,8 +177,11 @@ export class VerificationEngine extends PersistentService<VerificationEngineRunt
     /**
      * Verify a single credential
      */
-    async verifyCredential(payload: CredentialPayload): Promise<VerificationResult> {
-        await this.ensureHydrated();
+    async verifyCredential(
+        payload: CredentialPayload,
+        options: { skipPersist?: boolean } = {},
+    ): Promise<VerificationResult> {
+        await ensureHydrated();
         const verificationId = `verify-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         const checks: VerificationCheck[] = [];
         const riskFlags: string[] = [];
@@ -253,8 +287,10 @@ export class VerificationEngine extends PersistentService<VerificationEngineRunt
             };
 
             // Cache result
-            this.state.verificationCache.set(verificationId, result);
-            await this.queuePersist();
+            verificationCache.set(verificationId, result);
+            if (!options.skipPersist) {
+                await queuePersist();
+            }
 
             return result;
         } catch (error) {
@@ -267,7 +303,7 @@ export class VerificationEngine extends PersistentService<VerificationEngineRunt
      * Bulk verify credentials from CSV data
      */
     async bulkVerify(credentials: CredentialPayload[]): Promise<BulkVerificationResult> {
-        await this.ensureHydrated();
+        await ensureHydrated();
         const jobId = `bulk-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         const results: VerificationResult[] = [];
 
@@ -276,7 +312,7 @@ export class VerificationEngine extends PersistentService<VerificationEngineRunt
         let suspicious = 0;
 
         for (const cred of credentials) {
-            const result = await this.verifyCredential(cred);
+            const result = await this.verifyCredential(cred, { skipPersist: true });
             results.push(result);
 
             if (result.status === 'verified') verified++;
@@ -294,8 +330,8 @@ export class VerificationEngine extends PersistentService<VerificationEngineRunt
             completedAt: new Date(),
         };
 
-        this.state.bulkJobs.set(jobId, bulkResult);
-        await this.queuePersist();
+        bulkJobs.set(jobId, bulkResult);
+        await queuePersist();
         return bulkResult;
     }
 
@@ -709,16 +745,16 @@ export class VerificationEngine extends PersistentService<VerificationEngineRunt
      * Get verification result by ID
      */
     async getVerificationResult(id: string): Promise<VerificationResult | undefined> {
-        await this.ensureHydrated();
-        return this.state.verificationCache.get(id);
+        await ensureHydrated();
+        return verificationCache.get(id);
     }
 
     /**
      * Get bulk job result
      */
     async getBulkJobResult(id: string): Promise<BulkVerificationResult | undefined> {
-        await this.ensureHydrated();
-        return this.state.bulkJobs.get(id);
+        await ensureHydrated();
+        return bulkJobs.get(id);
     }
 }
 
