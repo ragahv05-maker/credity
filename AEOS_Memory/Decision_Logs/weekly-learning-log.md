@@ -1,3 +1,4 @@
 - 2026-02-15: INGEST_V1 completed for Credity. Built strategic/operational/departmental baseline from repo evidence + plans (S28/S31/S32/S33/S34 + PRD/master docs). Review trigger: next control room cycle or material code/release change.
 - 2026-02-15: Weekly compaction (W07) — summarized updated Operational/Departmental/Decision/Strategic memory into weekly strategic summary + refreshed context-compression bullets; no source files deleted. Review trigger: next Sunday compaction or any material release-gate/hosting/secrets decision.
 - 2026-02-16: Decision — current swarm wave is in integration/hardening phase with L3+ quality gates enforced for completion evidence.
+- 2026-02-18: MIDWEEK_CHECK — Drift risks: (1) pressure-driven process drift from AEOS pod/gate discipline, (2) any release motion before signed solo go/no-go record, (3) evidence freshness lag vs current release SHA, (4) root-cause rigor slipping into superficial patching.

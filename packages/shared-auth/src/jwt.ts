@@ -2,7 +2,7 @@
  * JWT token generation and verification utilities
  */
 import jwt from 'jsonwebtoken';
-import type { AuthUser, TokenPayload, TokenPair, AuthConfig, VerifyTokenResult } from './types';
+import type { AuthUser, TokenPayload, TokenPair, AuthConfig, VerifyTokenResult } from './types.js';
 
 const DEFAULT_ACCESS_EXPIRY = '15m';
 const DEFAULT_REFRESH_EXPIRY = '7d';
@@ -10,6 +10,33 @@ const JWT_ALGORITHM = 'HS256' as const;
 
 // Stateless token mode avoids process-local auth state.
 // For global logout/token revocation use a shared session store or JWT denylist service.
+
+
+interface RevokedTokenRecord {
+    expiresAt: number;
+}
+
+const revokedAccessTokens = new Map<string, RevokedTokenRecord>();
+const revokedRefreshTokens = new Map<string, RevokedTokenRecord>();
+
+function pruneRevokedTokens(now: number = Date.now()): void {
+    for (const [token, record] of revokedAccessTokens.entries()) {
+        if (record.expiresAt <= now) revokedAccessTokens.delete(token);
+    }
+    for (const [token, record] of revokedRefreshTokens.entries()) {
+        if (record.expiresAt <= now) revokedRefreshTokens.delete(token);
+    }
+}
+
+function decodeTokenExpiryMs(token: string, secret: string): number | null {
+    try {
+        const decoded = jwt.verify(token, secret, { algorithms: [JWT_ALGORITHM] }) as TokenPayload & { exp?: number };
+        if (!decoded?.exp) return null;
+        return decoded.exp * 1000;
+    } catch {
+        return null;
+    }
+}
 
 let config: AuthConfig = {
     jwtSecret: 'dev-only-secret-not-for-production',
@@ -91,6 +118,10 @@ export function generateTokenPair(user: AuthUser): TokenPair {
  * Verify access token
  */
 export function verifyAccessToken(token: string): TokenPayload | null {
+    pruneRevokedTokens();
+    if (revokedAccessTokens.has(token)) {
+        return null;
+    }
     try {
         const decoded = jwt.verify(token, config.jwtSecret, { algorithms: [JWT_ALGORITHM] }) as TokenPayload;
         if (decoded.type !== 'access') {
@@ -106,6 +137,10 @@ export function verifyAccessToken(token: string): TokenPayload | null {
  * Verify refresh token
  */
 export function verifyRefreshToken(token: string): TokenPayload | null {
+    pruneRevokedTokens();
+    if (revokedRefreshTokens.has(token)) {
+        return null;
+    }
     try {
         const decoded = jwt.verify(token, config.jwtRefreshSecret, { algorithms: [JWT_ALGORITHM] }) as TokenPayload;
         if (decoded.type !== 'refresh') {
@@ -142,14 +177,22 @@ export function verifyToken(token: string): VerifyTokenResult {
  * Invalidate refresh token (logout)
  */
 export function invalidateRefreshToken(token: string): void {
-    void token;
+    const expiresAt = decodeTokenExpiryMs(token, config.jwtRefreshSecret);
+    if (expiresAt && expiresAt > Date.now()) {
+        revokedRefreshTokens.set(token, { expiresAt });
+    }
+    pruneRevokedTokens();
 }
 
 /**
  * Invalidate access token
  */
 export function invalidateAccessToken(token: string): void {
-    void token;
+    const expiresAt = decodeTokenExpiryMs(token, config.jwtSecret);
+    if (expiresAt && expiresAt > Date.now()) {
+        revokedAccessTokens.set(token, { expiresAt });
+    }
+    pruneRevokedTokens();
 }
 
 /**
