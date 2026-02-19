@@ -13,7 +13,7 @@ import {
     upsertReputationEvent,
 } from '../services/reputation-rail-service';
 import { CredVerse, type CandidateVerificationSummary, type VerificationEvidence, type ReputationScoreContract, type SafeDateScoreContract } from '@credverse/trust';
-import { type ReasonCode } from '@credverse/shared-auth'; // ReasonCode not yet exported by trust-sdk
+import { type ReasonCode, type ReputationCategoryBreakdownContract } from '@credverse/shared-auth'; // ReasonCode not yet exported by trust-sdk
 
 const router = Router();
 
@@ -117,9 +117,10 @@ async function buildCandidateVerificationSummary(userId: number): Promise<Candid
             score: reputationScore.score,
             max_score: 1000,
             computed_at: reputationScore.computed_at,
-            breakdown: reputationScore.category_breakdown.map((entry) => ({
+            breakdown: reputationScore.category_breakdown.map((entry: ReputationCategoryBreakdownContract) => ({
                 ...entry,
                 weight: normalizeBreakdownWeight(entry.weight),
+                label: entry.category, // fallback since label is missing in contract
             })),
         },
         evidence: buildVerificationEvidence(recentEvents),
