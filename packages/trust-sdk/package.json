@@ -16,8 +16,7 @@
   "scripts": {
     "build": "tsc",
     "lint": "eslint .",
-    "test": "npm run build && node --test ./tests/*.test.mjs",
-    "prepare": "npm run build"
+    "test": "npm run build && node --test ./tests/*.test.mjs"
   },
   "dependencies": {
     "@credverse/shared-auth": "file:../shared-auth"

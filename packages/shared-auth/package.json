@@ -19,8 +19,7 @@
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
         "format": "prettier --write .",
-        "format:check": "prettier --check .",
-        "prepare": "npm run build"
+        "format:check": "prettier --check ."
     },
     "dependencies": {
         "bcryptjs": "^3.0.3",

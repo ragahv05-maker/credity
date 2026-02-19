@@ -15,7 +15,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run --no-file-parallelism",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "postinstall": "cd ../packages/shared-auth && npm install && npm run build && cd ../trust-sdk && npm install && npm run build"
   },
   "dependencies": {
     "@credverse/shared-auth": "file:../packages/shared-auth",
