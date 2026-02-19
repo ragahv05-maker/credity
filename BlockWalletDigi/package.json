@@ -15,7 +15,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "vitest run --no-file-parallelism",
+    "test": "npm run build:deps && vitest run --no-file-parallelism",
     "test:watch": "vitest"
   },
   "dependencies": {
