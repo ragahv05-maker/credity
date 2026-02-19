@@ -133,7 +133,7 @@ export function setupSecurity(app: Application, config: SecurityConfig = {}) {
 
     // 2. CORS
     app.use(cors({
-        origin: config.allowedOrigins || process.env.ALLOWED_ORIGINS?.split(',') || true,
+        origin: config.allowedOrigins || process.env.ALLOWED_ORIGINS?.split(',') || false,
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         allowedHeaders: [
