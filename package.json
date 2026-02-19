@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "npm run test:wallet && npm run test:issuer && npm run test:recruiter && npm run test:gateway && npm run test:mobile && npm run test:contracts && npm run test:trust-sdk",
-    "test:wallet": "cd BlockWalletDigi && npm test",
+    "test:wallet": "npm run check:shared-auth && npm run check:trust-sdk && cd BlockWalletDigi && npm test",
     "test:issuer": "cd \"CredVerseIssuer 3\" && npm test",
     "test:recruiter": "cd CredVerseRecruiter && npm test",
     "test:gateway": "cd credverse-gateway && npm run test:proxy",
@@ -48,6 +48,9 @@
     "zk:test": "cd zk && npm test",
     "zk:build": "cd zk && npm run build:circuits",
     "zk:prove": "cd zk && npm run prove"
+  },
+  "overrides": {
+    "minimatch": "^10.2.1"
   },
   "keywords": [
     "credential",

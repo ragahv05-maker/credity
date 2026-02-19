@@ -112,10 +112,13 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: ${{ matrix.lockfile }}
-      - name: Build shared-auth package for dependent services
+      - name: Build shared packages for dependent services
         if: (matrix.key == 'wallet' || matrix.key == 'issuer' || matrix.key == 'recruiter') && (needs.changes.outputs[matrix.key] == 'true' || github.event_name == 'workflow_dispatch')
-        working-directory: packages/shared-auth
         run: |
+          cd packages/shared-auth
+          npm ci
+          npm run build
+          cd ../trust-sdk
           npm ci
           npm run build
       - name: Install dependencies
@@ -168,10 +171,13 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: ${{ matrix.lockfile }}
-      - name: Build shared-auth package for dependent services
+      - name: Build shared packages for dependent services
         if: (matrix.key == 'wallet' || matrix.key == 'issuer' || matrix.key == 'recruiter') && (needs.changes.outputs[matrix.key] == 'true' || github.event_name == 'workflow_dispatch')
-        working-directory: packages/shared-auth
         run: |
+          cd packages/shared-auth
+          npm ci
+          npm run build
+          cd ../trust-sdk
           npm ci
           npm run build
       - name: Install dependencies

@@ -3,31 +3,36 @@ import { verificationEngine } from '../services/verification-engine';
 import { fraudDetector } from '../services/fraud-detector';
 import { authMiddleware, verifyAccessToken } from '../services/auth-service';
 import { storage, VerificationRecord } from '../storage';
-import crypto from 'crypto';
-import { idempotencyMiddleware, PostgresStateStore, signWebhook } from '@credverse/shared-auth';
+import { idempotencyMiddleware } from '@credverse/shared-auth';
 import type {
-    CandidateVerificationSummary,
     ProofVerificationRequestContract,
-    ReasonCode,
-    VerificationDecision,
-    VerificationEvidence,
     VerificationResultContract,
-    WorkScoreBreakdown,
 } from '@credverse/shared-auth';
-import { deterministicHash, deterministicHashLegacyTopLevel, parseCanonicalization, parseProofAlgorithm } from '../services/proof-lifecycle';
+import { deterministicHash, parseCanonicalization, parseProofAlgorithm } from '../services/proof-lifecycle';
 import { verifyProofContract, ProofVerificationError } from '../services/proof-verifier-service';
 import { z } from 'zod';
+import { oid4vpService } from '../services/oid4vp-service';
+import { proofReplayService } from '../services/proof-replay-service';
+import {
+    mapCredentialValidity,
+    mapStatusValidity,
+    mapAnchorValidity,
+    mapDecision,
+    applyLockedVerificationDecisionPolicy,
+    buildCandidateSummaryContract,
+    emitVerificationWebhook,
+    parseJwtPayloadSafely,
+    readCredentialType,
+    readIssuer,
+    readSubjectName,
+    readString
+} from '../services/verification-utils';
 
 const router = Router();
 const writeIdempotency = idempotencyMiddleware({ ttlMs: 6 * 60 * 60 * 1000 });
-const vpRequests = new Map<string, { id: string; nonce: string; createdAt: number; purpose: string; state?: string }>();
-const MAX_JWT_BYTES = 16 * 1024;
-const VP_REQUEST_TTL_MS = Number(process.env.OID4VP_REQUEST_TTL_MS || 15 * 60 * 1000);
+const MAX_PROOF_BYTES = 128 * 1024;
 const LEGACY_VERIFY_SUNSET_HEADER =
     process.env.API_LEGACY_SUNSET ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
-const MAX_PROOF_BYTES = 128 * 1024;
-const PROOF_REPLAY_TTL_MS = Number(process.env.PROOF_REPLAY_TTL_MS || 10 * 60 * 1000);
-const proofReplayCache = new Map<string, number>();
 const ALLOWED_PROOF_FORMATS = ['sd-jwt-vc', 'jwt_vp', 'ldp_vp', 'ldp_vc', 'merkle-membership'] as const;
 const didPattern = /^did:[a-z0-9]+:[A-Za-z0-9._:%-]+(?:[;/:?#][^\s]*)?$/;
 
@@ -93,20 +98,6 @@ function requireProofAccess(req: any, res: any, next: any): void {
     req.user = payload;
     next();
 }
-type Oid4vpRequestState = {
-    vpRequests: Array<[string, { id: string; nonce: string; createdAt: number; purpose: string; state?: string }]>;
-};
-const hasDatabase = typeof process.env.DATABASE_URL === 'string' && process.env.DATABASE_URL.length > 0;
-const stateStore = hasDatabase
-    ? new PostgresStateStore<Oid4vpRequestState>({
-        databaseUrl: process.env.DATABASE_URL as string,
-        serviceKey: 'recruiter-oid4vp-requests',
-    })
-    : null;
-
-let hydrated = false;
-let hydrationPromise: Promise<void> | null = null;
-let persistChain = Promise.resolve();
 
 router.use('/verify', (_req, res, next) => {
     res.setHeader('Deprecation', 'true');
@@ -114,267 +105,6 @@ router.use('/verify', (_req, res, next) => {
     res.setHeader('Link', '</api/v1/verifications>; rel="successor-version"');
     next();
 });
-
-async function ensureHydrated(): Promise<void> {
-    if (!stateStore || hydrated) return;
-    if (!hydrationPromise) {
-        hydrationPromise = (async () => {
-            const loaded = await stateStore.load();
-            vpRequests.clear();
-            for (const [requestId, request] of loaded?.vpRequests || []) {
-                vpRequests.set(requestId, request);
-            }
-            hydrated = true;
-        })();
-    }
-    await hydrationPromise;
-}
-
-async function queuePersist(): Promise<void> {
-    if (!stateStore) return;
-    persistChain = persistChain
-        .then(async () => {
-            await stateStore.save({
-                vpRequests: Array.from(vpRequests.entries()),
-            });
-        })
-        .catch((error) => {
-            console.error('[OID4VP] Persist failed:', error);
-        });
-    await persistChain;
-}
-
-function pruneExpiredVpRequests(): boolean {
-    let changed = false;
-    const now = Date.now();
-    for (const [requestId, request] of vpRequests.entries()) {
-        if ((request.createdAt + VP_REQUEST_TTL_MS) < now) {
-            vpRequests.delete(requestId);
-            changed = true;
-        }
-    }
-    return changed;
-}
-
-function pruneProofReplayCache(): void {
-    const now = Date.now();
-    for (const [key, expiresAt] of proofReplayCache.entries()) {
-        if (expiresAt <= now) {
-            proofReplayCache.delete(key);
-        }
-    }
-}
-
-function markProofReplayFingerprint(fingerprint: string): boolean {
-    pruneProofReplayCache();
-    if (proofReplayCache.has(fingerprint)) {
-        return false;
-    }
-    proofReplayCache.set(fingerprint, Date.now() + PROOF_REPLAY_TTL_MS);
-    return true;
-}
-
-function deriveProofReplayFingerprint(input: {
-    format: string;
-    proof: string | Record<string, unknown>;
-    challenge?: string;
-    domain?: string;
-}): string {
-    const proofDigest =
-        typeof input.proof === 'string'
-            ? crypto.createHash('sha256').update(input.proof).digest('hex')
-            : deterministicHash(input.proof, 'sha256');
-    return `${input.format}:${input.challenge || ''}:${input.domain || ''}:${proofDigest}`;
-}
-
-function mapCredentialValidity(
-    status: 'verified' | 'failed' | 'suspicious' | 'pending',
-): VerificationResultContract['credential_validity'] {
-    if (status === 'verified') return 'valid';
-    if (status === 'failed') return 'invalid';
-    return 'unknown';
-}
-
-function mapStatusValidity(riskFlags: string[]): VerificationResultContract['status_validity'] {
-    if (riskFlags.includes('REVOKED_CREDENTIAL')) return 'revoked';
-    return 'active';
-}
-
-function mapAnchorValidity(riskFlags: string[]): VerificationResultContract['anchor_validity'] {
-    if (riskFlags.includes('NO_BLOCKCHAIN_ANCHOR')) return 'pending';
-    return 'anchored';
-}
-
-function mapDecision(recommendation: string | undefined): VerificationResultContract['decision'] {
-    switch (recommendation) {
-        case 'accept':
-            return 'approve';
-        case 'reject':
-            return 'reject';
-        case 'review':
-            return 'review';
-        default:
-            return 'investigate';
-    }
-}
-
-
-function isUnsignedOrScannedCredential(credentialData: Record<string, unknown> | null): boolean {
-    if (!credentialData) return false;
-    const hasCryptographicProof = Boolean((credentialData as any).proof || (credentialData as any).signature);
-    if (!hasCryptographicProof) return true;
-
-    const scanHints = [
-        (credentialData as any).scanned,
-        (credentialData as any).scanResult,
-        (credentialData as any).scanSource,
-        (credentialData as any).documentScan,
-        (credentialData as any).ocr,
-    ];
-
-    return scanHints.some((value) => {
-        if (value === true) return true;
-        if (typeof value === 'string') {
-            const lowered = value.toLowerCase();
-            return lowered.includes('scan') || lowered.includes('ocr');
-        }
-        return false;
-    });
-}
-
-function applyLockedVerificationDecisionPolicy(input: {
-    riskFlags: string[];
-    recommendation?: string;
-    credentialData: Record<string, unknown> | null;
-}): VerificationResultContract['decision'] {
-    if (input.riskFlags.includes('INVALID_SIGNATURE')) {
-        return 'reject';
-    }
-    if (isUnsignedOrScannedCredential(input.credentialData)) {
-        return 'review';
-    }
-    return mapDecision(input.recommendation);
-}
-
-function toCandidateDecision(decision: VerificationResultContract['decision']): VerificationDecision {
-    return decision;
-}
-
-function buildCandidateSummaryContract(input: {
-    candidateId: string;
-    verificationResult: { confidence: number; riskScore: number; timestamp: Date; checks: Array<{ name: string; status: string }>; riskFlags: string[] };
-    decision: VerificationResultContract['decision'];
-    issuer?: string;
-}): CandidateVerificationSummary {
-    const confidence = Number(Math.max(0, Math.min(1, input.verificationResult.confidence)).toFixed(2));
-    const risk_score = Number((Math.max(0, Math.min(100, input.verificationResult.riskScore)) / 100).toFixed(2));
-    const score = Math.max(0, Math.min(1000, Math.round(confidence * 1000)));
-
-    const breakdown: WorkScoreBreakdown[] = input.verificationResult.checks.map((check) => ({
-        category: String(check.name || 'verification').toLowerCase().replace(/\s+/g, '_'),
-        weight: Number((1 / Math.max(input.verificationResult.checks.length, 1)).toFixed(2)),
-        score: check.status === 'passed' ? 100 : check.status === 'warning' ? 60 : 20,
-        weighted_score: check.status === 'passed' ? 100 : check.status === 'warning' ? 60 : 20,
-        event_count: 1,
-    }));
-
-    const evidence: VerificationEvidence[] = [
-        {
-            id: `verification-${input.verificationResult.timestamp.getTime()}`,
-            type: 'external_check',
-            issuer: input.issuer,
-            metadata: {
-                risk_flags: input.verificationResult.riskFlags,
-            },
-            verified_at: input.verificationResult.timestamp.toISOString(),
-        },
-    ];
-
-    return {
-        candidate_id: input.candidateId,
-        decision: toCandidateDecision(input.decision),
-        confidence,
-        risk_score,
-        reason_codes: input.verificationResult.riskFlags as ReasonCode[],
-        work_score: {
-            score,
-            max_score: 1000,
-            computed_at: input.verificationResult.timestamp.toISOString(),
-            breakdown,
-        },
-        evidence,
-    };
-}
-
-async function emitVerificationWebhook(event: string, payload: Record<string, unknown>): Promise<void> {
-    const targetUrl = process.env.VERIFICATION_WEBHOOK_URL;
-    if (!targetUrl) return;
-
-    const secret = process.env.VERIFICATION_WEBHOOK_SECRET || process.env.CREDENTIAL_WEBHOOK_SECRET;
-    const body = { event, ...payload };
-    const signed = secret ? signWebhook(body, secret) : null;
-
-    await fetch(targetUrl, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            ...(signed
-                ? {
-                    'X-Webhook-Timestamp': signed.timestamp,
-                    'X-Webhook-Signature': `sha256=${signed.signature}`,
-                }
-                : {}),
-        },
-        body: signed ? signed.payload : JSON.stringify(body),
-    });
-}
-
-function parseJwtPayloadSafely(jwt: string): Record<string, unknown> {
-    if (Buffer.byteLength(jwt, 'utf8') > MAX_JWT_BYTES) {
-        throw new Error('JWT payload is too large');
-    }
-    const parts = jwt.split('.');
-    if (parts.length < 2) {
-        throw new Error('Invalid JWT format');
-    }
-    const decoded = Buffer.from(parts[1], 'base64url').toString();
-    const parsed = JSON.parse(decoded);
-    if (!parsed || typeof parsed !== 'object') {
-        throw new Error('Invalid JWT payload');
-    }
-    return parsed as Record<string, unknown>;
-}
-
-function readString(value: unknown, fallback = 'Unknown'): string {
-    return typeof value === 'string' && value.trim().length > 0 ? value : fallback;
-}
-
-function readCredentialType(credentialData: Record<string, unknown> | null): string {
-    if (!credentialData) return 'Unknown';
-    const typeValue = credentialData.type;
-    if (Array.isArray(typeValue)) {
-        return readString(typeValue[0], 'Unknown');
-    }
-    return readString(typeValue, 'Unknown');
-}
-
-function readSubjectName(credentialData: Record<string, unknown> | null): string {
-    if (!credentialData) return 'Unknown';
-    const subjectValue = credentialData.credentialSubject;
-    if (!subjectValue || typeof subjectValue !== 'object') {
-        return 'Unknown';
-    }
-    return readString((subjectValue as Record<string, unknown>).name, 'Unknown');
-}
-
-function readIssuer(credentialData: Record<string, unknown> | null): string {
-    if (!credentialData) return 'Unknown';
-    const issuerValue = credentialData.issuer;
-    if (typeof issuerValue === 'string') return readString(issuerValue, 'Unknown');
-    if (!issuerValue || typeof issuerValue !== 'object') return 'Unknown';
-    const issuerObject = issuerValue as Record<string, unknown>;
-    return readString(issuerObject.name ?? issuerObject.id, 'Unknown');
-}
 
 // ============== Instant Verification ==============
 
@@ -656,11 +386,6 @@ router.post('/verify/link', requireProofAccess, writeIdempotency, async (req, re
 // ============== OpenID4VP + V1 Verification APIs ==============
 
 router.post('/v1/oid4vp/requests', authMiddleware, writeIdempotency, async (req, res) => {
-    await ensureHydrated();
-    if (pruneExpiredVpRequests()) {
-        await queuePersist();
-    }
-
     const { purpose = 'credential_verification', state } = req.body || {};
     if (typeof purpose !== 'string' || purpose.trim().length === 0 || purpose.length > 128) {
         return res.status(400).json({ error: 'invalid purpose' });
@@ -669,26 +394,15 @@ router.post('/v1/oid4vp/requests', authMiddleware, writeIdempotency, async (req,
         return res.status(400).json({ error: 'invalid state' });
     }
 
-    const requestId = `vp_req_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
-    const nonce = crypto.randomBytes(16).toString('hex');
-    const createdAt = Date.now();
-
-    vpRequests.set(requestId, {
-        id: requestId,
-        nonce,
-        createdAt,
-        purpose: purpose.trim(),
-        state,
-    });
-    await queuePersist();
+    const request = await oid4vpService.createRequest(purpose, state);
 
     res.status(201).json({
-        request_id: requestId,
-        nonce,
-        state: state || null,
-        expires_at: new Date(createdAt + VP_REQUEST_TTL_MS).toISOString(),
+        request_id: request.id,
+        nonce: request.nonce,
+        state: request.state || null,
+        expires_at: new Date(request.createdAt + oid4vpService.getTtlMs()).toISOString(),
         presentation_definition: {
-            id: requestId,
+            id: request.id,
             input_descriptors: [
                 {
                     id: 'credential',
@@ -704,17 +418,12 @@ router.post('/v1/oid4vp/requests', authMiddleware, writeIdempotency, async (req,
 
 router.post('/v1/oid4vp/responses', authMiddleware, writeIdempotency, async (req, res) => {
     try {
-        await ensureHydrated();
-        if (pruneExpiredVpRequests()) {
-            await queuePersist();
-        }
-
         const { request_id: requestId, vp_token: vpToken, credential, jwt, state } = req.body || {};
         if (typeof requestId !== 'string' || requestId.trim().length === 0) {
             return res.status(400).json({ error: 'request_id is required' });
         }
 
-        const request = vpRequests.get(requestId);
+        const request = await oid4vpService.getRequest(requestId);
         if (!request) {
             return res.status(400).json({ error: 'unknown request_id' });
         }
@@ -748,8 +457,7 @@ router.post('/v1/oid4vp/responses', authMiddleware, writeIdempotency, async (req
             raw: credential,
         });
 
-        vpRequests.delete(requestId);
-        await queuePersist();
+        await oid4vpService.deleteRequest(requestId);
 
         res.json({
             request_id: requestId,
@@ -782,13 +490,13 @@ router.post('/v1/proofs/verify', requireProofAccess, writeIdempotency, async (re
         const proof = payload.proof;
 
         if (payload.challenge || payload.domain) {
-            const fingerprint = deriveProofReplayFingerprint({
+            const fingerprint = proofReplayService.deriveProofReplayFingerprint({
                 format: payload.format,
                 proof,
                 challenge: payload.challenge,
                 domain: payload.domain,
             });
-            if (!markProofReplayFingerprint(fingerprint)) {
+            if (!proofReplayService.markProofReplayFingerprint(fingerprint)) {
                 return res.status(409).json({
                     error: 'Duplicate proof replay detected',
                     code: 'PROOF_REPLAY_DETECTED',
