@@ -106,6 +106,22 @@ const CLAIMS_RATE_LIMIT_WINDOW_MS = parsePositiveInt(process.env.MOBILE_PROXY_CL
 type RateLimitBucket = { count: number; resetAt: number };
 const claimsRateBuckets = new Map<string, RateLimitBucket>();
 
+export function __resetClaimsRateBucketsForTests(): void {
+    claimsRateBuckets.clear();
+}
+
+function hasProxyAuth(req: Request): boolean {
+    const authHeader = req.headers.authorization;
+    if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ') && authHeader.length > 7) {
+        return true;
+    }
+    const apiKeyHeader = req.headers['x-api-key'];
+    if (typeof apiKeyHeader === 'string' && apiKeyHeader.trim().length > 0) {
+        return true;
+    }
+    return false;
+}
+
 function normalizeSubpath(rawPath: string): string {
     return rawPath
         .replace(/^\/+/, '')
@@ -132,13 +148,6 @@ function isClaimsRoute(target: ProxyTarget, subpath: string): boolean {
 }
 
 function getClientIdentifier(req: Request): string {
-    const forwardedFor = req.headers['x-forwarded-for'];
-    if (typeof forwardedFor === 'string' && forwardedFor.trim()) {
-        return forwardedFor.split(',')[0]?.trim() || 'unknown';
-    }
-    if (Array.isArray(forwardedFor) && forwardedFor[0]) {
-        return forwardedFor[0].split(',')[0]?.trim() || 'unknown';
-    }
     return req.ip || 'unknown';
 }
 
@@ -337,6 +346,11 @@ router.all('/:target/*', async (req, res) => {
 
     if (!isSubpathAllowed(target, subpath)) {
         return res.status(403).json({ error: 'Route not allowed by mobile proxy policy' });
+    }
+
+    const isPublicMetadataRoute = target === 'issuer' && (subpath === '.well-known/openid-credential-issuer' || subpath.startsWith('.well-known/openid-credential-issuer/'));
+    if (!isPublicMetadataRoute && !hasProxyAuth(req)) {
+        return res.status(401).json({ error: 'Mobile proxy requires Authorization bearer token or X-API-Key' });
     }
 
     if (isClaimsRoute(target, subpath)) {
