@@ -1,23 +1,25 @@
-import { Router, Request, Response } from 'express';
+import { Router, type Request, type Response } from 'express';
+import {
+  type ReputationCategoryContract,
+  type ReputationEventContract,
+} from '@credverse/shared-auth';
 import { storage } from '../storage';
 import * as livenessService from '../services/liveness-service';
 import * as documentService from '../services/document-scanner-service';
 import {
-    calculateReputationScore,
-    calculateSafeDateScore,
-    deriveSafeDateInputs,
-    listReputationEvents,
-    ReputationCategory,
-    ReputationEventInput,
-    ReputationEventRecord,
-    upsertReputationEvent,
+  upsertReputationEvent,
+  calculateReputationScore,
+  calculateSafeDateScore,
+  deriveSafeDateInputs,
+  listReputationEvents,
+  type ReputationEventInput,
 } from '../services/reputation-rail-service';
 import { CredVerse, type CandidateVerificationSummary, type VerificationEvidence, type ReputationScoreContract, type SafeDateScoreContract } from '@credverse/trust';
 import { type ReasonCode } from '@credverse/shared-auth'; // ReasonCode not yet exported by trust-sdk
 
 const router = Router();
 
-const ALLOWED_CATEGORIES: ReputationCategory[] = [
+const ALLOWED_CATEGORIES: ReputationCategoryContract[] = [
     'transport',
     'accommodation',
     'delivery',
@@ -79,7 +81,7 @@ function mapVerificationDecision(score: number, safeDateScore: number, reasonCod
     return 'review';
 }
 
-function buildVerificationEvidence(events: ReputationEventRecord[]): VerificationEvidence[] {
+function buildVerificationEvidence(events: ReputationEventContract[]): VerificationEvidence[] {
     return events.slice(0, 10).map((event) => ({
         id: event.event_id,
         type: 'reputation_event',
@@ -117,11 +119,9 @@ async function buildCandidateVerificationSummary(userId: number): Promise<Candid
             score: reputationScore.score,
             max_score: 1000,
             computed_at: reputationScore.computed_at,
-            breakdown: reputationScore.category_breakdown.map((entry: { category: string; weight: number; score: number }) => ({
+            breakdown: reputationScore.category_breakdown.map((entry: any) => ({
                 ...entry,
                 weight: normalizeBreakdownWeight(entry.weight),
-                weighted_score: entry.score, // Fallback/derived value to satisfy WorkScoreBreakdown
-                event_count: 1 // Fallback/derived value to satisfy WorkScoreBreakdown
             })),
         },
         evidence: buildVerificationEvidence(recentEvents),
@@ -137,7 +137,7 @@ async function buildSafeDateSnapshot(userId: number): Promise<{ reputationScore:
                 trustSdk.getSafeDateScore({ userId }),
             ]);
             return { reputationScore, safeDate };
-        } catch (error: any) {
+        } catch (error) {
             console.warn('[reputation] Trust SDK fetch failed, using local fallback:', (error as Error)?.message || error);
         }
     }
@@ -169,8 +169,8 @@ router.get('/events', async (req: Request, res: Response) => {
         const userId = parseUserId(req.query.userId || 1);
         const categoryRaw = req.query.category ? String(req.query.category) : undefined;
         const category =
-            categoryRaw && ALLOWED_CATEGORIES.includes(categoryRaw as ReputationCategory)
-                ? (categoryRaw as ReputationCategory)
+            categoryRaw && ALLOWED_CATEGORIES.includes(categoryRaw as ReputationCategoryContract)
+                ? (categoryRaw as ReputationCategoryContract)
                 : undefined;
         const limit = Math.max(1, Math.min(500, Number(req.query.limit) || 100));
 
