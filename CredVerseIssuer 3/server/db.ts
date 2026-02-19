@@ -26,18 +26,6 @@ export function getDb() {
     return db;
 }
 
-export function getPool() {
-    if (!DATABASE_URL) {
-        return null;
-    }
-
-    if (!pool) {
-        getDb();
-    }
-
-    return pool;
-}
-
 export function isDbConnected(): boolean {
     return !!DATABASE_URL && !!db;
 }
@@ -50,4 +38,4 @@ export async function closeDb() {
     }
 }
 
-export { db, pool };
+export { db };

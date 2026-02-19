@@ -1,5 +1,4 @@
 import crypto from 'crypto';
-import { logger } from './logger';
 
 /**
  * DigiLocker Integration Service
@@ -96,7 +95,7 @@ export class DigiLockerService {
         this.useSandbox = process.env.DIGILOCKER_SANDBOX === 'true';
 
         if (!this.isConfigured && !this.demoMode) {
-            logger.warn('[DigiLocker] Credentials are not configured. DigiLocker operations are disabled.');
+            console.warn('[DigiLocker] Credentials are not configured. DigiLocker operations are disabled.');
         }
     }
 
@@ -181,7 +180,7 @@ export class DigiLockerService {
 
         // For demo mode, simulate token response
         if (this.demoMode) {
-            logger.info('[DigiLocker] Demo mode - simulating token exchange');
+            console.log('[DigiLocker] Demo mode - simulating token exchange');
             const demoTokens: DigiLockerTokens = {
                 access_token: `demo_access_token_${crypto.randomBytes(16).toString('hex')}`,
                 refresh_token: `demo_refresh_token_${crypto.randomBytes(16).toString('hex')}`,

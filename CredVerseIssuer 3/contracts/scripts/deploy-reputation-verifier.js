@@ -24,19 +24,6 @@ async function main() {
   const ageVerificationVerifier = requireAddress("ZK_VERIFIER_AGE_VERIFICATION");
   const crossVerticalAggregateVerifier = requireAddress("ZK_VERIFIER_CROSS_VERTICAL_AGGREGATE");
 
-  // Verify all verifier addresses have deployed bytecode (reject EOAs / empty addresses)
-  for (const [name, addr] of [
-    ["ZK_VERIFIER_SCORE_THRESHOLD", scoreThresholdVerifier],
-    ["ZK_VERIFIER_AGE_VERIFICATION", ageVerificationVerifier],
-    ["ZK_VERIFIER_CROSS_VERTICAL_AGGREGATE", crossVerticalAggregateVerifier],
-  ]) {
-    const code = await hre.ethers.provider.getCode(addr);
-    if (code === "0x" || code.length <= 2) {
-      throw new Error(`${name} (${addr}) has no deployed bytecode — refusing to deploy with empty/EOA verifier.`);
-    }
-    console.log(`✅ ${name} has deployed bytecode (${code.length} hex chars)`);
-  }
-
   const ReputationVerifier = await hre.ethers.getContractFactory("ReputationVerifier");
   const contract = await ReputationVerifier.deploy(
     scoreThresholdVerifier,

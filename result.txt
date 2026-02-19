@@ -1,0 +1,69 @@
+Checking status...
+{"message":"Missing or invalid API Key"}<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script type="module">
+import { createHotContext } from "/@vite/client";
+const hot = createHotContext("/__dummy__runtime-error-plugin");
+
+function sendError(error) {
+  if (!(error instanceof Error)) {
+    error = new Error("(unknown runtime error)");
+  }
+  const serialized = {
+    message: error.message,
+    stack: error.stack,
+  };
+  hot.send("runtime-error-plugin:error", serialized);
+}
+
+window.addEventListener("error", (evt) => {
+  sendError(evt.error);
+});
+
+window.addEventListener("unhandledrejection", (evt) => {
+  sendError(evt.reason);
+});
+</script>
+
+    <script type="module">import { injectIntoGlobalHook } from "/@react-refresh";
+injectIntoGlobalHook(window);
+window.$RefreshReg$ = () => {};
+window.$RefreshSig$ = () => (type) => type;</script>
+
+    <script type="module" src="/@vite/client"></script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+
+    <meta property="og:title" content="BlockCred Wallet" />
+    <meta property="og:description" content="Secure Block-based Credential Wallet with DigiLocker Integration" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://replit.com/public/images/opengraph.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@replit" />
+    <meta name="twitter:title" content="BlockCred Wallet" />
+    <meta name="twitter:description" content="Secure Block-based Credential Wallet with DigiLocker Integration" />
+    <meta name="twitter:image" content="https://replit.com/public/images/opengraph.png" />
+
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx?v=lny3y6fIGxWEy1a2e3IvB"></script>
+  </body>
+</html>Creating Template...
+Template Response: {"tenantId":"550e8400-e29b-41d4-a716-446655440000","name":"Degree","schema":{"type":"object"},"render":"Cert","id":"002d9676-1257-4b7a-8e06-22ef739998e8","createdAt":"2025-12-06T21:23:51.525Z","version":"1.0.0","disclosure":{}}
+Template ID: 002d9676-1257-4b7a-8e06-22ef739998e8
+Creating Issuer...
+Issuer ID: 507a3694-0c3e-4c9b-b36a-7cb2bedc2099
+Issuing Credential...
+Credential ID: d61649dc-7f42-4ed1-a457-743c290d7b36
+Create Offer...
+zsh: command not found: #
+Offer URL: http://localhost:5001/api/v1/public/issuance/offer/consume?token=2453479c-e32f-43e7-a3a9-c770d1e1e01d
+Claiming...
+{"success":true,"credential":{"id":"cred-1765056232071-b22cko","type":["VerifiableCredential","Imported"],"issuer":"507a3694-0c3e-4c9b-b36a-7cb2bedc2099","issuanceDate":"2025-12-06T21:23:52.070Z","data":{"name":"Test Cert"},"jwt":"eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6a2V5OjEyMyIsImlzcyI6ImRpZDp3ZWI6dGVzdC5jb20iLCJpYXQiOjE3NjUwNTYyMzEsIm5iZiI6MTc2NTA1NjIzMSwiZXhwIjoxNzk2NTkyMjMxLCJ2YyI6eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsImh0dHBzOi8vY3JlZHZlcnNlLmlvL2NvbnRleHQvdjEiXSwidHlwZSI6WyJWZXJpZmlhYmxlQ3JlZGVudGlhbCIsIkRlZ3JlZSJdLCJpc3N1ZXIiOnsiaWQiOiJkaWQ6d2ViOnRlc3QuY29tIiwibmFtZSI6IlRlc3QgSXNzdWVyIn0sImlzc3VhbmNlRGF0ZSI6IjIwMjUtMTItMDZUMjE6MjM6NTEuNjY5WiIsImNyZWRlbnRpYWxTdWJqZWN0Ijp7ImlkIjoiZGlkOmtleToxMjMiLCJuYW1lIjoiVGVzdCBDZXJ0In19fQ.sig_dad3d9fe21cb4a79b4e2ecfb9d488af8","encryptedData":"9d8daaa8542789e2bf242607df258265:6a48ac846ccc7d75b0536aea84d5107a:c825c7daeed641719c3403e195f3ca14f9b4bf55","hash":"bbd51fdb8f4d03bba3a7d4cb75f2ba210997e5fb7dd4023337844156543cabf4","anchorStatus":"pending","category":"other","verificationCount":0},"message":"Credential claimed successfully"}

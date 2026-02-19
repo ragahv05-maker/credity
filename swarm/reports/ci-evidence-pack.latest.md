@@ -1,15 +1,15 @@
 # CI Evidence Pack (Hosted)
 
-Generated: 19 Feb 2026, 1:40:33 am (IST)
+Generated: 15 Feb 2026, 3:30:08 am (IST)
 
 ## Release metadata
-- Commit SHA: <commit-sha>
-- Release ref: <release-ref>
+- Commit SHA: ddd8b702dedb895f63ca06c562cfd6448d53a2c4
+- Release ref: main
 
 ## Hosted workflow links
-- quality-gates-ci: <quality-gates-run-url>
-- contract-security-ci: <contract-security-run-url>
-- launch-gate: <launch-gate-run-url>
+- quality-gates-ci: https://github.com/ragahv05-maker/credity/actions/runs/22024661938
+- contract-security-ci: https://github.com/ragahv05-maker/credity/actions/runs/22022153594
+- launch-gate: https://github.com/ragahv05-maker/credity/actions/runs/22022372832
 
 ## Artifact checklist
 - [ ] quality-gates-evidence-<run_id> artifact downloaded/linked

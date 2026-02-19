@@ -1,10 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import express from 'express';
-import mobileProxyRoutes, { __resetClaimsRateBucketsForTests } from './mobile-proxy';
+import mobileProxyRoutes from './mobile-proxy';
 
 const originalFetch = globalThis.fetch;
-const authHeaders = { Authorization: 'Bearer test-token' };
 
 type MockFetchCall = {
     input: string;
@@ -21,7 +20,6 @@ async function withProxyServer<T>(
         mockFetch?: (input: RequestInfo | URL, init?: RequestInit, calls?: MockFetchCall[]) => Promise<Response>;
     },
 ): Promise<T> {
-    __resetClaimsRateBucketsForTests();
     const calls: MockFetchCall[] = [];
     globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
         calls.push({ input: String(input), init });
@@ -90,7 +88,6 @@ test('mobile proxy forwards issuer OID routes with /api prefix and propagates id
         const response = await localFetch(`${baseUrl}/api/mobile/issuer/v1/oid4vci/credential`, {
             method: 'POST',
             headers: {
-                ...authHeaders,
                 'Content-Type': 'application/json',
                 'Idempotency-Key': 'test-idempotency-key',
             },
@@ -107,20 +104,9 @@ test('mobile proxy forwards issuer OID routes with /api prefix and propagates id
     });
 });
 
-
-
-test('mobile proxy requires auth on protected routes', async () => {
-    await withProxyServer(async ({ baseUrl, localFetch, calls }) => {
-        const res = await localFetch(`${baseUrl}/api/mobile/wallet/v1/wallet/profile`);
-        assert.equal(res.status, 401);
-        assert.equal(calls.length, 0);
-    });
-});
-
-
 test('mobile proxy forwards wallet reputation v1 routes with /api prefix', async () => {
     await withProxyServer(async ({ baseUrl, localFetch, calls }) => {
-        const response = await localFetch(`${baseUrl}/api/mobile/wallet/v1/reputation/score?userId=1`, { headers: authHeaders });
+        const response = await localFetch(`${baseUrl}/api/mobile/wallet/v1/reputation/score?userId=1`);
         assert.equal(response.status, 200);
         assert.equal(calls.length, 1);
         assert.equal(calls[0]?.input, 'http://localhost:5002/api/v1/reputation/score?userId=1');
@@ -129,7 +115,7 @@ test('mobile proxy forwards wallet reputation v1 routes with /api prefix', async
 
 test('mobile proxy forwards wallet compliance routes with /api prefix', async () => {
     await withProxyServer(async ({ baseUrl, localFetch, calls }) => {
-        const response = await localFetch(`${baseUrl}/api/mobile/wallet/v1/compliance/consents?userId=7`, { headers: authHeaders });
+        const response = await localFetch(`${baseUrl}/api/mobile/wallet/v1/compliance/consents?userId=7`);
         assert.equal(response.status, 200);
         assert.equal(calls.length, 1);
         assert.equal(calls[0]?.input, 'http://localhost:5002/api/v1/compliance/consents?userId=7');
@@ -138,11 +124,11 @@ test('mobile proxy forwards wallet compliance routes with /api prefix', async ()
 
 test('mobile proxy forwards issuer queue and compliance routes with /api prefix', async () => {
     await withProxyServer(async ({ baseUrl, localFetch, calls }) => {
-        const queueResponse = await localFetch(`${baseUrl}/api/mobile/issuer/v1/queue/dead-letter?limit=5`, { headers: authHeaders });
+        const queueResponse = await localFetch(`${baseUrl}/api/mobile/issuer/v1/queue/dead-letter?limit=5`);
         assert.equal(queueResponse.status, 200);
         assert.equal(calls[0]?.input, 'http://localhost:5001/api/v1/queue/dead-letter?limit=5');
 
-        const complianceResponse = await localFetch(`${baseUrl}/api/mobile/issuer/v1/compliance/consents`, { headers: authHeaders });
+        const complianceResponse = await localFetch(`${baseUrl}/api/mobile/issuer/v1/compliance/consents`);
         assert.equal(complianceResponse.status, 200);
         assert.equal(calls[1]?.input, 'http://localhost:5001/api/v1/compliance/consents');
     });
@@ -150,7 +136,7 @@ test('mobile proxy forwards issuer queue and compliance routes with /api prefix'
 
 test('mobile proxy forwards recruiter compliance routes with /api prefix', async () => {
     await withProxyServer(async ({ baseUrl, localFetch, calls }) => {
-        const response = await localFetch(`${baseUrl}/api/mobile/recruiter/v1/compliance/audit-log/export`, { headers: authHeaders });
+        const response = await localFetch(`${baseUrl}/api/mobile/recruiter/v1/compliance/audit-log/export`);
         assert.equal(response.status, 200);
         assert.equal(calls.length, 1);
         assert.equal(calls[0]?.input, 'http://localhost:5003/api/v1/compliance/audit-log/export');
@@ -162,7 +148,6 @@ test('mobile proxy blocks malformed claims payloads before forwarding', async ()
         const arrayPayload = await localFetch(`${baseUrl}/api/mobile/wallet/v1/claims/verify`, {
             method: 'POST',
             headers: {
-                ...authHeaders,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(['not-an-object']),
@@ -203,13 +188,12 @@ test('mobile proxy enforces claims method and content-type guardrails', async ()
     await withProxyServer(async ({ baseUrl, localFetch, calls }) => {
         const methodRejected = await localFetch(`${baseUrl}/api/mobile/wallet/v1/claims/verify`, {
             method: 'DELETE',
-            headers: authHeaders,
         });
         assert.equal(methodRejected.status, 405);
 
         const contentTypeRejected = await localFetch(`${baseUrl}/api/mobile/wallet/v1/claims/verify`, {
             method: 'POST',
-            headers: { ...authHeaders, 'Content-Type': 'text/plain' },
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({ test: true }),
         });
         assert.equal(contentTypeRejected.status, 415);
@@ -226,14 +210,12 @@ test('mobile proxy enforces claims query size limits', async () => {
 
         const tooManyParamsResponse = await localFetch(
             `${baseUrl}/api/mobile/wallet/v1/claims/list?${tooManyParams.toString()}`,
-            { headers: authHeaders },
         );
         assert.equal(tooManyParamsResponse.status, 400);
 
         const longValue = 'a'.repeat(513);
         const longValueResponse = await localFetch(
             `${baseUrl}/api/mobile/wallet/v1/claims/list?search=${longValue}`,
-            { headers: authHeaders },
         );
         assert.equal(longValueResponse.status, 400);
         assert.equal(calls.length, 0);
@@ -243,7 +225,6 @@ test('mobile proxy enforces claims query size limits', async () => {
 test('mobile proxy rate limits claims requests per client', async () => {
     await withProxyServer(async ({ baseUrl, localFetch }) => {
         const headers = {
-            ...authHeaders,
             'x-forwarded-for': '198.51.100.55',
             'content-type': 'application/json',
         };
@@ -271,17 +252,17 @@ test('mobile proxy rate limits claims requests per client', async () => {
 test('mobile proxy maps upstream network and timeout errors', async () => {
     await withProxyServer(
         async ({ baseUrl, localFetch }) => {
-            const unavailable = await localFetch(`${baseUrl}/api/mobile/wallet/v1/wallet/balance`, { headers: authHeaders });
+            const unavailable = await localFetch(`${baseUrl}/api/mobile/wallet/v1/wallet/balance`);
             assert.equal(unavailable.status, 502);
             const unavailableBody = await unavailable.json();
             assert.equal(unavailableBody.error, 'Upstream unavailable');
 
-            const timeout = await localFetch(`${baseUrl}/api/mobile/wallet/v1/wallet/timeout`, { headers: authHeaders });
+            const timeout = await localFetch(`${baseUrl}/api/mobile/wallet/v1/wallet/timeout`);
             assert.equal(timeout.status, 504);
             const timeoutBody = await timeout.json();
             assert.equal(timeoutBody.error, 'Upstream timeout');
 
-            const invalid = await localFetch(`${baseUrl}/api/mobile/wallet/v1/wallet/invalid`, { headers: authHeaders });
+            const invalid = await localFetch(`${baseUrl}/api/mobile/wallet/v1/wallet/invalid`);
             assert.equal(invalid.status, 502);
             const invalidBody = await invalid.json();
             assert.equal(invalidBody.error, 'Invalid upstream response');

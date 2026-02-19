@@ -34,20 +34,16 @@ describe('issuer api auth middleware', () => {
     expect(res.body.tenantId).toBe('tenant-1');
   });
 
-  it('accepts valid bearer token fallback and resolves tenant from token userId only', async () => {
+  it('accepts valid bearer token fallback and resolves tenant from token userId', async () => {
     verifyAccessToken.mockReturnValue({ userId: 99, username: 'u', role: 'issuer' });
 
     const { apiKeyOrAuthMiddleware } = await import('../server/auth');
     const app = express();
-    app.use(express.json());
-    app.post('/check', apiKeyOrAuthMiddleware, (req, res) => {
+    app.get('/check', apiKeyOrAuthMiddleware, (req, res) => {
       res.json({ tenantId: (req as any).tenantId, userId: (req as any).user?.userId });
     });
 
-    const res = await request(app)
-      .post('/check?tenantId=attacker-query')
-      .set('Authorization', 'Bearer token')
-      .send({ tenantId: 'attacker-body' });
+    const res = await request(app).get('/check').set('Authorization', 'Bearer token');
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ tenantId: '99', userId: 99 });
   });

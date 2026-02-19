@@ -22,9 +22,7 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
   const verifierToken = generateVerifierAccessToken({ id: '1', username: 'verifier', role: 'recruiter' });
   const verifierWrongRoleToken = generateVerifierAccessToken({ id: '2', username: 'issuer-user', role: 'issuer' });
   const walletToken = generateWalletAccessToken({ id: 1, username: 'holder', role: 'holder' });
-  // Bearer flow uses tenant derived from token userId in issuer auth middleware.
-  // Align it with the bootstrap/API-key tenant used by seeded templates.
-  const issuerBearerToken = generateIssuerAccessToken({ id: 'issuer-1', username: 'issuer-e2e', role: 'issuer' });
+  const issuerBearerToken = generateIssuerAccessToken({ id: 'issuer-e2e', username: 'issuer-e2e', role: 'issuer' });
 
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
@@ -161,34 +159,12 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
     });
     expect(apiKeyFlow.storedCredential).toBeTruthy();
 
-    const bearerIssueRes = await fetch('http://127.0.0.1:5001/api/v1/credentials/issue?tenantId=550e8400-e29b-41d4-a716-446655440000', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        Authorization: `Bearer ${issuerBearerToken}`,
-      },
-      body: JSON.stringify({
-        templateId: 'template-1',
-        issuerId: 'issuer-1',
-        recipient: {
-          name: 'E2E Candidate bearer',
-          email: 'e2e+bearer@example.com',
-          studentId: 'E2E-bearer',
-        },
-        credentialData: {
-          credentialName: 'Bachelor of Technology',
-          major: 'Computer Science',
-          grade: 'A',
-        },
-      }),
+    const bearerFlow = await issueOfferClaim({
+      mode: 'active',
+      auth: { kind: 'bearer', token: issuerBearerToken },
+      suffix: 'bearer',
     });
-    const bearerIssueBody = await bearerIssueRes.json() as Record<string, unknown>;
-    expect([201, 403]).toContain(bearerIssueRes.status);
-    if (bearerIssueRes.status === 403) {
-      expect(bearerIssueBody.code).toBe('TEMPLATE_FORBIDDEN');
-    } else {
-      expect(bearerIssueBody.id).toBeTruthy();
-    }
+    expect(bearerFlow.storedCredential).toBeTruthy();
   });
 
   it('covers blockchain proof modes deterministically (active, deferred, writes-disabled)', async () => {

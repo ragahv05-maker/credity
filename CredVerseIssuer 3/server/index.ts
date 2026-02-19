@@ -26,8 +26,8 @@ import { createServer } from "http";
 const app = express();
 const httpServer = createServer(app);
 
-const requireDatabase = process.env.REQUIRE_DATABASE === 'true';
-const requireQueue = process.env.REQUIRE_QUEUE === 'true';
+const requireDatabase = process.env.NODE_ENV === 'production' || process.env.REQUIRE_DATABASE === 'true';
+const requireQueue = process.env.NODE_ENV === 'production' || process.env.REQUIRE_QUEUE === 'true';
 
 if (requireDatabase && !process.env.DATABASE_URL) {
   console.error('[Startup] REQUIRE_DATABASE policy is enabled but DATABASE_URL is missing.');
@@ -40,14 +40,8 @@ if (requireQueue && !process.env.REDIS_URL) {
 if (requireDatabase) {
   console.log('[Startup] Database persistence policy is enforced.');
 }
-if (process.env.NODE_ENV === 'production' && !requireDatabase) {
-  console.warn('[Startup] REQUIRE_DATABASE is not enabled; service will run without mandatory DATABASE_URL gate.');
-}
 if (requireQueue) {
   console.log('[Startup] Queue-backed processing policy is enforced.');
-}
-if (process.env.NODE_ENV === 'production' && !requireQueue) {
-  console.warn('[Startup] REQUIRE_QUEUE is not enabled; service will run with queue features optional.');
 }
 
 initAuth({
@@ -72,12 +66,14 @@ app.use(helmet({
 }));
 
 // CORS configuration
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map((origin) => origin.trim()).filter(Boolean)
-  : [];
-if (process.env.NODE_ENV === 'production' && allowedOrigins.length === 0) {
-  throw new Error('SECURITY CRITICAL: ALLOWED_ORIGINS must be explicitly configured in production.');
-}
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
+  'http://localhost:5000',
+  'http://localhost:5001',
+  'http://localhost:5002',
+  'http://localhost:5003',
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, curl, etc)
@@ -131,32 +127,6 @@ export function log(message: string, source = "express") {
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 
-function redactSensitive(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    return value.map((item) => redactSensitive(item));
-  }
-  if (!value || typeof value !== 'object') {
-    return value;
-  }
-
-  const redacted: Record<string, unknown> = {};
-  for (const [key, nestedValue] of Object.entries(value as Record<string, unknown>)) {
-    const lowered = key.toLowerCase();
-    if (
-      lowered.includes('token') ||
-      lowered.includes('authorization') ||
-      lowered.includes('password') ||
-      lowered.includes('secret') ||
-      lowered.includes('cookie')
-    ) {
-      redacted[key] = '[REDACTED]';
-      continue;
-    }
-    redacted[key] = redactSensitive(nestedValue);
-  }
-  return redacted;
-}
-
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -173,7 +143,7 @@ app.use((req, res, next) => {
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(redactSensitive(capturedJsonResponse))}`;
+        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
 
       log(logLine);
@@ -206,9 +176,11 @@ app.use((req, res, next) => {
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const parsedPort = Number(process.env.PORT);
-  const port = Number.isFinite(parsedPort) && parsedPort > 0 ? parsedPort : 5000;
-  httpServer.listen(port, '0.0.0.0', () => {
-    log(`serving on port ${port}`);
-  });
+  const port = parseInt(process.env.PORT || "5000", 10);
+  httpServer.listen(
+    port,
+    () => {
+      log(`serving on port ${port}`);
+    },
+  );
 })();
