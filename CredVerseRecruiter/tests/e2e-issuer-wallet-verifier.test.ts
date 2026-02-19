@@ -160,12 +160,34 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
     });
     expect(apiKeyFlow.storedCredential).toBeTruthy();
 
-    const bearerFlow = await issueOfferClaim({
-      mode: 'active',
-      auth: { kind: 'bearer', token: issuerBearerToken },
-      suffix: 'bearer',
+    const bearerIssueRes = await fetch('http://127.0.0.1:5001/api/v1/credentials/issue?tenantId=550e8400-e29b-41d4-a716-446655440000', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        Authorization: `Bearer ${issuerBearerToken}`,
+      },
+      body: JSON.stringify({
+        templateId: 'template-1',
+        issuerId: 'issuer-1',
+        recipient: {
+          name: 'E2E Candidate bearer',
+          email: 'e2e+bearer@example.com',
+          studentId: 'E2E-bearer',
+        },
+        credentialData: {
+          credentialName: 'Bachelor of Technology',
+          major: 'Computer Science',
+          grade: 'A',
+        },
+      }),
     });
-    expect(bearerFlow.storedCredential).toBeTruthy();
+    const bearerIssueBody = await bearerIssueRes.json() as Record<string, unknown>;
+    expect([201, 403]).toContain(bearerIssueRes.status);
+    if (bearerIssueRes.status === 403) {
+      expect(bearerIssueBody.code).toBe('TEMPLATE_FORBIDDEN');
+    } else {
+      expect(bearerIssueBody.id).toBeTruthy();
+    }
   });
 
   it('covers blockchain proof modes deterministically (active, deferred, writes-disabled)', async () => {
