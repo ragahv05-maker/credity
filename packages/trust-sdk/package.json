@@ -28,5 +28,8 @@
     "globals": "^16.5.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.36.0"
+  },
+  "overrides": {
+    "minimatch": "^10.2.1"
   }
 }
