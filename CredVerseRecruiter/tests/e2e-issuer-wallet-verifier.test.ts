@@ -1,7 +1,8 @@
-import express from 'express';
-import { createServer, Server } from 'http';
-import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import express from 'express';
+import { createServer, type Server } from 'http';
+import request from 'supertest';
+
 import { registerRoutes as registerIssuerRoutes } from '../../CredVerseIssuer 3/server/routes';
 import { registerRoutes as registerWalletRoutes } from '../../BlockWalletDigi/server/routes';
 import { registerRoutes as registerVerifierRoutes } from '../server/routes';
@@ -92,10 +93,8 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
           studentId: `E2E-${params.suffix}`,
         },
         credentialData: {
-          studentName: `E2E Candidate ${params.suffix}`,
-          studentId: `E2E-${params.suffix}`,
-          program: 'Computer Science',
-          completionYear: '2025',
+          credentialName: 'Bachelor of Technology',
+          major: 'Computer Science',
           grade: 'A',
         },
       }),
@@ -161,34 +160,12 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
     });
     expect(apiKeyFlow.storedCredential).toBeTruthy();
 
-    const bearerIssueRes = await fetch('http://127.0.0.1:5001/api/v1/credentials/issue?tenantId=550e8400-e29b-41d4-a716-446655440000', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        Authorization: `Bearer ${issuerBearerToken}`,
-      },
-      body: JSON.stringify({
-        templateId: 'template-1',
-        issuerId: 'issuer-1',
-        recipient: {
-          name: 'E2E Candidate bearer',
-          email: 'e2e+bearer@example.com',
-          studentId: 'E2E-bearer',
-        },
-        credentialData: {
-          credentialName: 'Bachelor of Technology',
-          major: 'Computer Science',
-          grade: 'A',
-        },
-      }),
+    const bearerFlow = await issueOfferClaim({
+      mode: 'active',
+      auth: { kind: 'bearer', token: issuerBearerToken },
+      suffix: 'bearer',
     });
-    const bearerIssueBody = await bearerIssueRes.json() as Record<string, unknown>;
-    expect([201, 403]).toContain(bearerIssueRes.status);
-    if (bearerIssueRes.status === 403) {
-      expect(bearerIssueBody.code).toBe('TEMPLATE_FORBIDDEN');
-    } else {
-      expect(bearerIssueBody.id).toBeTruthy();
-    }
+    expect(bearerFlow.storedCredential).toBeTruthy();
   });
 
   it('covers blockchain proof modes deterministically (active, deferred, writes-disabled)', async () => {

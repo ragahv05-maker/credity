@@ -156,4 +156,3 @@ export {
     computeAuditEventHash,
     verifyAuditChain,
 } from './audit-chain.js';
-export { PersistentService, type PersistentServiceOptions } from './persistent-service.js';

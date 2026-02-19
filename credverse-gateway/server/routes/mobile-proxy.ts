@@ -106,10 +106,6 @@ const CLAIMS_RATE_LIMIT_WINDOW_MS = parsePositiveInt(process.env.MOBILE_PROXY_CL
 type RateLimitBucket = { count: number; resetAt: number };
 const claimsRateBuckets = new Map<string, RateLimitBucket>();
 
-export function __resetClaimsRateBucketsForTests(): void {
-    claimsRateBuckets.clear();
-}
-
 function hasProxyAuth(req: Request): boolean {
     const authHeader = req.headers.authorization;
     if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ') && authHeader.length > 7) {

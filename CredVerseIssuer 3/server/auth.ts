@@ -182,23 +182,15 @@ export function setupPassport(app: Express) {
   });
 }
 
-/**
- * Middleware to enforce authentication.
- * Checks for:
- * 1. Passport session (req.isAuthenticated())
- * 2. API Key context (req.tenantId)
- * 3. JWT context (req.user)
- */
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
-    // 1. Check for active Passport session
     if (req.isAuthenticated()) {
         return next();
     }
 
-    // 2. Check for API Key context or JWT context (from upstream middleware)
+    // For now, we'll assume if tenantId is present (via API key), it's "authenticated" for API access
+    // Or if it's a browser session, we'd check req.session
     if ((req as any).tenantId || (req as any).user) {
         return next();
     }
-
     res.status(401).json({ message: "Unauthorized", code: "AUTH_UNAUTHORIZED" });
 }
