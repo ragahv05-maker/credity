@@ -49,6 +49,9 @@
     "zk:build": "cd zk && npm run build:circuits",
     "zk:prove": "cd zk && npm run prove"
   },
+  "overrides": {
+    "minimatch": "^10.2.1"
+  },
   "keywords": [
     "credential",
     "blockchain",
