@@ -9,6 +9,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import helmet from "helmet";
 import cors from "cors";
 import { errorHandler } from "./middleware/error-handler";
+import { sanitizeContext } from "./middleware/observability";
 import { setupSecurity } from "@credverse/shared-auth";
 import { initAuth } from "@credverse/shared-auth";
 import { registerRoutes } from "./routes";
@@ -89,7 +90,7 @@ app.use((req, res, next) => {
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+        logLine += ` :: ${JSON.stringify(sanitizeContext(capturedJsonResponse))}`;
       }
 
       log(logLine);
