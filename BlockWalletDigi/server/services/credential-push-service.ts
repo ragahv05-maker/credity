@@ -248,7 +248,7 @@ async function sendWebhookNotification(
         });
         logger.info(`[Push] Webhook sent to ${config.url} for event ${event}`);
     } catch (error) {
-        logger.error(`[Push] Webhook failed:`, error);
+        logger.error(error, `[Push] Webhook failed:`);
     }
 }
 
