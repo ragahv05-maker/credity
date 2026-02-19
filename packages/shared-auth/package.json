@@ -40,7 +40,7 @@
         "@types/hpp": "^0.2.7",
         "@types/jsonwebtoken": "^9.0.10",
         "@types/pg": "^8.16.0",
-        "eslint": "^9.39.2",
+        "eslint": "^10.0.0",
         "eslint-config-prettier": "^10.1.8",
         "globals": "^16.5.0",
         "prettier": "^3.8.1",
