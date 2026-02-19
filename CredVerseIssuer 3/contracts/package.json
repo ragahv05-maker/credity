@@ -38,5 +38,8 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.4.0"
+  },
+  "overrides": {
+    "minimatch": "^10.2.1"
   }
 }
