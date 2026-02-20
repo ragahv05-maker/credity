@@ -1,0 +1,115 @@
+{
+  "generatedAt": "2026-02-20T22:14:53.564Z",
+  "sampleCount": 5,
+  "sampleDelayMs": 300,
+  "services": [
+    {
+      "service": "gateway",
+      "baseUrl": "http://localhost:5173",
+      "checks": {
+        "healthUrl": "http://localhost:5173/api/health",
+        "metricsUrl": "http://localhost:5173/api/metrics",
+        "sampleCount": 5,
+        "successCount": 0,
+        "availabilityPct": 0,
+        "p50Ms": 5,
+        "p95Ms": 21,
+        "p99Ms": 21,
+        "maxMs": 21
+      },
+      "tracePropagation": {
+        "observedHeaderPairs": [],
+        "passed": false
+      },
+      "metricsEndpoint": {
+        "ok": false,
+        "status": 0,
+        "hasPrometheusShape": false,
+        "sample": [
+          ""
+        ]
+      }
+    },
+    {
+      "service": "issuer",
+      "baseUrl": "http://localhost:5001",
+      "checks": {
+        "healthUrl": "http://localhost:5001/api/health",
+        "metricsUrl": "http://localhost:5001/api/metrics",
+        "sampleCount": 5,
+        "successCount": 0,
+        "availabilityPct": 0,
+        "p50Ms": 3,
+        "p95Ms": 5,
+        "p99Ms": 5,
+        "maxMs": 5
+      },
+      "tracePropagation": {
+        "observedHeaderPairs": [],
+        "passed": false
+      },
+      "metricsEndpoint": {
+        "ok": false,
+        "status": 0,
+        "hasPrometheusShape": false,
+        "sample": [
+          ""
+        ]
+      }
+    },
+    {
+      "service": "wallet",
+      "baseUrl": "http://localhost:5002",
+      "checks": {
+        "healthUrl": "http://localhost:5002/api/health",
+        "metricsUrl": "http://localhost:5002/api/metrics",
+        "sampleCount": 5,
+        "successCount": 0,
+        "availabilityPct": 0,
+        "p50Ms": 3,
+        "p95Ms": 3,
+        "p99Ms": 3,
+        "maxMs": 3
+      },
+      "tracePropagation": {
+        "observedHeaderPairs": [],
+        "passed": false
+      },
+      "metricsEndpoint": {
+        "ok": false,
+        "status": 0,
+        "hasPrometheusShape": false,
+        "sample": [
+          ""
+        ]
+      }
+    },
+    {
+      "service": "recruiter",
+      "baseUrl": "http://localhost:5003",
+      "checks": {
+        "healthUrl": "http://localhost:5003/api/health",
+        "metricsUrl": "http://localhost:5003/api/metrics",
+        "sampleCount": 5,
+        "successCount": 0,
+        "availabilityPct": 0,
+        "p50Ms": 3,
+        "p95Ms": 4,
+        "p99Ms": 4,
+        "maxMs": 4
+      },
+      "tracePropagation": {
+        "observedHeaderPairs": [],
+        "passed": false
+      },
+      "metricsEndpoint": {
+        "ok": false,
+        "status": 0,
+        "hasPrometheusShape": false,
+        "sample": [
+          ""
+        ]
+      }
+    }
+  ]
+}

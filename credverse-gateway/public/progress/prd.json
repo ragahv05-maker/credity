@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-02-17T12:35:38.152Z",
+  "generatedAt": "2026-02-20T21:21:31.548Z",
   "totalFeatures": 14,
-  "achievedScore": 2,
-  "prdCompletionPct": 14.3,
-  "mappedEvidenceFeatures": 4,
+  "achievedScore": 4,
+  "prdCompletionPct": 28.6,
+  "mappedEvidenceFeatures": 14,
   "items": [
     {
       "name": "User Onboarding & Authentication",
@@ -27,7 +27,7 @@
     },
     {
       "name": "WorkScore (Comprehensive Employment Verification)",
-      "status": "NOT_STARTED"
+      "status": "PARTIAL"
     },
     {
       "name": "TenantScore (Rental Housing Verification)",
@@ -51,15 +51,15 @@
     },
     {
       "name": "Trust Score Calculation",
-      "status": "NOT_STARTED"
+      "status": "PARTIAL"
     },
     {
       "name": "Credential Management",
-      "status": "NOT_STARTED"
+      "status": "PARTIAL"
     },
     {
       "name": "Platform Connections",
-      "status": "NOT_STARTED"
+      "status": "PARTIAL"
     }
   ]
 }

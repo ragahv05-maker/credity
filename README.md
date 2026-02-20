@@ -90,6 +90,23 @@ npm install
 
 Each service runs on a dedicated port. Please refer to individual service READMEs for detailed startup guides, or use the root scripts if available.
 
+### CI Quality Lane (local, reproducible)
+
+Before opening PRs, run:
+
+```bash
+npm run ci:lane:quality:quick
+```
+
+For strict release-ready checks:
+
+```bash
+npm run ci:lane:quality
+npm run ci:oss:readiness
+```
+
+See `docs/devex/ci-quality-devex-lane.md` for lane details and developer workflow.
+
 | Service | Port |
 |---------|------|
 | **Issuer** | `3000` / `5001` |

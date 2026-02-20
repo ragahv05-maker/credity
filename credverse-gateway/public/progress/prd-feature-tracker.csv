@@ -1,15 +1,15 @@
 featureId,featureNumber,feature,status,evidenceCount,evidencePaths,evidenceNote
-F01,1,User Onboarding & Authentication,PARTIAL,2,VALIDATION_CHECKLIST_P0_E2E.md | swarm/reports/credity-s34-master-board.csv,Foundation auth + onboarding flows evidenced via launch checklist and release board artifacts.
-F02,2,Identity Verification (Complete Flow),PARTIAL,2,VALIDATION_CHECKLIST_P0_E2E.md | swarm/reports/credity-s20-launch-evidence.md,Issue → claim → verify flow documented and tied to release evidence artifacts.
-F03,5,Reputation Rail (Cross-Platform Trust) 🆕,PARTIAL,3,CredVerseIssuer 3/tests/reputation-graph.test.ts | CredVerseIssuer 3/tests/reputation-graph-event-mapper.test.ts | CredVerseIssuer 3/tests/reputation-route-graph.test.ts,Issuer graph integration and route behavior covered by focused tests.
-F04,6,SafeDate Score (Dating Safety Layer),PARTIAL,3,BlockWalletDigi/tests/reputation-route-summary.test.ts | BlockWalletDigi/tests/reputation-preview-fallback.test.ts | BlockWalletDigi/tests/reputation-rail.test.ts,Wallet safe-date summary/preview/reputation paths covered by focused tests.
-F05,7,Gig Economy Onboarding Acceleration,NOT_STARTED,0,,
-F06,8,WorkScore (Comprehensive Employment Verification),NOT_STARTED,0,,
-F07,9,TenantScore (Rental Housing Verification),NOT_STARTED,0,,
-F08,10,HealthScore (Healthcare/Telemedicine Trust),NOT_STARTED,0,,
-F09,11,TutorScore (Education Marketplace Verification),NOT_STARTED,0,,
-F10,12,HomeWorkerScore (Domestic Services Verification),NOT_STARTED,0,,
-F11,13,TrustScore for Lending (Alternative Credit),NOT_STARTED,0,,
-F12,3,Trust Score Calculation,NOT_STARTED,0,,
-F13,4,Credential Management,NOT_STARTED,0,,
-F14,5,Platform Connections,NOT_STARTED,0,,
+F01,1,User Onboarding & Authentication,PARTIAL,4,swarm/reports/prod-phase-lane1-prd-closure.md | BlockWalletDigi/tests/auth-apple-oauth.test.ts | BlockWalletDigi/tests/auth-pin-fallback.test.ts | BlockWalletDigi/tests/auth-session-30day-policy.test.ts,"Auth hardening landed (Apple JWKS verification, PIN fallback, 30-day session policy evidence) but full production cutover still blocked by infra/env gates."
+F02,2,Identity Verification (Complete Flow),PARTIAL,4,swarm/reports/prod-phase-lane1-prd-closure.md | BlockWalletDigi/tests/identity-doc-type-validation.test.ts | BlockWalletDigi/tests/identity-face-match-accuracy.test.ts | BlockWalletDigi/server/routes/identity.ts,Document type validation + face match robustness added; still partial vs full PRD biometric/runtime depth requirements.
+F03,5,Reputation Rail (Cross-Platform Trust) 🆕,PARTIAL,4,swarm/reports/prd-gap-matrix-credity12.md | BlockWalletDigi/server/routes/reputation.ts | CredVerseIssuer 3/tests/reputation-graph.test.ts | CredVerseIssuer 3/tests/reputation-route-graph.test.ts,Reputation routes/tests exist; dispute workflow and <5s propagation SLA remain explicit gaps.
+F04,6,SafeDate Score (Dating Safety Layer),PARTIAL,3,swarm/reports/prd-gap-matrix-credity12.md | CredVerseRecruiter/server/routes/safedate.ts | BlockWalletDigi/tests/reputation-route-summary.test.ts,SafeDate scoring APIs are present; premium/reporting/ban propagation/video verify remain open.
+F05,7,Gig Economy Onboarding Acceleration,NOT_STARTED,2,swarm/reports/prd-gap-matrix-credity12.md | swarm/reports/prod-phase-lane5-oss-benchmark.md,Hard blocker: no dedicated gig profile/fast-track APIs implemented yet; only OSS implementation path/plan is available.
+F06,8,WorkScore (Comprehensive Employment Verification),PARTIAL,4,swarm/reports/prd-gap-matrix-credity12.md | CredVerseRecruiter/server/routes/workscore.ts | CredVerseRecruiter/tests/workscore.test.ts | swarm/reports/prod-phase-lane5-oss-benchmark.md,"WorkScore core routes exist, but ATS integrations and 5-minute SLA contract are still pending."
+F07,9,TenantScore (Rental Housing Verification),NOT_STARTED,1,swarm/reports/prd-gap-matrix-credity12.md,Hard blocker: vertical not implemented (no tenantscore namespace/routes/services/tests).
+F08,10,HealthScore (Healthcare/Telemedicine Trust),NOT_STARTED,1,swarm/reports/prd-gap-matrix-credity12.md,Hard blocker: vertical not implemented (no healthscore namespace/routes/services/tests).
+F09,11,TutorScore (Education Marketplace Verification),NOT_STARTED,1,swarm/reports/prd-gap-matrix-credity12.md,Hard blocker: vertical not implemented (no tutorscore namespace/routes/services/tests).
+F10,12,HomeWorkerScore (Domestic Services Verification),NOT_STARTED,1,swarm/reports/prd-gap-matrix-credity12.md,Hard blocker: vertical not implemented (no homeworkerscore namespace/routes/services/tests).
+F11,13,TrustScore for Lending (Alternative Credit),NOT_STARTED,1,swarm/reports/prd-gap-matrix-credity12.md,Hard blocker: vertical not implemented (no lending trustscore namespace/routes/services/tests).
+F12,3,Trust Score Calculation,PARTIAL,2,swarm/reports/prd-gap-matrix-credity12.md | BlockWalletDigi/server/routes/trust-score.ts,Trust score API surface exists; explicit <1s and <5 min update SLA evidence remains missing.
+F13,4,Credential Management,PARTIAL,3,swarm/reports/prd-gap-matrix-credity12.md | BlockWalletDigi/server/routes/credentials.ts | BlockWalletDigi/tests/credentials-authz.test.ts,Credential CRUD/proof-sharing exists; full revocation fanout and lifecycle-expiry semantics are still open.
+F14,5,Platform Connections,PARTIAL,2,swarm/reports/prd-gap-matrix-credity12.md | BlockWalletDigi/server/routes/connections.ts,Connection APIs exist but webhook callback + notification SLA coverage remain open blockers for strict PRD closure.

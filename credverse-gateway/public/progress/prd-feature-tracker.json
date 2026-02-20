@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-02-17T12:35:38.153Z",
+  "generatedAt": "2026-02-20T21:21:31.549Z",
   "totalFeatures": 14,
-  "mappedEvidenceFeatures": 4,
+  "mappedEvidenceFeatures": 14,
   "items": [
     {
       "featureId": "F01",
@@ -9,10 +9,12 @@
       "feature": "User Onboarding & Authentication",
       "status": "PARTIAL",
       "evidence": [
-        "VALIDATION_CHECKLIST_P0_E2E.md",
-        "swarm/reports/credity-s34-master-board.csv"
+        "swarm/reports/prod-phase-lane1-prd-closure.md",
+        "BlockWalletDigi/tests/auth-apple-oauth.test.ts",
+        "BlockWalletDigi/tests/auth-pin-fallback.test.ts",
+        "BlockWalletDigi/tests/auth-session-30day-policy.test.ts"
       ],
-      "evidenceNote": "Foundation auth + onboarding flows evidenced via launch checklist and release board artifacts."
+      "evidenceNote": "Auth hardening landed (Apple JWKS verification, PIN fallback, 30-day session policy evidence) but full production cutover still blocked by infra/env gates."
     },
     {
       "featureId": "F02",
@@ -20,10 +22,12 @@
       "feature": "Identity Verification (Complete Flow)",
       "status": "PARTIAL",
       "evidence": [
-        "VALIDATION_CHECKLIST_P0_E2E.md",
-        "swarm/reports/credity-s20-launch-evidence.md"
+        "swarm/reports/prod-phase-lane1-prd-closure.md",
+        "BlockWalletDigi/tests/identity-doc-type-validation.test.ts",
+        "BlockWalletDigi/tests/identity-face-match-accuracy.test.ts",
+        "BlockWalletDigi/server/routes/identity.ts"
       ],
-      "evidenceNote": "Issue → claim → verify flow documented and tied to release evidence artifacts."
+      "evidenceNote": "Document type validation + face match robustness added; still partial vs full PRD biometric/runtime depth requirements."
     },
     {
       "featureId": "F03",
@@ -31,11 +35,12 @@
       "feature": "Reputation Rail (Cross-Platform Trust) 🆕",
       "status": "PARTIAL",
       "evidence": [
+        "swarm/reports/prd-gap-matrix-credity12.md",
+        "BlockWalletDigi/server/routes/reputation.ts",
         "CredVerseIssuer 3/tests/reputation-graph.test.ts",
-        "CredVerseIssuer 3/tests/reputation-graph-event-mapper.test.ts",
         "CredVerseIssuer 3/tests/reputation-route-graph.test.ts"
       ],
-      "evidenceNote": "Issuer graph integration and route behavior covered by focused tests."
+      "evidenceNote": "Reputation routes/tests exist; dispute workflow and <5s propagation SLA remain explicit gaps."
     },
     {
       "featureId": "F04",
@@ -43,91 +48,119 @@
       "feature": "SafeDate Score (Dating Safety Layer)",
       "status": "PARTIAL",
       "evidence": [
-        "BlockWalletDigi/tests/reputation-route-summary.test.ts",
-        "BlockWalletDigi/tests/reputation-preview-fallback.test.ts",
-        "BlockWalletDigi/tests/reputation-rail.test.ts"
+        "swarm/reports/prd-gap-matrix-credity12.md",
+        "CredVerseRecruiter/server/routes/safedate.ts",
+        "BlockWalletDigi/tests/reputation-route-summary.test.ts"
       ],
-      "evidenceNote": "Wallet safe-date summary/preview/reputation paths covered by focused tests."
+      "evidenceNote": "SafeDate scoring APIs are present; premium/reporting/ban propagation/video verify remain open."
     },
     {
       "featureId": "F05",
       "featureNumber": 7,
       "feature": "Gig Economy Onboarding Acceleration",
       "status": "NOT_STARTED",
-      "evidence": [],
-      "evidenceNote": ""
+      "evidence": [
+        "swarm/reports/prd-gap-matrix-credity12.md",
+        "swarm/reports/prod-phase-lane5-oss-benchmark.md"
+      ],
+      "evidenceNote": "Hard blocker: no dedicated gig profile/fast-track APIs implemented yet; only OSS implementation path/plan is available."
     },
     {
       "featureId": "F06",
       "featureNumber": 8,
       "feature": "WorkScore (Comprehensive Employment Verification)",
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "evidenceNote": ""
+      "status": "PARTIAL",
+      "evidence": [
+        "swarm/reports/prd-gap-matrix-credity12.md",
+        "CredVerseRecruiter/server/routes/workscore.ts",
+        "CredVerseRecruiter/tests/workscore.test.ts",
+        "swarm/reports/prod-phase-lane5-oss-benchmark.md"
+      ],
+      "evidenceNote": "WorkScore core routes exist, but ATS integrations and 5-minute SLA contract are still pending."
     },
     {
       "featureId": "F07",
       "featureNumber": 9,
       "feature": "TenantScore (Rental Housing Verification)",
       "status": "NOT_STARTED",
-      "evidence": [],
-      "evidenceNote": ""
+      "evidence": [
+        "swarm/reports/prd-gap-matrix-credity12.md"
+      ],
+      "evidenceNote": "Hard blocker: vertical not implemented (no tenantscore namespace/routes/services/tests)."
     },
     {
       "featureId": "F08",
       "featureNumber": 10,
       "feature": "HealthScore (Healthcare/Telemedicine Trust)",
       "status": "NOT_STARTED",
-      "evidence": [],
-      "evidenceNote": ""
+      "evidence": [
+        "swarm/reports/prd-gap-matrix-credity12.md"
+      ],
+      "evidenceNote": "Hard blocker: vertical not implemented (no healthscore namespace/routes/services/tests)."
     },
     {
       "featureId": "F09",
       "featureNumber": 11,
       "feature": "TutorScore (Education Marketplace Verification)",
       "status": "NOT_STARTED",
-      "evidence": [],
-      "evidenceNote": ""
+      "evidence": [
+        "swarm/reports/prd-gap-matrix-credity12.md"
+      ],
+      "evidenceNote": "Hard blocker: vertical not implemented (no tutorscore namespace/routes/services/tests)."
     },
     {
       "featureId": "F10",
       "featureNumber": 12,
       "feature": "HomeWorkerScore (Domestic Services Verification)",
       "status": "NOT_STARTED",
-      "evidence": [],
-      "evidenceNote": ""
+      "evidence": [
+        "swarm/reports/prd-gap-matrix-credity12.md"
+      ],
+      "evidenceNote": "Hard blocker: vertical not implemented (no homeworkerscore namespace/routes/services/tests)."
     },
     {
       "featureId": "F11",
       "featureNumber": 13,
       "feature": "TrustScore for Lending (Alternative Credit)",
       "status": "NOT_STARTED",
-      "evidence": [],
-      "evidenceNote": ""
+      "evidence": [
+        "swarm/reports/prd-gap-matrix-credity12.md"
+      ],
+      "evidenceNote": "Hard blocker: vertical not implemented (no lending trustscore namespace/routes/services/tests)."
     },
     {
       "featureId": "F12",
       "featureNumber": 3,
       "feature": "Trust Score Calculation",
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "evidenceNote": ""
+      "status": "PARTIAL",
+      "evidence": [
+        "swarm/reports/prd-gap-matrix-credity12.md",
+        "BlockWalletDigi/server/routes/trust-score.ts"
+      ],
+      "evidenceNote": "Trust score API surface exists; explicit <1s and <5 min update SLA evidence remains missing."
     },
     {
       "featureId": "F13",
       "featureNumber": 4,
       "feature": "Credential Management",
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "evidenceNote": ""
+      "status": "PARTIAL",
+      "evidence": [
+        "swarm/reports/prd-gap-matrix-credity12.md",
+        "BlockWalletDigi/server/routes/credentials.ts",
+        "BlockWalletDigi/tests/credentials-authz.test.ts"
+      ],
+      "evidenceNote": "Credential CRUD/proof-sharing exists; full revocation fanout and lifecycle-expiry semantics are still open."
     },
     {
       "featureId": "F14",
       "featureNumber": 5,
       "feature": "Platform Connections",
-      "status": "NOT_STARTED",
-      "evidence": [],
-      "evidenceNote": ""
+      "status": "PARTIAL",
+      "evidence": [
+        "swarm/reports/prd-gap-matrix-credity12.md",
+        "BlockWalletDigi/server/routes/connections.ts"
+      ],
+      "evidenceNote": "Connection APIs exist but webhook callback + notification SLA coverage remain open blockers for strict PRD closure."
     }
   ]
 }

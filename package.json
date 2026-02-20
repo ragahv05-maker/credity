@@ -38,7 +38,11 @@
     "gate:launch": "node scripts/launch-gate-check.mjs",
     "gate:launch:strict": "LAUNCH_GATE_STRICT=1 node scripts/launch-gate-check.mjs",
     "healthcheck:prod-workflow": "node scripts/production-workflow-healthcheck.mjs",
-    "smoke:infra:live": "bash scripts/infra-live-smoke.sh"
+    "smoke:infra:live": "bash scripts/infra-live-smoke.sh",
+    "ops:telemetry:sla": "node scripts/ops-telemetry-sla.mjs",
+    "ci:lane:quality": "node scripts/ci-quality-lane.mjs",
+    "ci:lane:quality:quick": "node scripts/ci-quality-lane.mjs --mode=quick",
+    "ci:oss:readiness": "node scripts/oss-readiness-gate.mjs"
   },
   "keywords": [
     "credential",

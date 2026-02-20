@@ -11,6 +11,11 @@ on:
       - 'credverse-gateway/**'
       - 'apps/mobile/**'
       - 'packages/shared-auth/**'
+      - 'packages/policy-rules/**'
+      - 'packages/workflows-temporal/**'
+      - 'scripts/**'
+      - 'docs/gates/**'
+      - 'docs/devex/**'
       - '.github/workflows/quality-gates-ci.yml'
   push:
     branches: [main, master]
@@ -23,6 +28,11 @@ on:
       - 'credverse-gateway/**'
       - 'apps/mobile/**'
       - 'packages/shared-auth/**'
+      - 'packages/policy-rules/**'
+      - 'packages/workflows-temporal/**'
+      - 'scripts/**'
+      - 'docs/gates/**'
+      - 'docs/devex/**'
       - '.github/workflows/quality-gates-ci.yml'
   workflow_dispatch:
 
@@ -61,6 +71,11 @@ jobs:
               - 'credverse-gateway/**'
               - 'apps/mobile/**'
               - 'packages/shared-auth/**'
+              - 'packages/policy-rules/**'
+              - 'packages/workflows-temporal/**'
+              - 'scripts/**'
+              - 'docs/gates/**'
+              - 'docs/devex/**'
             contracts:
               - 'CredVerseIssuer 3/contracts/**'
             wallet:
@@ -79,6 +94,66 @@ jobs:
             root:
               - 'package.json'
               - 'package-lock.json'
+
+  lint:
+    needs: changes
+    if: needs.changes.outputs.quality == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - key: shared_auth
+            path: packages/shared-auth
+            lockfile: packages/shared-auth/package-lock.json
+            command: npm run lint
+          - key: wallet
+            path: BlockWalletDigi
+            lockfile: BlockWalletDigi/package-lock.json
+            command: npm run lint
+          - key: issuer
+            path: CredVerseIssuer 3
+            lockfile: CredVerseIssuer 3/package-lock.json
+            command: npm run lint
+          - key: recruiter
+            path: CredVerseRecruiter
+            lockfile: CredVerseRecruiter/package-lock.json
+            command: npm run lint
+          - key: gateway
+            path: credverse-gateway
+            lockfile: credverse-gateway/package-lock.json
+            command: npm run lint
+          - key: mobile
+            path: apps/mobile
+            lockfile: apps/mobile/package-lock.json
+            command: npm run typecheck
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ${{ matrix.lockfile }}
+      - name: Build shared-auth package for dependent services
+        if: (matrix.key == 'wallet' || matrix.key == 'issuer' || matrix.key == 'recruiter') && (needs.changes.outputs[matrix.key] == 'true' || github.event_name == 'workflow_dispatch')
+        working-directory: packages/shared-auth
+        run: |
+          npm ci
+          npm run build
+      - name: Install dependencies
+        if: needs.changes.outputs[matrix.key] == 'true' || github.event_name == 'workflow_dispatch'
+        working-directory: ${{ matrix.path }}
+        run: |
+          if [ "${{ matrix.key }}" = "issuer" ]; then
+            npm ci --legacy-peer-deps
+          else
+            npm ci
+          fi
+      - name: Lint/type gate
+        if: needs.changes.outputs[matrix.key] == 'true' || github.event_name == 'workflow_dispatch'
+        working-directory: ${{ matrix.path }}
+        run: ${{ matrix.command }}
 
   check:
     needs: changes
@@ -268,8 +343,31 @@ jobs:
         working-directory: ${{ matrix.path }}
         run: npm audit --omit=dev --audit-level=high
 
+  oss-readiness:
+    needs: changes
+    if: needs.changes.outputs.quality == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+      - name: Install root dependencies
+        run: npm ci
+      - name: OSS rollout readiness gate
+        run: npm run ci:oss:readiness
+      - name: Upload OSS readiness artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: oss-readiness-evidence-${{ github.run_id }}
+          path: ci-evidence/oss-readiness-summary.md
+          if-no-files-found: error
+
   evidence-pack:
-    needs: [changes, check, test, contracts-security, dependency-security]
+    needs: [changes, lint, check, test, contracts-security, dependency-security, oss-readiness]
     if: ${{ always() && !cancelled() && (needs.changes.outputs.quality == 'true' || github.event_name == 'workflow_dispatch') }}
     runs-on: ubuntu-latest
     steps:
@@ -291,16 +389,19 @@ jobs:
           ## Job results
 
           - changes: ${{ needs.changes.result }}
+          - lint: ${{ needs.lint.result }}
           - check: ${{ needs.check.result }}
           - test: ${{ needs.test.result }}
           - contracts-security: ${{ needs['contracts-security'].result }}
           - dependency-security: ${{ needs['dependency-security'].result }}
+          - oss-readiness: ${{ needs['oss-readiness'].result }}
 
           ## Release board mapping
 
-          - P0-03 Cross-service quality gates pass: check + test + launch gate (see run URL)
+          - P0-03 Cross-service quality gates pass: lint + check + test + launch gate (see run URL)
           - P0-04 CI release workflow validation: quality-gates-ci run status (this artifact)
           - P0-05 Security high/critical sweep: contracts-security + dependency-security
+          - OSS execution lane readiness: policy/workflow/SLA suites tracked via oss-readiness
           EOF
       - name: Upload CI evidence artifact
         uses: actions/upload-artifact@v4
