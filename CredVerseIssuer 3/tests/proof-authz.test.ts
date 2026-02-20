@@ -3,6 +3,7 @@ import request from 'supertest';
 import express from 'express';
 import { createServer } from 'http';
 import { registerRoutes } from '../server/routes';
+import { deterministicHash } from '../server/services/proof-lifecycle';
 
 const app = express();
 app.use(express.json());
@@ -82,5 +83,71 @@ describe('issuer proof route authz', () => {
     expect(res.body.code).toBe('PROOF_FORMAT_INVALID');
     expect(Array.isArray(res.body.allowed_formats)).toBe(true);
     expect(res.body.allowed_formats).toContain('ldp_vc');
+  });
+
+  it('verifies merkle-membership proof using strict deterministic checks', async () => {
+    const claims = { credentialSubject: { id: 'did:key:holder-verify', score: 88 } };
+    const claimsDigest = deterministicHash(claims, 'sha256', 'RFC8785-V1');
+    const leafHash = deterministicHash(
+      {
+        credential_id: 'cred-verify-route',
+        claims_digest: claimsDigest,
+        nonce: 'nonce-verify-route',
+      },
+      'sha256',
+      'RFC8785-V1',
+    );
+
+    const proof = {
+      type: 'credity.merkle-membership-proof/v1',
+      verification_contract: 'credity-proof-verification/v1',
+      canonicalization: 'RFC8785-V1',
+      hash_algorithm: 'sha256',
+      issued_at: new Date().toISOString(),
+      credential_id: 'cred-verify-route',
+      issuer_did: 'did:key:issuer-verify',
+      subject_did: 'did:key:holder-verify',
+      challenge: 'challenge-verify-route',
+      domain: 'recruiter.credity.example',
+      nonce: 'nonce-verify-route',
+      claims_digest: claimsDigest,
+      leaf_hash: leafHash,
+      verification_endpoint: 'https://issuer.credity.example/api/v1/proofs/verify',
+      zk_hook: null,
+    };
+
+    const res = await request(app).post('/api/v1/proofs/verify').send({
+      format: 'merkle-membership',
+      proof,
+      challenge: 'challenge-verify-route',
+      domain: 'recruiter.credity.example',
+      expected_issuer_did: 'did:key:issuer-verify',
+      expected_subject_did: 'did:key:holder-verify',
+      expected_claims: claims,
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.code).toBe('PROOF_VERIFIED');
+    expect(res.body.valid).toBe(true);
+  });
+
+  it('fails closed on verify for unsupported runtime formats', async () => {
+    const res = await request(app)
+      .post('/api/v1/proofs/verify')
+      .send({ format: 'sd-jwt-vc', proof: { any: 'value' } });
+
+    expect(res.status).toBe(501);
+    expect(res.body.code).toBe('PROOF_INTEGRATION_REQUIRED');
+    expect(res.body.integration_required).toBe(true);
+  });
+
+  it('rejects invalid merkle proof schema on verify endpoint', async () => {
+    const res = await request(app)
+      .post('/api/v1/proofs/verify')
+      .send({ format: 'merkle-membership', proof: { type: 'invalid' } });
+
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe('PROOF_VERIFICATION_FAILED');
+    expect(res.body.reason_codes).toContain('PROOF_SCHEMA_INVALID');
   });
 });

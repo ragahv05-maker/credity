@@ -84,6 +84,7 @@ export type {
     ProofPurposeContract,
     ProofGenerationRequestContract,
     ProofGenerationResultContract,
+    MerkleMembershipProofContract,
     ProofVerificationRequestContract,
     ProofVerificationResultContract,
     RevocationWitnessContract,

@@ -1,4 +1,5 @@
 import { Router, type Request } from 'express';
+import { randomUUID } from 'crypto';
 
 type ProxyTarget = 'wallet' | 'issuer' | 'recruiter';
 
@@ -82,6 +83,8 @@ const FORWARDED_HEADERS = [
     'idempotency-key',
     'x-api-key',
     'x-request-id',
+    'x-trace-id',
+    'x-correlation-id',
 ];
 
 const CLAIMS_BASE_PATH = 'v1/claims';
@@ -276,6 +279,12 @@ function getForwardHeaders(req: Request): Headers {
         }
         headers.set(header, value);
     });
+
+    const requestId = headers.get('x-request-id') || randomUUID();
+    const traceId = headers.get('x-trace-id') || headers.get('x-correlation-id') || randomUUID();
+    headers.set('x-request-id', requestId);
+    headers.set('x-trace-id', traceId);
+    headers.set('x-correlation-id', traceId);
 
     return headers;
 }

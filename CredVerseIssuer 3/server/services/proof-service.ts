@@ -1,5 +1,11 @@
 import crypto from 'crypto';
-import type { ProofGenerationRequestContract, ProofGenerationResultContract } from '@credverse/shared-auth';
+import type {
+  ProofGenerationRequestContract,
+  ProofGenerationResultContract,
+  ProofVerificationRequestContract,
+  ProofVerificationResultContract,
+  MerkleMembershipProofContract,
+} from '@credverse/shared-auth';
 import { deterministicHash } from './proof-lifecycle';
 
 export class ProofGenerationError extends Error {
@@ -58,6 +64,36 @@ function toObjectPayload(credential: CredentialLike): Record<string, unknown> {
   return { credential_id: credential.id };
 }
 
+function isMerkleMembershipProof(value: unknown): value is MerkleMembershipProofContract {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const proof = value as Record<string, unknown>;
+
+  const optionalString = (v: unknown) => v === null || typeof v === 'string';
+  const zkHook = proof.zk_hook;
+  const validZkHook =
+    zkHook === null ||
+    zkHook === undefined ||
+    (typeof zkHook === 'object' && !Array.isArray(zkHook) && typeof (zkHook as Record<string, unknown>).schema === 'string');
+
+  return (
+    proof.type === 'credity.merkle-membership-proof/v1' &&
+    proof.verification_contract === 'credity-proof-verification/v1' &&
+    proof.canonicalization === 'RFC8785-V1' &&
+    proof.hash_algorithm === 'sha256' &&
+    typeof proof.issued_at === 'string' &&
+    typeof proof.credential_id === 'string' &&
+    optionalString(proof.issuer_did) &&
+    optionalString(proof.subject_did) &&
+    optionalString(proof.challenge) &&
+    optionalString(proof.domain) &&
+    optionalString(proof.nonce) &&
+    typeof proof.claims_digest === 'string' &&
+    typeof proof.leaf_hash === 'string' &&
+    typeof proof.verification_endpoint === 'string' &&
+    validZkHook
+  );
+}
+
 export function generateProof({ request, credential, issuerBaseUrl }: GenerateProofInput): ProofGenerationResultContract {
   const format = request.format;
 
@@ -96,7 +132,7 @@ export function generateProof({ request, credential, issuerBaseUrl }: GeneratePr
 
   const createdAt = new Date().toISOString();
   const zkHook = extractZkHookMetadata(request);
-  const proof = {
+  const proof: MerkleMembershipProofContract = {
     type: 'credity.merkle-membership-proof/v1',
     verification_contract: 'credity-proof-verification/v1',
     canonicalization: 'RFC8785-V1',
@@ -127,5 +163,86 @@ export function generateProof({ request, credential, issuerBaseUrl }: GeneratePr
     },
     credential_id: request.credential_id,
     created_at: createdAt,
+  };
+}
+
+export function verifyProof(request: ProofVerificationRequestContract): ProofVerificationResultContract {
+  const checkedAt = new Date().toISOString();
+
+  if (request.format !== 'merkle-membership') {
+    return {
+      id: `verify_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`,
+      valid: false,
+      decision: 'review',
+      reason_codes: ['PROOF_FORMAT_INTEGRATION_REQUIRED'],
+      checked_at: checkedAt,
+    };
+  }
+
+  if (!isMerkleMembershipProof(request.proof)) {
+    return {
+      id: `verify_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`,
+      valid: false,
+      decision: 'reject',
+      reason_codes: ['PROOF_SCHEMA_INVALID'],
+      checked_at: checkedAt,
+    };
+  }
+
+  const proof = request.proof;
+  const reasonCodes: string[] = [];
+
+  if (request.challenge !== undefined && request.challenge !== proof.challenge) {
+    reasonCodes.push('PROOF_CHALLENGE_MISMATCH');
+  }
+
+  if (request.domain !== undefined && request.domain !== proof.domain) {
+    reasonCodes.push('PROOF_DOMAIN_MISMATCH');
+  }
+
+  if (request.expected_issuer_did && request.expected_issuer_did !== proof.issuer_did) {
+    reasonCodes.push('PROOF_ISSUER_MISMATCH');
+  }
+
+  if (request.expected_subject_did && request.expected_subject_did !== proof.subject_did) {
+    reasonCodes.push('PROOF_SUBJECT_MISMATCH');
+  }
+
+  if (request.expected_claims) {
+    const digest = deterministicHash(request.expected_claims, 'sha256', 'RFC8785-V1');
+    if (digest !== proof.claims_digest) {
+      reasonCodes.push('PROOF_CLAIMS_DIGEST_MISMATCH');
+    }
+  }
+
+  const recomputedLeaf = deterministicHash(
+    {
+      credential_id: proof.credential_id,
+      claims_digest: proof.claims_digest,
+      nonce: proof.nonce ?? null,
+    },
+    'sha256',
+    'RFC8785-V1',
+  );
+
+  if (recomputedLeaf !== proof.leaf_hash) {
+    reasonCodes.push('PROOF_LEAF_HASH_MISMATCH');
+  }
+
+  return {
+    id: `verify_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`,
+    valid: reasonCodes.length === 0,
+    decision: reasonCodes.length === 0 ? 'approve' : 'reject',
+    reason_codes: reasonCodes,
+    checked_at: checkedAt,
+    extracted_claims: {
+      credential_id: proof.credential_id,
+      issuer_did: proof.issuer_did,
+      subject_did: proof.subject_did,
+      claims_digest: proof.claims_digest,
+      leaf_hash: proof.leaf_hash,
+      challenge: proof.challenge,
+      domain: proof.domain,
+    },
   };
 }

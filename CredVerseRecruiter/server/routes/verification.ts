@@ -6,6 +6,7 @@ import { storage, VerificationRecord } from '../storage';
 import crypto from 'crypto';
 import { idempotencyMiddleware, PostgresStateStore, signWebhook } from '@credverse/shared-auth';
 import type { VerificationResultContract } from '@credverse/shared-auth';
+import { evaluateVerificationDecisionPolicy } from '../services/verification-decision-policy';
 
 const router = Router();
 const writeIdempotency = idempotencyMiddleware({ ttlMs: 6 * 60 * 60 * 1000 });
@@ -93,32 +94,6 @@ function mapStatusValidity(riskFlags: string[]): VerificationResultContract['sta
 function mapAnchorValidity(riskFlags: string[]): VerificationResultContract['anchor_validity'] {
     if (riskFlags.includes('NO_BLOCKCHAIN_ANCHOR')) return 'pending';
     return 'anchored';
-}
-
-function deriveDecision(
-    verificationStatus: 'verified' | 'failed' | 'suspicious' | 'pending',
-    riskFlags: string[],
-    fraudRecommendation: string | undefined,
-    riskScore: number,
-): VerificationResultContract['decision'] {
-    const hardRejectFlags = new Set(['INVALID_SIGNATURE', 'REVOKED_CREDENTIAL', 'EXPIRED_CREDENTIAL', 'PARSE_FAILED']);
-    if (verificationStatus === 'failed' || riskFlags.some((flag) => hardRejectFlags.has(flag))) {
-        return 'reject';
-    }
-
-    if (fraudRecommendation === 'reject') {
-        return 'reject';
-    }
-
-    if (verificationStatus === 'suspicious' || riskScore >= 40 || fraudRecommendation === 'review') {
-        return 'review';
-    }
-
-    if (verificationStatus === 'verified' && fraudRecommendation === 'accept') {
-        return 'approve';
-    }
-
-    return 'investigate';
 }
 
 function mapDecisionToLegacyRecommendation(decision: VerificationResultContract['decision']): 'accept' | 'review' | 'reject' {
@@ -216,6 +191,68 @@ function readIssuer(credentialData: Record<string, unknown> | null): string {
     return readString(issuerObject.name ?? issuerObject.id, 'Unknown');
 }
 
+function normalizeFraudRecommendation(value: unknown): 'accept' | 'review' | 'reject' {
+    if (value === 'accept' || value === 'review' || value === 'reject') {
+        return value;
+    }
+    if (value === 'approve') {
+        return 'accept';
+    }
+    return 'review';
+}
+
+function normalizeFraudAnalysis(fraud: any) {
+    return {
+        score: Number.isFinite(Number(fraud?.score)) ? Number(fraud.score) : 0,
+        flags: Array.isArray(fraud?.flags) ? fraud.flags.map((f: unknown) => String(f)) : [],
+        recommendation: normalizeFraudRecommendation(fraud?.recommendation),
+        details: Array.isArray(fraud?.details) ? fraud.details : [],
+    };
+}
+
+function hasUnsignedOrScannedSignal(checks: Array<{ name?: string; status?: string; message?: string }>): boolean {
+    return checks.some((check) => {
+        if (check.status !== 'warning') return false;
+        const text = `${check.name || ''} ${check.message || ''}`.toLowerCase();
+        return text.includes('unsigned') || text.includes('scanned');
+    });
+}
+
+function buildRiskSignals(args: {
+    verificationResult: { riskScore: number; riskFlags: string[] };
+    fraudAnalysis: { score: number; flags: string[] };
+    decisionReasonCodes: string[];
+}) {
+    const verificationSeverity =
+        args.verificationResult.riskScore >= 70 ? 'high' : args.verificationResult.riskScore >= 40 ? 'medium' : args.verificationResult.riskScore >= 15 ? 'low' : 'info';
+    const fraudSeverity =
+        args.fraudAnalysis.score >= 60 ? 'high' : args.fraudAnalysis.score >= 30 ? 'medium' : args.fraudAnalysis.score >= 10 ? 'low' : 'info';
+
+    return [
+        {
+            id: 'verification.risk',
+            score: args.verificationResult.riskScore,
+            severity: verificationSeverity,
+            source: 'rules',
+            reason_codes: args.verificationResult.riskFlags,
+        },
+        {
+            id: 'fraud.model',
+            score: args.fraudAnalysis.score,
+            severity: fraudSeverity,
+            source: 'ai',
+            reason_codes: args.fraudAnalysis.flags,
+        },
+        {
+            id: 'decision.policy',
+            score: Math.max(args.verificationResult.riskScore, args.fraudAnalysis.score),
+            severity: verificationSeverity === 'high' || fraudSeverity === 'high' ? 'high' : verificationSeverity === 'medium' || fraudSeverity === 'medium' ? 'medium' : 'low',
+            source: 'rules',
+            reason_codes: args.decisionReasonCodes,
+        },
+    ];
+}
+
 // ============== Instant Verification ==============
 
 /**
@@ -249,23 +286,27 @@ router.post('/verify/instant', writeIdempotency, async (req, res) => {
                 return res.status(400).json({ error: decodeError?.message || 'Invalid JWT payload' });
             }
         }
-        const fraudAnalysis = credentialData
+        const fraudAnalysisRaw = credentialData
             ? await fraudDetector.analyzeCredential(credentialData)
             : { score: 0, flags: [], recommendation: 'review', details: [] };
+        const fraudAnalysis = normalizeFraudAnalysis(fraudAnalysisRaw);
 
-        const derivedDecision = deriveDecision(
-            verificationResult.status,
-            verificationResult.riskFlags,
-            fraudAnalysis.recommendation,
-            verificationResult.riskScore,
-        );
-        const recommendation = mapDecisionToLegacyRecommendation(derivedDecision);
+        const policy = await evaluateVerificationDecisionPolicy({
+            verificationStatus: verificationResult.status,
+            riskScore: verificationResult.riskScore,
+            riskFlags: verificationResult.riskFlags,
+            fraudScore: fraudAnalysis.score,
+            fraudRecommendation: fraudAnalysis.recommendation,
+            fraudFlags: fraudAnalysis.flags,
+            isScanned: Boolean((credentialData as any)?.scanned) || hasUnsignedOrScannedSignal(verificationResult.checks as any),
+        });
+        const recommendation = mapDecisionToLegacyRecommendation(policy.decision);
 
         // Store in history
         const record: VerificationRecord = {
             id: verificationResult.verificationId,
             credentialType: readCredentialType(credentialData),
-            issuer: readString(credentialData?.issuer, 'Unknown'),
+            issuer: readIssuer(credentialData),
             subject: readSubjectName(credentialData),
             status: verificationResult.status,
             riskScore: verificationResult.riskScore,
@@ -276,19 +317,43 @@ router.post('/verify/instant', writeIdempotency, async (req, res) => {
         };
         await storage.addVerification(record);
 
+        const riskSignals = buildRiskSignals({
+            verificationResult,
+            fraudAnalysis,
+            decisionReasonCodes: policy.reasonCodes,
+        });
+
         const responseBody = {
             success: true,
             verification: verificationResult,
             fraud: fraudAnalysis,
             record,
+            reason_codes: policy.reasonCodes,
+            risk_signals_version: 'risk-v1',
+            risk_signals: riskSignals,
+            evidence_links: [],
+            candidate_summary: {
+                candidate_id: verificationResult.verificationId,
+                decision: policy.decision,
+                confidence: verificationResult.confidence,
+                risk_score: verificationResult.riskScore,
+                reason_codes: policy.reasonCodes,
+                work_score: {
+                    score: Math.max(0, 100 - verificationResult.riskScore),
+                },
+            },
             v1: {
-                credential_validity: verificationResult.status === 'verified' ? 'valid' : 'invalid',
-                status_validity: verificationResult.riskFlags.includes('REVOKED_CREDENTIAL') ? 'revoked' : 'active',
-                anchor_validity: verificationResult.riskFlags.includes('NO_BLOCKCHAIN_ANCHOR') ? 'pending' : 'anchored',
+                credential_validity: mapCredentialValidity(verificationResult.status),
+                status_validity: mapStatusValidity(verificationResult.riskFlags),
+                anchor_validity: mapAnchorValidity(verificationResult.riskFlags),
                 fraud_score: fraudAnalysis.score,
                 fraud_explanations: fraudAnalysis.flags,
-                decision: recommendation,
-                decision_reason_codes: verificationResult.riskFlags,
+                decision: policy.decision,
+                decision_reason_codes: policy.reasonCodes,
+                reason_codes: policy.reasonCodes,
+                risk_signals_version: 'risk-v1',
+                risk_signals: riskSignals,
+                evidence_links: [],
             },
         };
 
@@ -564,17 +629,21 @@ router.post('/v1/verifications/instant', authMiddleware, writeIdempotency, async
             }
         }
 
-        const fraudAnalysis = credentialData
+        const fraudAnalysisRaw = credentialData
             ? await fraudDetector.analyzeCredential(credentialData)
             : { score: 0, flags: [], recommendation: 'review', details: [] };
+        const fraudAnalysis = normalizeFraudAnalysis(fraudAnalysisRaw);
 
-        const derivedDecision = deriveDecision(
-            verificationResult.status,
-            verificationResult.riskFlags,
-            fraudAnalysis.recommendation,
-            verificationResult.riskScore,
-        );
-        const recommendation = mapDecisionToLegacyRecommendation(derivedDecision);
+        const policy = await evaluateVerificationDecisionPolicy({
+            verificationStatus: verificationResult.status,
+            riskScore: verificationResult.riskScore,
+            riskFlags: verificationResult.riskFlags,
+            fraudScore: fraudAnalysis.score,
+            fraudRecommendation: fraudAnalysis.recommendation,
+            fraudFlags: fraudAnalysis.flags,
+            isScanned: Boolean((credentialData as any)?.scanned) || hasUnsignedOrScannedSignal(verificationResult.checks as any),
+        });
+        const recommendation = mapDecisionToLegacyRecommendation(policy.decision);
 
         const record: VerificationRecord = {
             id: verificationResult.verificationId,
@@ -590,6 +659,12 @@ router.post('/v1/verifications/instant', authMiddleware, writeIdempotency, async
         };
         await storage.addVerification(record);
 
+        const riskSignals = buildRiskSignals({
+            verificationResult,
+            fraudAnalysis,
+            decisionReasonCodes: policy.reasonCodes,
+        });
+
         const contractResult: VerificationResultContract = {
             id: verificationResult.verificationId,
             credential_validity: mapCredentialValidity(verificationResult.status),
@@ -597,14 +672,31 @@ router.post('/v1/verifications/instant', authMiddleware, writeIdempotency, async
             anchor_validity: mapAnchorValidity(verificationResult.riskFlags),
             fraud_score: fraudAnalysis.score,
             fraud_explanations: fraudAnalysis.flags,
-            decision: derivedDecision,
-            decision_reason_codes: verificationResult.riskFlags,
+            decision: policy.decision,
+            decision_reason_codes: policy.reasonCodes,
         };
 
         res.json({
             ...contractResult,
             verification_id: contractResult.id,
             checks: verificationResult.checks,
+            reason_codes: policy.reasonCodes,
+            risk_signals_version: 'risk-v1',
+            risk_signals: riskSignals,
+            evidence_links: [],
+            candidate_summary: {
+                candidate_id: verificationResult.verificationId,
+                decision: policy.decision,
+                confidence: verificationResult.confidence,
+                risk_score: verificationResult.riskScore,
+                reason_codes: policy.reasonCodes,
+                work_score: {
+                    score: Math.max(0, 100 - verificationResult.riskScore),
+                },
+            },
+            policy: {
+                matched_rules: policy.matchedRules,
+            },
         });
     } catch (error) {
         console.error('V1 instant verification error:', error);

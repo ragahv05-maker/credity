@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type Request } from 'express';
 import crypto from 'crypto';
 import IORedis from 'ioredis';
 import {
@@ -43,17 +43,72 @@ initAuth({
 
 const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60;
 const STATE_TTL_SECONDS = 10 * 60;
+const AUTH_RATE_WINDOW_MS = Number.parseInt(process.env.GATEWAY_AUTH_RATE_WINDOW_MS || '60000', 10);
+const AUTH_RATE_LIMIT_MAX = Number.parseInt(process.env.GATEWAY_AUTH_RATE_LIMIT_MAX || '30', 10);
+const VERIFY_RATE_LIMIT_MAX = Number.parseInt(process.env.GATEWAY_VERIFY_RATE_LIMIT_MAX || '120', 10);
+const SESSION_IDLE_MAX_SECONDS = Number.parseInt(process.env.GATEWAY_SESSION_IDLE_MAX_SECONDS || '3600', 10);
 
 type SessionRecord = {
     user: GoogleUser;
     jwtToken: string;
     createdAt: string;
+    lastSeenAt: string;
+    userAgentHash: string;
+    ipHash: string;
 };
+
+type RateLimitResult = { allowed: boolean; retryAfterSeconds?: number };
+
+function safeNowIso(): string {
+    return new Date().toISOString();
+}
+
+function hashValue(value: string): string {
+    return crypto.createHash('sha256').update(value).digest('hex');
+}
+
+function getClientIp(req: Request): string {
+    const xff = req.headers['x-forwarded-for'];
+    if (typeof xff === 'string' && xff.trim()) {
+        return xff.split(',')[0]?.trim() || req.ip || 'unknown';
+    }
+    if (Array.isArray(xff) && xff[0]) {
+        return xff[0].split(',')[0]?.trim() || req.ip || 'unknown';
+    }
+    return req.ip || 'unknown';
+}
+
+function getRequestFingerprint(req: Request): { userAgentHash: string; ipHash: string } {
+    const ua = String(req.headers['user-agent'] || 'unknown');
+    const ip = getClientIp(req);
+    return {
+        userAgentHash: hashValue(ua),
+        ipHash: hashValue(ip),
+    };
+}
+
+function getRequestId(req: Request): string | undefined {
+    const requestId = req.headers['x-request-id'];
+    return typeof requestId === 'string' ? requestId : undefined;
+}
+
+function logAuthAudit(event: string, req: Request, extras: Record<string, unknown> = {}): void {
+    const base = {
+        ts: safeNowIso(),
+        category: 'gateway.auth.audit',
+        event,
+        requestId: getRequestId(req),
+        method: req.method,
+        path: req.path,
+    };
+    console.info(JSON.stringify({ ...base, ...extras }));
+}
 
 class GatewaySessionStore {
     private readonly redis?: IORedis;
     private readonly sessions = new Map<string, SessionRecord>();
     private readonly pendingStates = new Map<string, { createdAt: Date }>();
+    private readonly localRateBuckets = new Map<string, { count: number; resetAt: number }>();
 
     constructor(url?: string) {
         if (!url) {
@@ -147,6 +202,14 @@ class GatewaySessionStore {
         return this.sessions.get(sessionId) ?? null;
     }
 
+    async touchSession(sessionId: string, session: SessionRecord): Promise<void> {
+        const updated: SessionRecord = {
+            ...session,
+            lastSeenAt: safeNowIso(),
+        };
+        await this.setSession(sessionId, updated);
+    }
+
     async deleteSession(sessionId: string): Promise<void> {
         if (this.redis) {
             await this.redis.del(`gateway:auth:session:${sessionId}`);
@@ -154,6 +217,45 @@ class GatewaySessionStore {
         }
 
         this.sessions.delete(sessionId);
+    }
+
+    async consumeRateLimit(key: string, max: number, windowMs: number): Promise<RateLimitResult> {
+        const now = Date.now();
+
+        if (this.redis) {
+            const bucketKey = `gateway:auth:ratelimit:${key}`;
+            const tx = await this.redis.multi()
+                .incr(bucketKey)
+                .pexpire(bucketKey, windowMs, 'NX')
+                .pttl(bucketKey)
+                .exec();
+            const count = Number(tx?.[0]?.[1] || 0);
+            const ttlMs = Number(tx?.[2]?.[1] || 0);
+            if (count > max) {
+                return {
+                    allowed: false,
+                    retryAfterSeconds: Math.max(1, Math.ceil(Math.max(ttlMs, 1000) / 1000)),
+                };
+            }
+            return { allowed: true };
+        }
+
+        const existing = this.localRateBuckets.get(key);
+        if (!existing || existing.resetAt <= now) {
+            this.localRateBuckets.set(key, { count: 1, resetAt: now + windowMs });
+            return { allowed: true };
+        }
+
+        if (existing.count >= max) {
+            return {
+                allowed: false,
+                retryAfterSeconds: Math.max(1, Math.ceil((existing.resetAt - now) / 1000)),
+            };
+        }
+
+        existing.count += 1;
+        this.localRateBuckets.set(key, existing);
+        return { allowed: true };
     }
 }
 
@@ -182,6 +284,17 @@ function verifySSOToken(token: string): Record<string, unknown> | null {
     return decoded as Record<string, unknown>;
 }
 
+function isSessionStale(session: SessionRecord): boolean {
+    const lastSeenMs = Date.parse(session.lastSeenAt || session.createdAt);
+    if (!Number.isFinite(lastSeenMs)) return true;
+    return Date.now() - lastSeenMs > SESSION_IDLE_MAX_SECONDS * 1000;
+}
+
+async function enforceRouteRateLimit(req: Request, max: number): Promise<RateLimitResult> {
+    const ip = getClientIp(req);
+    return sessionStore.consumeRateLimit(`ip:${ip}:path:${req.path}`, max, AUTH_RATE_WINDOW_MS);
+}
+
 /**
  * Check if Google OAuth is available
  */
@@ -198,13 +311,20 @@ router.get('/auth/status', (_req, res) => {
 /**
  * Start Google OAuth flow
  */
-router.get('/auth/google', async (_req, res) => {
+router.get('/auth/google', async (req, res) => {
     if (!isGoogleOAuthConfigured()) {
         return res.status(503).json({ error: 'Google OAuth not configured' });
     }
 
+    const routeLimit = await enforceRouteRateLimit(req, AUTH_RATE_LIMIT_MAX);
+    if (!routeLimit.allowed) {
+        res.setHeader('Retry-After', String(routeLimit.retryAfterSeconds || 60));
+        return res.status(429).json({ error: 'Too many auth attempts' });
+    }
+
     const state = crypto.randomBytes(32).toString('hex');
     await sessionStore.setPendingState(state);
+    logAuthAudit('oauth_state_issued', req, { stateHash: hashValue(state) });
 
     const authUrl = getAuthorizationUrl(state);
     res.redirect(authUrl);
@@ -215,18 +335,27 @@ router.get('/auth/google', async (_req, res) => {
  */
 router.get('/auth/google/callback', async (req, res) => {
     try {
+        const routeLimit = await enforceRouteRateLimit(req, AUTH_RATE_LIMIT_MAX);
+        if (!routeLimit.allowed) {
+            res.setHeader('Retry-After', String(routeLimit.retryAfterSeconds || 60));
+            return res.redirect('/?error=too_many_attempts');
+        }
+
         const { code, state, error } = req.query;
 
         if (error) {
+            logAuthAudit('oauth_callback_error', req, { providerError: String(error) });
             return res.redirect(`/?error=${encodeURIComponent(error as string)}`);
         }
 
         if (!code || !state) {
+            logAuthAudit('oauth_callback_invalid_request', req);
             return res.redirect('/?error=invalid_request');
         }
 
         const validState = await sessionStore.consumePendingState(state as string);
         if (!validState) {
+            logAuthAudit('oauth_callback_invalid_state', req, { stateHash: hashValue(String(state)) });
             return res.redirect('/?error=invalid_state');
         }
 
@@ -235,10 +364,14 @@ router.get('/auth/google/callback', async (req, res) => {
         const jwtToken = generateSSOToken(googleUser);
 
         const sessionId = crypto.randomBytes(32).toString('hex');
+        const fingerprint = getRequestFingerprint(req);
         await sessionStore.setSession(sessionId, {
             user: googleUser,
             jwtToken,
-            createdAt: new Date().toISOString(),
+            createdAt: safeNowIso(),
+            lastSeenAt: safeNowIso(),
+            userAgentHash: fingerprint.userAgentHash,
+            ipHash: fingerprint.ipHash,
         });
 
         res.cookie('session', sessionId, {
@@ -255,9 +388,11 @@ router.get('/auth/google/callback', async (req, res) => {
             maxAge: SESSION_TTL_SECONDS * 1000,
         });
 
+        logAuthAudit('oauth_login_success', req, { userIdHash: hashValue(googleUser.id) });
         res.redirect(`/?login=success&name=${encodeURIComponent(googleUser.name)}`);
     } catch (error) {
         console.error('[Auth] Google callback error:', error);
+        logAuthAudit('oauth_login_failed', req);
         res.redirect('/?error=auth_failed');
     }
 });
@@ -277,6 +412,21 @@ router.get('/auth/me', async (req, res) => {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
+    if (isSessionStale(session)) {
+        await sessionStore.deleteSession(sessionId);
+        logAuthAudit('session_stale_rejected', req);
+        return res.status(401).json({ error: 'Session expired' });
+    }
+
+    const fingerprint = getRequestFingerprint(req);
+    if (session.userAgentHash !== fingerprint.userAgentHash || session.ipHash !== fingerprint.ipHash) {
+        await sessionStore.deleteSession(sessionId);
+        logAuthAudit('session_fingerprint_mismatch', req);
+        return res.status(401).json({ error: 'Session validation failed' });
+    }
+
+    await sessionStore.touchSession(sessionId, session);
+
     res.json({
         user: session.user,
         ssoToken: session.jwtToken,
@@ -287,7 +437,13 @@ router.get('/auth/me', async (req, res) => {
 /**
  * Verify SSO token - used by other apps for cross-app auth
  */
-router.post('/auth/verify-token', (req, res) => {
+router.post('/auth/verify-token', async (req, res) => {
+    const routeLimit = await enforceRouteRateLimit(req, VERIFY_RATE_LIMIT_MAX);
+    if (!routeLimit.allowed) {
+        res.setHeader('Retry-After', String(routeLimit.retryAfterSeconds || 60));
+        return res.status(429).json({ valid: false, error: 'Too many token verification requests' });
+    }
+
     let token = req.body?.token;
 
     if (!token) {
@@ -303,6 +459,7 @@ router.post('/auth/verify-token', (req, res) => {
 
     const decoded = verifySSOToken(token);
     if (decoded) {
+        logAuthAudit('verify_token_success', req);
         res.json({
             valid: true,
             user: {
@@ -314,6 +471,7 @@ router.post('/auth/verify-token', (req, res) => {
             app: 'gateway',
         });
     } else {
+        logAuthAudit('verify_token_failed', req);
         res.json({ valid: false, error: 'Invalid or expired token' });
     }
 });
@@ -326,6 +484,7 @@ router.post('/auth/logout', async (req, res) => {
     if (sessionId) {
         await sessionStore.deleteSession(sessionId);
     }
+    logAuthAudit('logout', req);
     res.clearCookie('session');
     res.clearCookie('sso_token');
     res.json({ success: true });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { generateProof, ProofGenerationError } from '../server/services/proof-service';
+import { generateProof, verifyProof, ProofGenerationError } from '../server/services/proof-service';
 import { deterministicHashLegacyTopLevel } from '../server/services/proof-lifecycle';
 
 describe('issuer proof-service', () => {
@@ -81,5 +81,67 @@ describe('issuer proof-service', () => {
     expect(proof.canonicalization).toBe('RFC8785-V1');
     expect(proof.claims_digest).toBeTypeOf('string');
     expect(proof.claims_digest).not.toBe(legacyDigest);
+  });
+
+  it('verifies valid merkle-membership proof deterministically', () => {
+    const credentialData = { credentialSubject: { id: 'did:key:subject-1', score: 93 } };
+    const generated = generateProof({
+      request: {
+        format: 'merkle-membership',
+        credential_id: 'cred-verify-1',
+        challenge: 'challenge-verify',
+        domain: 'recruiter.credity.example',
+        nonce: 'nonce-verify',
+      },
+      credential: {
+        id: 'cred-verify-1',
+        issuerDid: 'did:key:issuer-1',
+        subjectDid: 'did:key:subject-1',
+        credentialData,
+      },
+      issuerBaseUrl: 'https://issuer.credity.example',
+    });
+
+    const result = verifyProof({
+      format: 'merkle-membership',
+      proof: generated.proof as Record<string, unknown>,
+      challenge: 'challenge-verify',
+      domain: 'recruiter.credity.example',
+      expected_issuer_did: 'did:key:issuer-1',
+      expected_subject_did: 'did:key:subject-1',
+      expected_claims: credentialData,
+    });
+
+    expect(result.valid).toBe(true);
+    expect(result.decision).toBe('approve');
+    expect(result.reason_codes).toEqual([]);
+  });
+
+  it('rejects tampered merkle-membership proof leaf hash', () => {
+    const generated = generateProof({
+      request: {
+        format: 'merkle-membership',
+        credential_id: 'cred-verify-2',
+      },
+      credential: {
+        id: 'cred-verify-2',
+        credentialData: { credentialSubject: { id: 'did:key:subject-2' } },
+      },
+      issuerBaseUrl: 'https://issuer.credity.example',
+    });
+
+    const proof = {
+      ...(generated.proof as Record<string, unknown>),
+      leaf_hash: 'deadbeef',
+    };
+
+    const result = verifyProof({
+      format: 'merkle-membership',
+      proof,
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.decision).toBe('reject');
+    expect(result.reason_codes).toContain('PROOF_LEAF_HASH_MISMATCH');
   });
 });

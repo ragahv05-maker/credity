@@ -28,9 +28,19 @@ describe('revocation/status propagation across issuer verification paths', () =>
   });
 
   it('maps issuer 404 to explicit failed revocation outcome', async () => {
-    vi.spyOn(globalThis, 'fetch' as any).mockResolvedValueOnce(
-      new Response(JSON.stringify({ message: 'Credential not found' }), { status: 404 }),
-    );
+    const fetchMock = vi.spyOn(globalThis, 'fetch' as any).mockImplementation(async (input: RequestInfo | URL) => {
+      const url = String(input);
+
+      if (url.includes('/api/v1/public/registry/issuers/did/')) {
+        return new Response(JSON.stringify({ verified: true }), { status: 200 });
+      }
+
+      if (url.includes('/api/v1/credentials/') && url.includes('/status')) {
+        return new Response(JSON.stringify({ message: 'Credential not found' }), { status: 404 });
+      }
+
+      return new Response(JSON.stringify({ message: 'unexpected fetch in test', url }), { status: 500 });
+    });
 
     const result = await verificationEngine.verifyCredential({
       raw: {
@@ -40,6 +50,7 @@ describe('revocation/status propagation across issuer verification paths', () =>
       },
     });
 
+    expect(fetchMock).toHaveBeenCalled();
     const revocation = result.checks.find((c) => c.name === 'Revocation Check');
     expect(revocation?.status).toBe('failed');
     expect(revocation?.details?.code).toBe('ISSUER_CREDENTIAL_NOT_FOUND');

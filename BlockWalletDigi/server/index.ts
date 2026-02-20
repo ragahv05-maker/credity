@@ -16,6 +16,7 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import passport from "passport";
+import { metricsHandler, telemetryMiddleware } from "./middleware/telemetry";
 
 const app = express();
 const httpServer = createServer(app);
@@ -66,6 +67,8 @@ app.use(
 );
 
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+app.use(telemetryMiddleware('credverse-wallet'));
+app.get('/api/metrics', metricsHandler('credverse-wallet'));
 
 // Device fingerprinting (Agent 1) — must run before all routes
 app.use(deviceFingerprintMiddleware);

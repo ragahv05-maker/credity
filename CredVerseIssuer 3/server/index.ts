@@ -22,6 +22,7 @@ import {
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import { metricsHandler, telemetryMiddleware } from "./middleware/telemetry";
 
 const app = express();
 const httpServer = createServer(app);
@@ -109,6 +110,8 @@ app.use(
 );
 
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+app.use(telemetryMiddleware('credverse-issuer'));
+app.get('/api/metrics', metricsHandler('credverse-issuer'));
 
 // Advanced security middleware
 app.use(requestIdMiddleware);           // Add request ID for audit logging

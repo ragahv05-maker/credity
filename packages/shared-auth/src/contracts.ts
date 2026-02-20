@@ -139,11 +139,29 @@ export interface ProofGenerationRequestContract {
     metadata?: Record<string, unknown>;
 }
 
+export interface MerkleMembershipProofContract {
+    type: 'credity.merkle-membership-proof/v1';
+    verification_contract: 'credity-proof-verification/v1';
+    canonicalization: 'RFC8785-V1';
+    hash_algorithm: 'sha256';
+    issued_at: string;
+    credential_id: string;
+    issuer_did: string | null;
+    subject_did: string | null;
+    challenge: string | null;
+    domain: string | null;
+    nonce: string | null;
+    claims_digest: string;
+    leaf_hash: string;
+    verification_endpoint: string;
+    zk_hook?: Record<string, unknown> | null;
+}
+
 export interface ProofGenerationResultContract {
     id: string;
     status: 'generated' | 'queued' | 'unsupported' | 'failed';
     format: ProofFormatContract;
-    proof: Record<string, unknown> | string | null;
+    proof: MerkleMembershipProofContract | Record<string, unknown> | string | null;
     public_signals?: Record<string, unknown> | null;
     credential_id?: string | null;
     created_at: string;
@@ -152,7 +170,7 @@ export interface ProofGenerationResultContract {
 
 export interface ProofVerificationRequestContract {
     format: ProofFormatContract;
-    proof: Record<string, unknown> | string;
+    proof: MerkleMembershipProofContract | Record<string, unknown> | string;
     challenge?: string;
     domain?: string;
     expected_issuer_did?: string;

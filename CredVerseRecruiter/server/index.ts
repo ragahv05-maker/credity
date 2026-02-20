@@ -14,6 +14,7 @@ import { initAuth } from "@credverse/shared-auth";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import { metricsHandler, telemetryMiddleware } from "./middleware/telemetry";
 
 const app = express();
 const httpServer = createServer(app);
@@ -61,6 +62,8 @@ app.use(
 );
 
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+app.use(telemetryMiddleware('credverse-recruiter'));
+app.get('/api/metrics', metricsHandler('credverse-recruiter'));
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {

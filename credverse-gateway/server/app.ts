@@ -8,9 +8,11 @@ import { errorHandler } from './middleware/error-handler';
 import { ERROR_CODES } from './services/observability';
 import { setupSecurity } from '@credverse/shared-auth';
 import { sentryErrorHandler } from './services/sentry';
+import { metricsHandler, telemetryMiddleware } from './services/telemetry';
 
 export function createGatewayApp() {
   const app = express();
+  app.set('trust proxy', 1);
 
   setupSecurity(app, {
     allowedOrigins: [
@@ -22,8 +24,10 @@ export function createGatewayApp() {
     ],
   });
 
-  app.use(express.json());
+  app.use(express.json({ limit: '64kb' }));
   app.use(cookieParser());
+  app.use(telemetryMiddleware('credverse-gateway'));
+  app.get('/api/metrics', metricsHandler('credverse-gateway'));
 
   const googleClientId = process.env.GOOGLE_CLIENT_ID;
   const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;

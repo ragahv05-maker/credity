@@ -7,6 +7,7 @@ import { idempotencyMiddleware, PostgresStateStore } from '@credverse/shared-aut
 import type {
     ProofGenerationRequestContract,
     ProofGenerationResultContract,
+    ProofVerificationRequestContract,
     RevocationWitnessContract,
 } from '@credverse/shared-auth';
 import {
@@ -25,7 +26,7 @@ import {
     AnchorBatchError,
 } from '../services/anchor-batch-service';
 import { deterministicHash } from '../services/proof-lifecycle';
-import { generateProof, ProofGenerationError } from '../services/proof-service';
+import { generateProof, verifyProof, ProofGenerationError } from '../services/proof-service';
 
 type CredentialOfferState = {
     tenantId: string;
@@ -577,6 +578,52 @@ router.post('/api/v1/proofs/generate', apiKeyOrAuthMiddleware, enforceProofRoute
         }
         return res.status(500).json({ message: error?.message || 'Failed to generate proof', code: 'PROOF_GENERATE_INTERNAL_ERROR' });
     }
+});
+
+router.post('/api/v1/proofs/verify', writeIdempotency, async (req, res) => {
+    const payload = (req.body || {}) as Partial<ProofVerificationRequestContract>;
+    const format = parseProofFormat(payload.format);
+
+    if (!format) {
+        return res.status(400).json({
+            message: 'Unsupported proof format',
+            code: 'PROOF_FORMAT_INVALID',
+            allowed_formats: Array.from(supportedProofFormats),
+        });
+    }
+
+    if (payload.proof === null || payload.proof === undefined) {
+        return res.status(400).json({
+            message: 'proof is required',
+            code: 'PROOF_VERIFY_INPUT_INVALID',
+        });
+    }
+
+    const result = verifyProof({
+        ...(payload as ProofVerificationRequestContract),
+        format,
+        proof: payload.proof as ProofVerificationRequestContract['proof'],
+    });
+
+    if (format !== 'merkle-membership') {
+        return res.status(501).json({
+            ...result,
+            code: 'PROOF_INTEGRATION_REQUIRED',
+            integration_required: true,
+        });
+    }
+
+    if (!result.valid) {
+        return res.status(422).json({
+            ...result,
+            code: 'PROOF_VERIFICATION_FAILED',
+        });
+    }
+
+    return res.status(200).json({
+        ...result,
+        code: 'PROOF_VERIFIED',
+    });
 });
 
 router.get('/api/v1/proofs/revocation-witness/:credentialId', apiKeyOrAuthMiddleware, enforceProofRouteAccess, async (req, res) => {
