@@ -16,8 +16,15 @@ import {
     authMiddleware,
     checkRateLimit,
     validatePasswordStrength,
+    getSessionPolicyEvidence,
     AuthUser,
 } from '../services/auth-service';
+import {
+    createAppleAuthState,
+    getAppleAuthorizationUrl,
+    verifyAppleIdentityToken,
+} from '../services/apple-oauth-service';
+import { hasPin, setupPin, verifyPin } from '../services/pin-auth-service';
 
 const router = Router();
 const allowLegacyLoginBypass =
@@ -352,6 +359,102 @@ router.post('/auth/verify-token', (req, res) => {
     }
 });
 
+// ─── Apple OAuth ──────────────────────────────────────────────────────────
+const APPLE_CLIENT_ID = process.env.APPLE_CLIENT_ID;
+const appleStateCache = new Set<string>();
+
+router.get('/auth/apple', (_req, res) => {
+    if (!APPLE_CLIENT_ID) {
+        return res.status(503).json({ error: 'Apple OAuth not configured' });
+    }
+
+    const state = createAppleAuthState();
+    appleStateCache.add(state);
+
+    try {
+        const authorizationUrl = getAppleAuthorizationUrl(state);
+        res.json({ authorizationUrl, state });
+    } catch (error: any) {
+        res.status(503).json({ error: error.message });
+    }
+});
+
+router.post('/auth/apple', async (req, res) => {
+    try {
+        if (!APPLE_CLIENT_ID) {
+            return res.status(503).json({ error: 'Apple OAuth not configured' });
+        }
+
+        const { identityToken, state } = req.body;
+        if (!identityToken) {
+            return res.status(400).json({ error: 'identityToken required' });
+        }
+
+        if (state && !appleStateCache.has(state)) {
+            return res.status(400).json({ error: 'Invalid OAuth state' });
+        }
+
+        if (state) appleStateCache.delete(state);
+
+        const payload = verifyAppleIdentityToken(identityToken);
+        const email = payload.email ?? `apple_${payload.sub}@privaterelay.appleid.com`;
+
+        let user = await storage.getUserByEmail(email);
+        if (!user) {
+            const hashed = await hashPassword(String(Math.random()));
+            user = await storage.createUser({
+                username: email,
+                email,
+                password: hashed,
+                name: email,
+                emailVerified: payload.email_verified === 'true' || payload.email_verified === true,
+            });
+        }
+
+        const authUser: AuthUser = {
+            id: user.id,
+            username: user.username,
+            email: user.email || undefined,
+            role: 'holder',
+        };
+
+        const accessToken = generateAccessToken(authUser);
+        const refreshToken = generateRefreshToken(authUser);
+
+        res.json({
+            success: true,
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                name: user.name,
+            },
+            tokens: {
+                accessToken,
+                refreshToken,
+                expiresIn: 900,
+            },
+        });
+    } catch (error: any) {
+        res.status(401).json({ error: error.message ?? 'Apple sign-in failed' });
+    }
+});
+
+router.get('/auth/apple/callback', (req, res) => {
+    const { code, id_token: idToken, state } = req.query;
+    if (!code && !idToken) {
+        return res.status(400).json({ error: 'Apple callback missing code or id_token' });
+    }
+
+    res.json({
+        success: true,
+        code: code ?? null,
+        idTokenReceived: Boolean(idToken),
+        state: state ?? null,
+        hint: 'Submit identityToken to POST /api/v1/auth/apple to complete authentication',
+    });
+});
+
 // ─── Google OAuth ─────────────────────────────────────────────────────────
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
@@ -499,6 +602,72 @@ router.post('/auth/reset-password', async (req, res) => {
     } catch (err: any) {
         res.status(400).json({ error: err.message });
     }
+});
+
+router.post('/auth/pin/setup', authMiddleware, async (req, res) => {
+    try {
+        const schema = z.object({ pin: z.string().regex(/^[0-9]{4,8}$/) });
+        const parsed = schema.safeParse(req.body);
+        if (!parsed.success) {
+            return res.status(400).json({ error: 'pin must be numeric and 4-8 digits' });
+        }
+
+        await setupPin(Number(req.user!.userId), parsed.data.pin);
+        res.json({ success: true });
+    } catch (error: any) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+router.post('/auth/pin/verify', async (req, res) => {
+    try {
+        const schema = z.object({ username: z.string().min(1), pin: z.string().regex(/^[0-9]{4,8}$/) });
+        const parsed = schema.safeParse(req.body);
+        if (!parsed.success) {
+            return res.status(400).json({ error: 'username and valid pin are required' });
+        }
+
+        const user = await storage.getUserByUsername(parsed.data.username);
+        if (!user || !hasPin(user.id)) {
+            return res.status(401).json({ error: 'PIN fallback unavailable for this user' });
+        }
+
+        const valid = await verifyPin(user.id, parsed.data.pin);
+        if (!valid) {
+            return res.status(401).json({ error: 'Invalid PIN' });
+        }
+
+        const authUser: AuthUser = { id: user.id, username: user.username, email: user.email || undefined, role: 'holder' };
+        const accessToken = generateAccessToken(authUser);
+        const refreshToken = generateRefreshToken(authUser);
+
+        res.json({
+            success: true,
+            fallback: 'pin',
+            tokens: { accessToken, refreshToken, expiresIn: 900 },
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'PIN verification failed' });
+    }
+});
+
+router.post('/auth/session/policy-evidence', (req, res) => {
+    const schema = z.object({ refreshToken: z.string().min(10) });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) {
+        return res.status(400).json({ error: 'refreshToken is required' });
+    }
+
+    const evidence = getSessionPolicyEvidence(parsed.data.refreshToken);
+    if (!evidence) {
+        return res.status(404).json({ error: 'Session evidence unavailable' });
+    }
+
+    res.json({
+        success: true,
+        policy: '30-day-session-max',
+        ...evidence,
+    });
 });
 
 export default router;

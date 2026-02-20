@@ -8,6 +8,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 const ACCESS_TOKEN_EXPIRY = '15m';
 const REFRESH_TOKEN_EXPIRY = '7d';
+const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // PRD: 30-day max session lifecycle
 const JWT_ALGORITHM = 'HS256' as const;
 const requireStrictSecrets =
     process.env.NODE_ENV === 'production' || process.env.REQUIRE_DATABASE === 'true';
@@ -26,7 +27,12 @@ if (missingJwtSecrets && !requireStrictSecrets) {
 }
 
 // In-memory token storage (use Redis in production)
-const refreshTokens = new Map<string, { userId: number; expiresAt: Date }>();
+const refreshTokens = new Map<string, {
+    userId: number;
+    expiresAt: Date;
+    sessionStartedAt: Date;
+    sessionId: string;
+}>();
 const invalidatedTokens = new Set<string>();
 
 export interface AuthUser {
@@ -41,6 +47,7 @@ export interface TokenPayload {
     username: string;
     role: string;
     type: 'access' | 'refresh';
+    sid?: string;
 }
 
 /**
@@ -109,12 +116,17 @@ export function generateAccessToken(user: AuthUser): string {
 /**
  * Generate refresh token
  */
-export function generateRefreshToken(user: AuthUser): string {
-    const payload: TokenPayload = {
+export function generateRefreshToken(
+    user: AuthUser,
+    options?: { sessionStartedAt?: Date; sessionId?: string },
+): string {
+    const sessionId = options?.sessionId ?? crypto.randomUUID();
+    const payload: TokenPayload & { sid?: string } = {
         userId: user.id,
         username: user.username,
         role: user.role,
         type: 'refresh',
+        sid: sessionId,
     };
     const token = jwt.sign(payload, EFFECTIVE_JWT_REFRESH_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY, algorithm: JWT_ALGORITHM });
 
@@ -122,6 +134,8 @@ export function generateRefreshToken(user: AuthUser): string {
     refreshTokens.set(token, {
         userId: user.id,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        sessionStartedAt: options?.sessionStartedAt ?? new Date(),
+        sessionId,
     });
 
     return token;
@@ -190,6 +204,17 @@ export function refreshAccessToken(refreshToken: string): { accessToken: string;
         return null;
     }
 
+    const sessionRecord = refreshTokens.get(refreshToken);
+    if (!sessionRecord) {
+        return null;
+    }
+
+    const sessionAgeMs = Date.now() - sessionRecord.sessionStartedAt.getTime();
+    if (sessionAgeMs > SESSION_MAX_AGE_MS) {
+        invalidateRefreshToken(refreshToken);
+        return null;
+    }
+
     // Invalidate old refresh token (rotation)
     invalidateRefreshToken(refreshToken);
 
@@ -201,7 +226,10 @@ export function refreshAccessToken(refreshToken: string): { accessToken: string;
 
     return {
         accessToken: generateAccessToken(user),
-        refreshToken: generateRefreshToken(user),
+        refreshToken: generateRefreshToken(user, {
+            sessionStartedAt: sessionRecord.sessionStartedAt,
+            sessionId: sessionRecord.sessionId,
+        }),
     };
 }
 
@@ -306,5 +334,29 @@ export function checkRateLimit(key: string, maxRequests: number, windowMs: numbe
     }
 
     record.count++;
+    return true;
+}
+
+export function getSessionPolicyEvidence(refreshToken: string): {
+    sessionStartedAt: Date;
+    sessionAgeMs: number;
+    maxAgeMs: number;
+    sessionId: string;
+} | null {
+    const record = refreshTokens.get(refreshToken);
+    if (!record) return null;
+
+    return {
+        sessionStartedAt: record.sessionStartedAt,
+        sessionAgeMs: Date.now() - record.sessionStartedAt.getTime(),
+        maxAgeMs: SESSION_MAX_AGE_MS,
+        sessionId: record.sessionId,
+    };
+}
+
+export function __test_backdateRefreshSession(refreshToken: string, sessionStartedAt: Date): boolean {
+    const record = refreshTokens.get(refreshToken);
+    if (!record) return false;
+    refreshTokens.set(refreshToken, { ...record, sessionStartedAt });
     return true;
 }

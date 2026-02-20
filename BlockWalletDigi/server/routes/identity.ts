@@ -17,6 +17,8 @@ import * as livenessService from '../services/liveness-service';
 import * as biometricsService from '../services/biometrics-service';
 import * as documentService from '../services/document-scanner-service';
 import { aiService } from '../services/ai-service';
+import { validateDocumentByType } from '../services/document-type-validator-service';
+import { matchFace } from '../services/face-match-service';
 
 const router = Router();
 
@@ -384,6 +386,50 @@ router.get('/documents', async (req: Request, res: Response) => {
     } catch (error: any) {
         console.error('Get documents error:', error);
         res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.post('/document/validate-type', async (req: Request, res: Response) => {
+    try {
+        const { type, documentNumber } = req.body;
+        const result = validateDocumentByType(type, documentNumber);
+
+        if (!result.valid) {
+            return res.status(400).json({ success: false, ...result });
+        }
+
+        res.json({ success: true, ...result });
+    } catch (error: any) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.post('/face-match', async (req: Request, res: Response) => {
+    try {
+        const {
+            idFaceEmbedding,
+            liveFaceEmbedding,
+            idImageData,
+            liveImageData,
+            threshold,
+        } = req.body;
+
+        const result = matchFace({
+            idFaceEmbedding,
+            liveFaceEmbedding,
+            idImageData,
+            liveImageData,
+            threshold,
+        });
+
+        res.json({
+            success: true,
+            confidence: result.confidence,
+            threshold: result.threshold,
+            matched: result.matched,
+        });
+    } catch (error: any) {
+        res.status(400).json({ success: false, error: error.message });
     }
 });
 
