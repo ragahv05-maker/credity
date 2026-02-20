@@ -30,7 +30,10 @@
     "mobile:ios": "cd apps/mobile && npm run ios",
     "mobile:web": "cd apps/mobile && npm run web",
     "gate:foundation": "node scripts/foundation-e2e-gate.mjs",
-    "gate:foundation:local": "node scripts/gate-foundation-local.mjs"
+    "gate:foundation:local": "node scripts/gate-foundation-local.mjs",
+    "gate:launch": "node scripts/launch-gate-check.mjs",
+    "gate:launch:strict": "LAUNCH_GATE_STRICT=1 node scripts/launch-gate-check.mjs",
+    "smoke:infra:live": "bash scripts/infra-live-smoke.sh"
   },
   "keywords": [
     "credential",

@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/node';
 import { sanitizeContext } from './observability';
 
-const SENTRY_DSN = process.env.SENTRY_DSN;
+const SENTRY_DSN = process.env.SENTRY_DSN || process.env.GATEWAY_SENTRY_DSN;
 const APP_NAME = process.env.APP_NAME || 'credverse-gateway';
 
 export function initSentry(appName?: string): void {
