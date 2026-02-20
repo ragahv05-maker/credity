@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { randomUUID } from "crypto";
+import { createHash, randomUUID } from "crypto";
 import {
   appendAuditEvent,
   type AuditEventRecord,
@@ -43,11 +43,22 @@ type IncidentRecord = {
   created_at: string;
 };
 
+type IdempotencyRecord = {
+  key: string;
+  endpoint: string;
+  actor: string;
+  body_hash: string;
+  response: Record<string, unknown>;
+  status_code: number;
+  created_at: string;
+};
+
 type ComplianceState = {
   consents: ConsentRecord[];
   data_requests: DataRequestRecord[];
   incidents: IncidentRecord[];
   audit_log: AuditEventRecord[];
+  idempotency: IdempotencyRecord[];
 };
 
 const router = Router();
@@ -66,6 +77,7 @@ const state: ComplianceState = {
   data_requests: [],
   incidents: [],
   audit_log: [],
+  idempotency: [],
 };
 
 let hydrated = false;
@@ -82,6 +94,7 @@ async function ensureHydrated(): Promise<void> {
         state.data_requests = loaded.data_requests || [];
         state.incidents = loaded.incidents || [];
         state.audit_log = loaded.audit_log || [];
+        state.idempotency = loaded.idempotency || [];
       } else {
         await stateStore.save(state);
       }
@@ -107,16 +120,48 @@ function actorFromRequest(req: any): string {
   return req?.user?.userId || req?.tenantId || "issuer-system";
 }
 
+function hashPayload(payload: unknown): string {
+  return createHash('sha256').update(JSON.stringify(payload || null)).digest('hex');
+}
+
+function lookupIdempotency(req: any, actorId: string): IdempotencyRecord | null {
+  const key = typeof req.get('Idempotency-Key') === 'string' ? req.get('Idempotency-Key').trim() : '';
+  if (!key) return null;
+  const bodyHash = hashPayload(req.body);
+  return state.idempotency.find((entry) => entry.key === key && entry.endpoint === req.path && entry.actor === actorId && entry.body_hash === bodyHash) || null;
+}
+
+async function storeIdempotency(req: any, actorId: string, statusCode: number, response: Record<string, unknown>): Promise<void> {
+  const key = typeof req.get('Idempotency-Key') === 'string' ? req.get('Idempotency-Key').trim() : '';
+  if (!key) return;
+  state.idempotency.unshift({
+    key,
+    endpoint: req.path,
+    actor: actorId,
+    body_hash: hashPayload(req.body),
+    response,
+    status_code: statusCode,
+    created_at: new Date().toISOString(),
+  });
+  state.idempotency = state.idempotency.slice(0, 500);
+  await queuePersist();
+}
+
 async function recordAudit(
   eventType: string,
   actorId: string,
   payload: Record<string, unknown>,
+  requestMeta?: { requestId?: string; idempotencyKey?: string },
 ): Promise<AuditEventRecord> {
   const event = appendAuditEvent(state.audit_log, {
     id: randomUUID(),
     event_type: eventType,
     actor_id: actorId,
-    payload,
+    payload: {
+      ...payload,
+      request_id: requestMeta?.requestId || null,
+      idempotency_key: requestMeta?.idempotencyKey || null,
+    },
     created_at: new Date().toISOString(),
   });
   await queuePersist();
@@ -130,6 +175,11 @@ router.get("/compliance/consents", async (_req, res) => {
 
 router.post("/compliance/consents", async (req, res) => {
   await ensureHydrated();
+  const actorId = actorFromRequest(req);
+  const cached = lookupIdempotency(req, actorId);
+  if (cached) {
+    return res.status(cached.status_code).json(cached.response);
+  }
   const subjectId = typeof req.body?.subject_id === "string" ? req.body.subject_id.trim() : "";
   const verifierId = typeof req.body?.verifier_id === "string" ? req.body.verifier_id.trim() : "";
   const purpose = typeof req.body?.purpose === "string" ? req.body.purpose.trim() : "";
@@ -167,13 +217,17 @@ router.post("/compliance/consents", async (req, res) => {
   };
 
   state.consents.unshift(consent);
-  await recordAudit("consent.created", actorFromRequest(req), {
+  await recordAudit("consent.created", actorId, {
     consent_id: consent.id,
     subject_id: consent.subject_id,
     verifier_id: consent.verifier_id,
     purpose: consent.purpose,
+  }, {
+    requestId: typeof req.get('X-Request-Id') === 'string' ? req.get('X-Request-Id') : undefined,
+    idempotencyKey: typeof req.get('Idempotency-Key') === 'string' ? req.get('Idempotency-Key') : undefined,
   });
 
+  await storeIdempotency(req, actorId, 201, consent as unknown as Record<string, unknown>);
   return res.status(201).json(consent);
 });
 

@@ -61,6 +61,35 @@ describe('Recruiter compliance API', () => {
     expect(exported.body.events.length).toBeGreaterThan(0);
   });
 
+  it('replays idempotent consent create requests', async () => {
+    const headers = await authHeader();
+    const subjectId = `subject_${Date.now()}_idem`;
+
+    const payload = {
+      subject_id: subjectId,
+      verifier_id: 'recruiter-a',
+      purpose: 'candidate_screening',
+      data_elements: ['credential_validity'],
+      expiry: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    };
+
+    const first = await request(app)
+      .post('/api/v1/compliance/consents')
+      .set(headers)
+      .set('Idempotency-Key', 'idem-key-1')
+      .send(payload);
+
+    const second = await request(app)
+      .post('/api/v1/compliance/consents')
+      .set(headers)
+      .set('Idempotency-Key', 'idem-key-1')
+      .send(payload);
+
+    expect(first.status).toBe(201);
+    expect(second.status).toBe(201);
+    expect(second.body.id).toBe(first.body.id);
+  });
+
   it('supports data export and delete requests', async () => {
     const headers = await authHeader();
     const subjectId = `subject_${Date.now()}_data`;

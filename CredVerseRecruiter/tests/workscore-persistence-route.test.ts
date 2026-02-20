@@ -69,6 +69,34 @@ describe('workscore persistence snapshots', () => {
     expect(new Date(persisted.timestamp).toString()).not.toBe('Invalid Date');
   });
 
+  it('applies policy-engine downgrade hook when enabled', async () => {
+    process.env.FEATURE_WORKSCORE_POLICY_ENGINE = 'true';
+
+    const response = await request(app)
+      .post('/api/workscore/evaluate')
+      .send({
+        components: {
+          identity: 1,
+          education: 1,
+          employment: 1,
+          reputation: 1,
+          skills: 1,
+          crossTrust: 1,
+        },
+        evidence: {
+          summary: '',
+          docs_checked: [],
+          anchors_checked: [],
+        },
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.policy?.enabled).toBe(true);
+    expect(response.body.decision).toBe('REVIEW');
+
+    delete process.env.FEATURE_WORKSCORE_POLICY_ENGINE;
+  });
+
   it('reads a persisted snapshot by id', async () => {
     const listRes = await request(app)
       .get('/api/workscore/evaluations')

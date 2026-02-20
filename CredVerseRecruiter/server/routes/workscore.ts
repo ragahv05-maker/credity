@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { WORKSCORE_REASON_CODES, WORKSCORE_WEIGHTS } from '@credverse/shared-auth';
 import { evaluateWorkScore } from '../services/workscore';
+import { evaluateWorkScorePolicy } from '../services/workscore-policy-service';
 import { deterministicHash } from '../services/proof-lifecycle';
 import { storage } from '../storage';
 import { authMiddleware, requireRole } from '../services/auth-service';
@@ -58,6 +59,16 @@ router.post('/workscore/evaluate', async (req, res) => {
     evidence: parsed.data.evidence,
   });
 
+  const policyEnabled = process.env.FEATURE_WORKSCORE_POLICY_ENGINE === 'true';
+  const policy = policyEnabled
+    ? await evaluateWorkScorePolicy({
+        score: evaluation.score,
+        hasStrongEvidence: Boolean(parsed.data.evidence?.summary?.trim()) && (parsed.data.evidence?.docs_checked?.length || 0) > 0,
+        hasRiskSignals: (evaluation.reason_codes || []).includes('CROSS_TRUST_LOW'),
+        candidateContext: parsed.data.context,
+      })
+    : null;
+
   const candidate_hash = parsed.data.candidate_id
     ? deterministicHash({ candidate_id: parsed.data.candidate_id }, 'sha256')
     : undefined;
@@ -72,14 +83,17 @@ router.post('/workscore/evaluate', async (req, res) => {
     'sha256',
   );
 
+  const effectiveDecision = policy ? policy.decision : evaluation.decision;
+  const effectiveReasonCodes = Array.from(new Set([...(evaluation.reason_codes || []), ...(policy?.reason_codes || [])]));
+
   await storage.addWorkScoreEvaluation({
     id: randomUUID(),
     candidate_hash,
     context_hash,
     score: evaluation.score,
     breakdown: evaluation.breakdown,
-    decision: evaluation.decision,
-    reason_codes: evaluation.reason_codes,
+    decision: effectiveDecision,
+    reason_codes: effectiveReasonCodes,
     evidence: evaluation.evidence,
     timestamp: new Date(),
   });
@@ -87,9 +101,19 @@ router.post('/workscore/evaluate', async (req, res) => {
   return res.json({
     score: evaluation.score,
     breakdown: evaluation.breakdown,
-    decision: evaluation.decision,
-    reason_codes: evaluation.reason_codes,
+    decision: effectiveDecision,
+    reason_codes: effectiveReasonCodes,
     evidence: evaluation.evidence,
+    policy: policy
+      ? {
+          enabled: true,
+          matched_rules: policy.matched_rules,
+        }
+      : { enabled: false },
+    orchestration: {
+      workflow_hint: 'recruiter.workscore.verify-candidate.v1',
+      policy_engine: policyEnabled ? 'json-rules-engine' : 'disabled',
+    },
     weights: WORKSCORE_WEIGHTS,
   });
 });

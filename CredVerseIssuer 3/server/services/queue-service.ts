@@ -16,6 +16,29 @@ let deadLetterQueue: Queue | null = null;
 let issuanceWorker: Worker | null = null;
 let queueEvents: QueueEvents | null = null;
 
+type QueueWorkflowHookEvent = {
+    type: 'job.queued' | 'job.processing' | 'job.completed' | 'job.failed' | 'job.deadlettered';
+    jobId: string;
+    metadata?: Record<string, unknown>;
+};
+
+type QueueWorkflowHook = (event: QueueWorkflowHookEvent) => void | Promise<void>;
+
+let queueWorkflowHook: QueueWorkflowHook | null = null;
+
+async function emitQueueWorkflowHook(event: QueueWorkflowHookEvent): Promise<void> {
+    if (!queueWorkflowHook) return;
+    try {
+        await queueWorkflowHook(event);
+    } catch (error) {
+        console.error('[Queue] Workflow hook failed:', error);
+    }
+}
+
+export function registerQueueWorkflowHook(hook: QueueWorkflowHook | null): void {
+    queueWorkflowHook = hook;
+}
+
 const DEFAULT_JOB_ATTEMPTS = Number(process.env.ISSUANCE_JOB_ATTEMPTS || 3);
 const DEFAULT_BACKOFF_DELAY_MS = Number(process.env.ISSUANCE_BACKOFF_DELAY_MS || 1000);
 const DEFAULT_BACKOFF_MAX_DELAY_MS = Number(process.env.ISSUANCE_BACKOFF_MAX_DELAY_MS || 30_000);
@@ -264,6 +287,11 @@ export function startIssuanceWorker(
             const jobId = job.id!;
 
             console.log(`[Queue] Processing job ${jobId} with ${recipients.length} credentials`);
+            void emitQueueWorkflowHook({
+                type: 'job.processing',
+                jobId,
+                metadata: { recipients: recipients.length },
+            });
 
             // Initialize job result
             const result: JobResult = {
@@ -304,6 +332,15 @@ export function startIssuanceWorker(
             void queuePersist();
 
             console.log(`[Queue] Job ${jobId} completed: ${result.success}/${result.total} success`);
+            void emitQueueWorkflowHook({
+                type: 'job.completed',
+                jobId,
+                metadata: {
+                    success: result.success,
+                    failed: result.failed,
+                    total: result.total,
+                },
+            });
 
             return result;
         },
@@ -332,6 +369,11 @@ export function startIssuanceWorker(
                 } else {
                     result.status = 'failed';
                     result.errors.push(`Job failed after ${attemptsMade} attempts: ${error.message}`);
+                    void emitQueueWorkflowHook({
+                        type: 'job.failed',
+                        jobId: sourceJobId,
+                        metadata: { attemptsMade, configuredAttempts, reason: error.message },
+                    });
                 }
                 jobResults.set(sourceJobId, result);
                 void queuePersist();
@@ -355,6 +397,11 @@ export function startIssuanceWorker(
                 .then((entryId) => {
                     if (entryId) {
                         console.warn(`[Queue] Job ${sourceJobId} moved to dead-letter queue entry ${entryId}`);
+                        void emitQueueWorkflowHook({
+                            type: 'job.deadlettered',
+                            jobId: sourceJobId,
+                            metadata: { entryId, attemptsMade },
+                        });
                     } else {
                         console.warn(`[Queue] Dead-letter queue unavailable, could not persist failed job ${sourceJobId}`);
                     }
@@ -393,6 +440,11 @@ export async function addBulkIssuanceJob(data: IssuanceJobData): Promise<{ jobId
     await queuePersist();
 
     console.log(`[Queue] Bulk issuance job ${job.id} added with ${data.recipients.length} credentials`);
+    void emitQueueWorkflowHook({
+        type: 'job.queued',
+        jobId: String(job.id),
+        metadata: { recipients: data.recipients.length },
+    });
 
     return { jobId: job.id!, queued: true };
 }
