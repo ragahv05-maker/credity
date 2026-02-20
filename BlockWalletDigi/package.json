@@ -9,13 +9,19 @@
     "build": "tsx script/build.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
+    "precheck": "npm run build:deps",
     "db:push": "drizzle-kit push",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "build:deps": "(cd ../packages/shared-auth && npm install && npm run build) && (cd ../packages/trust-sdk && npm install && npm run build)",
+    "pretest": "npm run build:deps",
     "test": "vitest run --no-file-parallelism",
     "test:watch": "vitest"
+  },
+  "overrides": {
+    "minimatch": "^10.0.0"
   },
   "dependencies": {
     "@credverse/shared-auth": "file:../packages/shared-auth",
