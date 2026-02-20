@@ -203,8 +203,12 @@ export function hashApiKey(apiKey: string): string {
 // Express middleware types
 declare global {
     namespace Express {
+        // Extend standard User interface with TokenPayload
+        // This ensures req.user is correctly typed when using Passport or custom auth
+        interface User extends TokenPayload {}
+
         interface Request {
-            user?: TokenPayload;
+            user?: User;
         }
     }
 }
