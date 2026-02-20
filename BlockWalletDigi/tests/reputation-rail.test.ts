@@ -8,12 +8,12 @@ import {
 } from '../server/services/reputation-rail-service';
 
 describe('reputation rail service', () => {
-    beforeEach(() => {
-        resetReputationRailStore();
+    beforeEach(async () => {
+        await resetReputationRailStore();
     });
 
-    it('computes deterministic weighted reputation score on a 0-1000 scale', () => {
-        upsertReputationEvent({
+    it('computes deterministic weighted reputation score on a 0-1000 scale', async () => {
+        await upsertReputationEvent({
             event_id: 'evt-transport',
             user_id: 1,
             platform_id: 'uber',
@@ -21,7 +21,7 @@ describe('reputation rail service', () => {
             signal_type: 'rating',
             score: 80,
         });
-        upsertReputationEvent({
+        await upsertReputationEvent({
             event_id: 'evt-accommodation',
             user_id: 1,
             platform_id: 'airbnb',
@@ -29,7 +29,7 @@ describe('reputation rail service', () => {
             signal_type: 'rating',
             score: 70,
         });
-        upsertReputationEvent({
+        await upsertReputationEvent({
             event_id: 'evt-delivery',
             user_id: 1,
             platform_id: 'swiggy',
@@ -37,7 +37,7 @@ describe('reputation rail service', () => {
             signal_type: 'rating',
             score: 90,
         });
-        upsertReputationEvent({
+        await upsertReputationEvent({
             event_id: 'evt-employment',
             user_id: 1,
             platform_id: 'linkedin',
@@ -45,7 +45,7 @@ describe('reputation rail service', () => {
             signal_type: 'endorsement',
             score: 60,
         });
-        upsertReputationEvent({
+        await upsertReputationEvent({
             event_id: 'evt-finance',
             user_id: 1,
             platform_id: 'bank',
@@ -53,7 +53,7 @@ describe('reputation rail service', () => {
             signal_type: 'on_time_payment',
             score: 50,
         });
-        upsertReputationEvent({
+        await upsertReputationEvent({
             event_id: 'evt-social',
             user_id: 1,
             platform_id: 'dating-app',
@@ -61,7 +61,7 @@ describe('reputation rail service', () => {
             signal_type: 'positive_feedback',
             score: 100,
         });
-        upsertReputationEvent({
+        await upsertReputationEvent({
             event_id: 'evt-identity',
             user_id: 1,
             platform_id: 'digilocker',
@@ -70,14 +70,14 @@ describe('reputation rail service', () => {
             score: 80,
         });
 
-        const score = calculateReputationScore(1);
+        const score = await calculateReputationScore(1);
         expect(score.score).toBe(740);
         expect(score.event_count).toBe(7);
         expect(score.category_breakdown).toHaveLength(7);
     });
 
-    it('deduplicates event writes by event_id to ensure idempotent behavior', () => {
-        const first = upsertReputationEvent({
+    it('deduplicates event writes by event_id to ensure idempotent behavior', async () => {
+        const first = await upsertReputationEvent({
             event_id: 'evt-dup-1',
             user_id: 1,
             platform_id: 'uber',
@@ -85,7 +85,7 @@ describe('reputation rail service', () => {
             signal_type: 'rating',
             score: 82,
         });
-        const second = upsertReputationEvent({
+        const second = await upsertReputationEvent({
             event_id: 'evt-dup-1',
             user_id: 1,
             platform_id: 'uber',
@@ -101,8 +101,8 @@ describe('reputation rail service', () => {
         expect(second.event.id).toBe(first.event.id);
     });
 
-    it('derives social safety inputs from ingested event signals', () => {
-        upsertReputationEvent({
+    it('derives social safety inputs from ingested event signals', async () => {
+        await upsertReputationEvent({
             event_id: 'evt-social-1',
             user_id: 1,
             platform_id: 'dating-app',
@@ -110,7 +110,7 @@ describe('reputation rail service', () => {
             signal_type: 'positive_feedback',
             score: 88,
         });
-        upsertReputationEvent({
+        await upsertReputationEvent({
             event_id: 'evt-social-2',
             user_id: 1,
             platform_id: 'dating-app',
@@ -118,7 +118,7 @@ describe('reputation rail service', () => {
             signal_type: 'harassment_report',
             score: 0,
         });
-        upsertReputationEvent({
+        await upsertReputationEvent({
             event_id: 'evt-social-3',
             user_id: 1,
             platform_id: 'payments',
@@ -127,7 +127,7 @@ describe('reputation rail service', () => {
             score: 0,
         });
 
-        const derived = deriveSafeDateInputs(1);
+        const derived = await deriveSafeDateInputs(1);
         expect(derived.endorsementCount).toBe(1);
         expect(derived.harassmentReports).toBe(1);
         expect(derived.backgroundFlags).toBe(1);

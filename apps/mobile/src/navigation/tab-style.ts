@@ -1,7 +1,10 @@
 import type { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
-import { colors } from '../theme/tokens';
+import type { ColorPalette } from '../theme/tokens';
 
-export function createBottomTabOptions(accentColor: string): BottomTabNavigationOptions {
+export function createBottomTabOptions(
+  accentColor: string,
+  colors: ColorPalette,
+): BottomTabNavigationOptions {
   return {
     headerShown: false,
     tabBarHideOnKeyboard: true,
@@ -17,6 +20,7 @@ export function createBottomTabOptions(accentColor: string): BottomTabNavigation
     tabBarLabelStyle: {
       fontSize: 12,
       fontWeight: '700',
+      fontFamily: 'Inter_700Bold',
     },
   };
 }

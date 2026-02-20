@@ -1,10 +1,12 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AuthScreen } from '../screens/auth-screen';
+import { ForgotPasswordScreen } from '../screens/forgot-password-screen';
 import { HomeShellScreen } from '../screens/home-shell-screen';
 import { RoleSelectScreen } from '../screens/role-select-screen';
 import { useSessionStore } from '../store/session-store';
+import { useTheme } from '../theme/ThemeContext';
 import type { AppRole } from '../types';
 
 const Stack = createNativeStackNavigator();
@@ -29,6 +31,11 @@ function RoleFlow() {
     return (
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Auth" component={AuthScreen} />
+        <Stack.Screen
+          name="ForgotPassword"
+          component={ForgotPasswordScreen}
+          options={{ headerShown: true, title: 'Reset Password', headerBackTitle: 'Back' }}
+        />
       </Stack.Navigator>
     );
   }
@@ -41,8 +48,9 @@ function RoleFlow() {
 }
 
 export function RootNavigator() {
+  const { isDark } = useTheme();
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={isDark ? DarkTheme : DefaultTheme}>
       <RoleFlow />
     </NavigationContainer>
   );

@@ -295,3 +295,64 @@ cd credverse-gateway && npm run start
 
 - GitHub Issues: https://github.com/raghavbadhwar/credity/issues
 - Documentation: Check `/docs` folder in repository
+
+## 🇮🇳 DigiLocker Integration (India Identity)
+
+DigiLocker lets Indian users pull government-issued documents (Aadhaar, PAN, driving licence, marksheets, etc.) directly into their CredVerse wallet. Both `BlockWalletDigi` and `CredVerseIssuer 3` include a DigiLocker pull service and will log a startup warning if `DIGILOCKER_CLIENT_ID` is unset.
+
+### NHA Developer Portal Registration
+
+1. Visit the **National Health Authority DigiLocker Partner Portal**: https://partners.digitallocker.gov.in
+2. Create a partner account with your organisation's PAN and CIN.
+3. Submit an application for **"Document Pull"** access (choose the document types required).
+4. After approval, obtain:
+   - `Client ID` → `DIGILOCKER_CLIENT_ID`
+   - `Client Secret` → `DIGILOCKER_CLIENT_SECRET`
+   - Allowed redirect URIs (register `https://<your-wallet-domain>/api/digilocker/callback`)
+
+### Required Environment Variables
+
+Add to each relevant service (`BlockWalletDigi`, `CredVerseIssuer 3`):
+
+```env
+# DigiLocker OAuth2 credentials (from NHA partner portal)
+DIGILOCKER_CLIENT_ID=<client-id-from-nha>
+DIGILOCKER_CLIENT_SECRET=<client-secret-from-nha>
+
+# The redirect URI registered with NHA (must match exactly)
+DIGILOCKER_REDIRECT_URI=https://<your-wallet-domain>/api/digilocker/callback
+
+# Sandbox vs Production toggle
+# Use "sandbox" during development — omit or set to "production" for live
+DIGILOCKER_ENV=sandbox
+```
+
+### Sandbox vs Production
+
+| | Sandbox | Production |
+|---|---|---|
+| Base URL | `https://digilocker.meripehchaan.gov.in` | `https://digilocker.meripehchaan.gov.in` |
+| Client credentials | Test credentials from NHA portal | Live credentials from NHA portal |
+| Documents returned | Mock/test documents only | Real government documents |
+| Aadhaar OTP | Bypassed (fixed OTP accepted) | Live OTP via UIDAI |
+| Rate limits | Relaxed | Enforced (see NHA SLA) |
+
+Set `DIGILOCKER_ENV=sandbox` (or leave unset) during development. Switch to `DIGILOCKER_ENV=production` only after NHA production approval and IP whitelisting.
+
+### IP Whitelisting
+
+NHA requires all production API calls to originate from whitelisted egress IPs:
+
+1. Identify your production server's **static outbound IP** (Railway: use a Static Outbound IP addon; GCP Cloud Run: use Cloud NAT with a reserved IP).
+2. Submit the IP(s) to NHA via the partner portal under **"IP Whitelist Management"**.
+3. Whitelisting propagates within 1–2 business days.
+4. Test with: `curl -I https://digilocker.meripehchaan.gov.in` from your production server.
+
+### Verification Checklist
+
+- [ ] Partner account approved on NHA portal
+- [ ] `DIGILOCKER_CLIENT_ID` and `DIGILOCKER_CLIENT_SECRET` set in deployment env
+- [ ] Redirect URI registered and matches `DIGILOCKER_REDIRECT_URI` exactly
+- [ ] Egress IP submitted to NHA and whitelisted
+- [ ] `DIGILOCKER_ENV=production` set (do not leave as `sandbox` in production)
+- [ ] No startup warning about missing `DIGILOCKER_CLIENT_ID` in server logs

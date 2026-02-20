@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { useNavigation } from '@react-navigation/native';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import * as Haptics from 'expo-haptics';
-import { HolderDashboardScreen } from '../screens/holder-dashboard-screen';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { ConnectionsScreen } from '../screens/connections-screen';
-import { ActivityScreen } from '../screens/activity-screen';
+import { CredentialsScreen } from '../screens/credentials-screen';
+import { LivenessScreen } from '../screens/liveness-screen';
 import { SettingsScreen } from '../screens/settings-screen';
-import { colors } from '../theme/tokens';
+import { TrustScoreScreen } from '../screens/trust-score-screen';
+import { useTheme } from '../theme/ThemeContext';
 import { createBottomTabOptions } from './tab-style';
 
 interface Props {
@@ -15,110 +15,79 @@ interface Props {
   onLogout: () => Promise<void>;
 }
 
-const Tab = createBottomTabNavigator();
+type HolderTabParamList = {
+  TrustScore: undefined;
+  Credentials: undefined;
+  Connections: undefined;
+  Settings: undefined;
+};
 
-export function HolderTabs({ onSwitchRole, onLogout }: Props) {
-  const [fabOpen, setFabOpen] = useState(false);
-  const navigation = useNavigation();
+type HolderStackParamList = {
+  HolderTabRoot: undefined;
+  Liveness: undefined;
+};
 
-  async function handleFabAction(target: 'Wallet' | 'Connections') {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setFabOpen(false);
-    (navigation as any).navigate(target);
-  }
+const Tab = createBottomTabNavigator<HolderTabParamList>();
+const Stack = createNativeStackNavigator<HolderStackParamList>();
 
-  async function handleFabOpen() {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setFabOpen(true);
-  }
+function tabIcon(routeName: keyof HolderTabParamList): keyof typeof Ionicons.glyphMap {
+  if (routeName === 'TrustScore') return 'shield-checkmark';
+  if (routeName === 'Credentials') return 'wallet';
+  if (routeName === 'Settings') return 'settings';
+  return 'link';
+}
 
-  async function handleTabPress() {
-    await Haptics.selectionAsync();
-  }
-
+function HolderTabNavigator() {
+  const { colors } = useTheme();
   return (
-    <View style={styles.container}>
-      <Tab.Navigator
-        screenOptions={createBottomTabOptions(colors.holder)}
-        screenListeners={{
-          tabPress: () => {
-            void handleTabPress();
-          },
-        }}
-      >
-        <Tab.Screen name="Wallet" options={{ title: 'Wallet' }}>
-          {() => <HolderDashboardScreen onSwitchRole={onSwitchRole} onLogout={onLogout} />}
-        </Tab.Screen>
-        <Tab.Screen name="Connections" component={ConnectionsScreen} />
-        <Tab.Screen name="Activity" component={ActivityScreen} />
-        <Tab.Screen name="Settings" component={SettingsScreen} />
-      </Tab.Navigator>
-      <Pressable style={styles.fab} onPress={handleFabOpen}>
-        <Text style={styles.fabText}>+</Text>
-      </Pressable>
-
-      <Modal transparent visible={fabOpen} animationType="fade" onRequestClose={() => setFabOpen(false)}>
-        <Pressable style={styles.fabBackdrop} onPress={() => setFabOpen(false)}>
-          <View style={styles.fabSheet}>
-            <Text style={styles.fabTitle}>Quick actions</Text>
-            <Pressable style={styles.fabAction} onPress={() => handleFabAction('Wallet')}>
-              <Text style={styles.fabActionText}>Share credential</Text>
-              <Text style={styles.fabActionHint}>Open Wallet to share</Text>
-            </Pressable>
-            <Pressable style={styles.fabAction} onPress={() => handleFabAction('Wallet')}>
-              <Text style={styles.fabActionText}>Generate ZK proof</Text>
-              <Text style={styles.fabActionHint}>Open Wallet to prove</Text>
-            </Pressable>
-            <Pressable style={styles.fabAction} onPress={() => handleFabAction('Connections')}>
-              <Text style={styles.fabActionText}>Connect platform</Text>
-              <Text style={styles.fabActionHint}>Open Connections</Text>
-            </Pressable>
-          </View>
-        </Pressable>
-      </Modal>
-    </View>
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        ...createBottomTabOptions(colors.holder, colors),
+        tabBarIcon: ({ color, size }) => (
+          <Ionicons name={tabIcon(route.name as keyof HolderTabParamList)} color={color} size={size} />
+        ),
+      })}
+    >
+      <Tab.Screen
+        name="TrustScore"
+        component={TrustScoreScreen}
+        options={{ title: 'Home' }}
+      />
+      <Tab.Screen
+        name="Credentials"
+        component={CredentialsScreen}
+        options={{ title: 'Credentials' }}
+      />
+      <Tab.Screen
+        name="Connections"
+        component={ConnectionsScreen}
+        options={{ title: 'Connections' }}
+      />
+      <Tab.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{ title: 'Settings' }}
+      />
+    </Tab.Navigator>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  fab: {
-    position: 'absolute',
-    right: 18,
-    bottom: 82,
-    height: 52,
-    width: 52,
-    borderRadius: 26,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#1D4ED8',
-    shadowOpacity: 0.28,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 8 },
-  },
-  fabText: { color: 'white', fontSize: 28, fontWeight: '800' },
-  fabBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.35)',
-    justifyContent: 'flex-end',
-  },
-  fabSheet: {
-    backgroundColor: colors.bg,
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
-    padding: 16,
-    gap: 12,
-  },
-  fabTitle: { color: colors.text, fontSize: 16, fontWeight: '800' },
-  fabAction: {
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 12,
-    backgroundColor: colors.card,
-    gap: 4,
-  },
-  fabActionText: { color: colors.text, fontWeight: '700' },
-  fabActionHint: { color: colors.muted, fontSize: 12 },
-});
+export function HolderTabs({ onSwitchRole, onLogout }: Props) {
+  void onSwitchRole;
+  void onLogout;
+
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="HolderTabRoot"
+        component={HolderTabNavigator}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Liveness"
+        component={LivenessScreen}
+        options={{ title: 'Verify Identity' }}
+      />
+    </Stack.Navigator>
+  );
+}

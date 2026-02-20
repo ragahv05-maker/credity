@@ -76,7 +76,8 @@ router.post('/liveness/challenge', async (req: Request, res: Response) => {
             }
         }
 
-        const result = livenessService.completeChallenge(sessionId, challengeId);
+        // completeChallenge now accepts an optional frame for AI spoof detection
+        const result = await livenessService.completeChallenge(sessionId, challengeId, frameData);
 
         res.json({
             success: result.success,
@@ -130,7 +131,7 @@ router.post('/liveness/complete', async (req: Request, res: Response) => {
 
             // Mark all challenges as complete
             for (const challenge of session.challenges) {
-                livenessService.completeChallenge(session.id, challenge.id);
+                await livenessService.completeChallenge(session.id, challenge.id);
             }
 
             const result = livenessService.getSessionResult(session.id);

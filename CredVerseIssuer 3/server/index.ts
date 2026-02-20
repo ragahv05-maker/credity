@@ -43,6 +43,9 @@ if (requireDatabase) {
 if (requireQueue) {
   console.log('[Startup] Queue-backed processing policy is enforced.');
 }
+if (!process.env.DIGILOCKER_CLIENT_ID) {
+  console.warn('[Startup] DIGILOCKER_CLIENT_ID is not set — DigiLocker pull service will run in sandbox/mock mode. Set DIGILOCKER_CLIENT_ID and DIGILOCKER_CLIENT_SECRET for production.');
+}
 
 initAuth({
   jwtSecret: process.env.JWT_SECRET || '',

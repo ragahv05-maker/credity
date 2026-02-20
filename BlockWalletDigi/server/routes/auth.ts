@@ -1,5 +1,9 @@
 import { Router } from 'express';
+import { z } from 'zod';
+import passport from 'passport';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { storage } from '../storage';
+import { generateOtp, verifyOtp, sendEmailOtp, sendSmsOtp } from '../services/otp-service';
 import {
     hashPassword,
     comparePassword,
@@ -57,6 +61,16 @@ router.post('/auth/register', async (req, res) => {
             email,
             password: passwordHash,
         });
+
+        // Store device fingerprint for anti-bot / multi-account detection (PRD §7.2)
+        if (req.deviceFingerprint) {
+            await storage.storeDeviceFingerprint(
+                user.id,
+                req.deviceFingerprint,
+                (req.headers['x-forwarded-for'] as string | undefined) ?? req.socket?.remoteAddress,
+                req.headers['user-agent'],
+            );
+        }
 
         // Generate tokens
         const authUser: AuthUser = {
@@ -335,6 +349,155 @@ router.post('/auth/verify-token', (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ valid: false, error: 'Token verification failed' });
+    }
+});
+
+// ─── Google OAuth ─────────────────────────────────────────────────────────
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL ?? 'http://localhost:5000/api/auth/google/callback';
+const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+
+if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
+    passport.use(new GoogleStrategy(
+        { clientID: GOOGLE_CLIENT_ID, clientSecret: GOOGLE_CLIENT_SECRET, callbackURL: GOOGLE_CALLBACK_URL },
+        (_accessToken: string, _refreshToken: string, profile: import('passport-google-oauth20').Profile, done: (err: null, user: import('passport-google-oauth20').Profile) => void) => done(null, profile),
+    ));
+}
+
+router.get('/auth/google', (req, res, next) => {
+    if (!GOOGLE_CLIENT_ID) {
+        return res.status(503).json({ error: 'Google OAuth not configured' });
+    }
+    passport.authenticate('google', { session: false, scope: ['email', 'profile'] })(req, res, next);
+});
+
+router.get('/auth/google/callback',
+    (req, res, next) => {
+        if (!GOOGLE_CLIENT_ID) return res.status(503).json({ error: 'Google OAuth not configured' });
+        passport.authenticate('google', { session: false, failureRedirect: `${FRONTEND_URL}/?error=oauth_failed` })(req, res, next);
+    },
+    async (req, res) => {
+        try {
+            const profile = req.user as unknown as import('passport-google-oauth20').Profile;
+            const email = profile.emails?.[0]?.value;
+            if (!email) return res.redirect(`${FRONTEND_URL}/?error=no_email`);
+
+            let user = await storage.getUserByEmail(email);
+            if (!user) {
+                const hashed = await hashPassword(String(Math.random()));
+                user = await storage.createUser({
+                    username: email,
+                    email,
+                    password: hashed,
+                    name: profile.displayName ?? email,
+                    did: null,
+                    bio: null,
+                    avatarUrl: profile.photos?.[0]?.value ?? null,
+                    phoneNumber: null,
+                    phoneVerified: false,
+                    emailVerified: true,
+                });
+            }
+            const accessToken = generateAccessToken({ id: user.id, username: user.username, role: 'holder' });
+            const refreshToken = generateRefreshToken({ id: user.id, username: user.username, role: 'holder' });
+            res.redirect(`${FRONTEND_URL}/?token=${accessToken}&refresh=${refreshToken}`);
+        } catch (err) {
+            res.redirect(`${FRONTEND_URL}/?error=oauth_error`);
+        }
+    },
+);
+
+// ─── OTP Routes ────────────────────────────────────────────────────────────
+
+router.post('/auth/send-email-otp', async (req, res) => {
+    const schema = z.object({ email: z.string().email() });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'Valid email required' });
+    try {
+        const user = await storage.getUserByEmail(parsed.data.email);
+        const code = await generateOtp(parsed.data.email, 'email_verify', user?.id);
+        await sendEmailOtp(parsed.data.email, code);
+        res.json({ ok: true });
+    } catch (err: any) {
+        res.status(429).json({ error: err.message });
+    }
+});
+
+router.post('/auth/verify-email-otp', async (req, res) => {
+    const schema = z.object({ email: z.string().email(), code: z.string().length(6) });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'email and 6-digit code required' });
+    try {
+        await verifyOtp(parsed.data.email, 'email_verify', parsed.data.code);
+        // Mark emailVerified on user if exists
+        const user = await storage.getUserByEmail(parsed.data.email);
+        if (user) await storage.updateUser(user.id, { emailVerified: true });
+        res.json({ ok: true });
+    } catch (err: any) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+router.post('/auth/send-phone-otp', async (req, res) => {
+    const schema = z.object({ phone: z.string().min(7) });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'Valid phone number required' });
+    try {
+        const code = await generateOtp(parsed.data.phone, 'phone_verify');
+        await sendSmsOtp(parsed.data.phone, code);
+        res.json({ ok: true });
+    } catch (err: any) {
+        res.status(429).json({ error: err.message });
+    }
+});
+
+router.post('/auth/verify-phone-otp', async (req, res) => {
+    const schema = z.object({ phone: z.string().min(7), code: z.string().length(6) });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'phone and 6-digit code required' });
+    try {
+        await verifyOtp(parsed.data.phone, 'phone_verify', parsed.data.code);
+        res.json({ ok: true });
+    } catch (err: any) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+router.post('/auth/forgot-password', async (req, res) => {
+    const schema = z.object({ email: z.string().email() });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'Valid email required' });
+    // Always respond 200 to prevent email enumeration
+    try {
+        const user = await storage.getUserByEmail(parsed.data.email);
+        if (user) {
+            const code = await generateOtp(parsed.data.email, 'password_reset', user.id);
+            await sendEmailOtp(parsed.data.email, code);
+        }
+    } catch { /* swallow */ }
+    res.json({ ok: true });
+});
+
+router.post('/auth/reset-password', async (req, res) => {
+    const schema = z.object({
+        email: z.string().email(),
+        code: z.string().length(6),
+        newPassword: z.string().min(8),
+    });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'email, 6-digit code, and newPassword (min 8 chars) required' });
+    try {
+        const strength = validatePasswordStrength(parsed.data.newPassword);
+        if (!strength.isValid) return res.status(400).json({ error: strength.errors.join('; ') });
+        await verifyOtp(parsed.data.email, 'password_reset', parsed.data.code);
+        const user = await storage.getUserByEmail(parsed.data.email);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        const hashed = await hashPassword(parsed.data.newPassword);
+        await storage.updateUser(user.id, { password: hashed });
+        res.json({ ok: true });
+    } catch (err: any) {
+        res.status(400).json({ error: err.message });
     }
 });
 

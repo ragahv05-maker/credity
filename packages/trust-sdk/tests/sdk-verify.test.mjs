@@ -167,3 +167,81 @@ test('request surfaces recruiter/issuer contract errors for root-cause handling'
     /CredVerse API error 404: \{"message":"Credential not found","code":"PROOF_CREDENTIAL_NOT_FOUND"\}/,
   );
 });
+
+// ---------------------------------------------------------------------------
+// Decision threshold boundary tests
+// ---------------------------------------------------------------------------
+
+function reputationFetch(rawScore) {
+  return async () =>
+    new Response(
+      JSON.stringify({
+        success: true,
+        reputation: {
+          user_id: 1,
+          score: rawScore,
+          event_count: 5,
+          category_breakdown: [],
+          computed_at: new Date().toISOString(),
+        },
+      }),
+      { status: 200, headers: { 'content-type': 'application/json' } },
+    );
+}
+
+test('verify decision: exact requiredScore yields APPROVE', async () => {
+  // score 700/1000 = normalized 70; requiredScore 70 → APPROVE
+  const sdk = new CredVerse({ baseUrl: 'https://api.credverse.test', fetchImpl: reputationFetch(700) });
+  const result = await sdk.verify({ userId: 1, vertical: 'OVERALL', requiredScore: 70 });
+  assert.equal(result.score, 70);
+  assert.equal(result.recommendation, 'APPROVE');
+});
+
+test('verify decision: one point below requiredScore yields REVIEW', async () => {
+  // score 690/1000 = 69; requiredScore=70; review floor=max(50,55)=55; 69>=55 → REVIEW
+  const sdk = new CredVerse({ baseUrl: 'https://api.credverse.test', fetchImpl: reputationFetch(690) });
+  const result = await sdk.verify({ userId: 1, vertical: 'OVERALL', requiredScore: 70 });
+  assert.equal(result.score, 69);
+  assert.equal(result.recommendation, 'REVIEW');
+});
+
+test('verify decision: at review floor yields REVIEW', async () => {
+  // requiredScore=70; review floor=max(50,55)=55; score=55 → REVIEW
+  const sdk = new CredVerse({ baseUrl: 'https://api.credverse.test', fetchImpl: reputationFetch(550) });
+  const result = await sdk.verify({ userId: 1, vertical: 'OVERALL', requiredScore: 70 });
+  assert.equal(result.score, 55);
+  assert.equal(result.recommendation, 'REVIEW');
+});
+
+test('verify decision: one below review floor yields REJECT', async () => {
+  // requiredScore=70; review floor=55; score=54 → REJECT
+  const sdk = new CredVerse({ baseUrl: 'https://api.credverse.test', fetchImpl: reputationFetch(540) });
+  const result = await sdk.verify({ userId: 1, vertical: 'OVERALL', requiredScore: 70 });
+  assert.equal(result.score, 54);
+  assert.equal(result.recommendation, 'REJECT');
+});
+
+test('verify decision: default requiredScore is 70', async () => {
+  const sdk = new CredVerse({ baseUrl: 'https://api.credverse.test', fetchImpl: reputationFetch(1000) });
+  const result = await sdk.verify({ userId: 1, vertical: 'HIRING' });
+  assert.equal(result.requiredScore, 70);
+  assert.equal(result.recommendation, 'APPROVE');
+});
+
+test('verify confidence: HIGH for score >= 85', async () => {
+  const sdk = new CredVerse({ baseUrl: 'https://api.credverse.test', fetchImpl: reputationFetch(860) });
+  const result = await sdk.verify({ userId: 1, vertical: 'GIG' });
+  assert.equal(result.confidence, 'HIGH');
+});
+
+test('verify confidence: MEDIUM for score 65-84', async () => {
+  const sdk = new CredVerse({ baseUrl: 'https://api.credverse.test', fetchImpl: reputationFetch(700) });
+  const result = await sdk.verify({ userId: 1, vertical: 'GIG' });
+  assert.equal(result.confidence, 'MEDIUM');
+});
+
+test('verify confidence: LOW for score < 65', async () => {
+  const sdk = new CredVerse({ baseUrl: 'https://api.credverse.test', fetchImpl: reputationFetch(600) });
+  const result = await sdk.verify({ userId: 1, vertical: 'GIG' });
+  assert.equal(result.confidence, 'LOW');
+});

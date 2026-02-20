@@ -4,6 +4,9 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { and, count, eq, gte, lt } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
 import {
     calculateTrustScore,
     generateImprovementSuggestions,
@@ -11,8 +14,17 @@ import {
     UserTrustData,
     ImprovementSuggestion
 } from '../services/trust-score-service';
+import * as livenessService from '../services/liveness-service';
+import * as biometricsService from '../services/biometrics-service';
+import * as documentService from '../services/document-scanner-service';
+import { activities, platformConnections, reputationEvents } from '@shared/schema';
 
 const router = Router();
+
+const pool = process.env.DATABASE_URL
+    ? new Pool({ connectionString: process.env.DATABASE_URL })
+    : null;
+const db = pool ? drizzle(pool) : null;
 
 /**
  * GET /api/trust-score
@@ -173,15 +185,6 @@ function calculateTrend(history: { date: string; score: number }[]): string {
 
 /**
  * Build user trust data from storage/database
- * In production, this would query multiple tables
- */
-import * as livenessService from '../services/liveness-service';
-import * as biometricsService from '../services/biometrics-service';
-import * as documentService from '../services/document-scanner-service';
-
-/**
- * Build user trust data from storage/database
- * In production, this would query multiple tables
  */
 async function getUserTrustData(userId: number): Promise<UserTrustData> {
     // Fetch real status from services
@@ -189,7 +192,46 @@ async function getUserTrustData(userId: number): Promise<UserTrustData> {
     const biometricsStatus = biometricsService.getBiometricStatus(userId.toString());
     const documentStatus = documentService.getDocumentVerificationStatus(userId.toString());
 
-    // In production, aggregate from: users, credentials, verifications, connections tables
+    let totalVerifications = 0;
+    let platformConnectionCount = 0;
+    let endorsementCount = 0;
+    let positiveFeedbackCount = 0;
+    let negativeFeedbackCount = 0;
+
+    if (db) {
+        // Count share/verification activities for this user
+        const [activityRow] = await db
+            .select({ value: count() })
+            .from(activities)
+            .where(eq(activities.userId, userId));
+        totalVerifications = Number(activityRow?.value ?? 0);
+
+        // Count active platform connections for this user
+        const [connRow] = await db
+            .select({ value: count() })
+            .from(platformConnections)
+            .where(and(eq(platformConnections.userId, userId), eq(platformConnections.status, 'active')));
+        platformConnectionCount = Number(connRow?.value ?? 0);
+
+        // Count reputation event signals
+        const [endRow] = await db
+            .select({ value: count() })
+            .from(reputationEvents)
+            .where(and(eq(reputationEvents.userId, userId), gte(reputationEvents.score, 75)));
+        endorsementCount = Number(endRow?.value ?? 0);
+
+        const [posRow] = await db
+            .select({ value: count() })
+            .from(reputationEvents)
+            .where(and(eq(reputationEvents.userId, userId), gte(reputationEvents.score, 50)));
+        positiveFeedbackCount = Number(posRow?.value ?? 0);
+
+        const [negRow] = await db
+            .select({ value: count() })
+            .from(reputationEvents)
+            .where(and(eq(reputationEvents.userId, userId), lt(reputationEvents.score, 50)));
+        negativeFeedbackCount = Number(negRow?.value ?? 0);
+    }
 
     return {
         userId,
@@ -197,19 +239,19 @@ async function getUserTrustData(userId: number): Promise<UserTrustData> {
         livenessVerified: livenessStatus.verified,
         documentVerified: documentStatus.verified,
         biometricsSetup: biometricsStatus.enrolled,
-        digilockerConnected: documentStatus.documentCount > 0, // Assume connected if docs exist
+        digilockerConnected: documentStatus.documentCount > 0,
 
-        // Activity (Mock for now, easy to hook up later)
-        totalCredentials: documentStatus.documentCount + 3, // Base + Verified Docs
-        totalVerifications: 5,
-        platformConnectionCount: 2,
+        // Activity (DB queries)
+        totalCredentials: documentStatus.documentCount + 3,
+        totalVerifications,
+        platformConnectionCount,
         lastActivityDate: new Date(),
 
-        // Reputation (Mock)
+        // Reputation (DB queries)
         suspiciousActivityFlags: 0,
-        endorsementCount: 0,
-        positiveFeedbackCount: 0,
-        negativeFeedbackCount: 0
+        endorsementCount,
+        positiveFeedbackCount,
+        negativeFeedbackCount,
     };
 }
 

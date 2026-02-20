@@ -70,10 +70,24 @@ export class CredVerse {
 
   async verify(input: VerifyRequest): Promise<VerifyResult> {
     const requiredScore = clamp(Math.round(input.requiredScore ?? 70), 0, 100);
+    const subjectDid = input.subjectDid ?? (input.userId ? String(input.userId) : undefined);
 
     if (input.vertical === 'DATING') {
       const safeDate = await this.getSafeDateScore({ userId: input.userId, subjectDid: input.subjectDid });
       const normalizedScore = clamp(Math.round(safeDate.score), 0, 100);
+      let zkProof: ProofGenerationResultWithCode | null = null;
+      if (input.includeZkProof) {
+        try {
+          zkProof = await this.generateProof({
+            format: 'sd-jwt-vc',
+            subject_did: subjectDid,
+            proof_purpose: 'assertionMethod',
+            metadata: { vertical: 'safe_date', score: normalizedScore },
+          });
+        } catch {
+          zkProof = null;
+        }
+      }
       return {
         vertical: input.vertical,
         score: normalizedScore,
@@ -81,7 +95,7 @@ export class CredVerse {
         requiredScore,
         recommendation: deriveDecision(normalizedScore, requiredScore),
         confidence: deriveConfidence(normalizedScore),
-        zkProof: null,
+        zkProof,
         raw: safeDate,
       };
     }
@@ -93,6 +107,19 @@ export class CredVerse {
     });
 
     const normalizedScore = clamp(Math.round((reputation.score / 1000) * 100), 0, 100);
+    let zkProof: ProofGenerationResultWithCode | null = null;
+    if (input.includeZkProof) {
+      try {
+        zkProof = await this.generateProof({
+          format: 'sd-jwt-vc',
+          subject_did: subjectDid,
+          proof_purpose: 'assertionMethod',
+          metadata: { vertical: input.vertical, score: normalizedScore },
+        });
+      } catch {
+        zkProof = null;
+      }
+    }
     return {
       vertical: input.vertical,
       score: normalizedScore,
@@ -100,7 +127,7 @@ export class CredVerse {
       requiredScore,
       recommendation: deriveDecision(normalizedScore, requiredScore),
       confidence: deriveConfidence(normalizedScore),
-      zkProof: null,
+      zkProof,
       raw: reputation,
     };
   }

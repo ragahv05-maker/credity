@@ -2,7 +2,7 @@ import { Router, type Express } from "express";
 import { type Server } from "http";
 import { storage } from "./storage";
 import userRoutes from "./routes/user";
-import digilockerRoutes from "./routes/digilocker";
+import digilockerRouter from "./routes/digilocker";
 import authRoutes from "./routes/auth";
 import walletRoutes from "./routes/wallet";
 import credentialsRoutes from "./routes/credentials";
@@ -49,7 +49,7 @@ export async function registerRoutes(
   app.use("/api/v1", sharingRoutes);
   app.use("/api/v1", notificationsRoutes);
   app.use("/api/v1", userRoutes);
-  app.use("/api/v1", digilockerRoutes);
+  app.use("/api/v1", digilockerRouter);
   app.use("/api/v1/trust-score", trustScoreRoutes);
   app.use("/api/v1/reputation", reputationRoutes);
   app.use("/api/v1", complianceRoutes);
@@ -63,7 +63,7 @@ export async function registerRoutes(
   app.use("/api", withLegacyDeprecation(sharingRoutes, "/api/v1/wallet/share"));
   app.use("/api", withLegacyDeprecation(notificationsRoutes, "/api/v1/inbox"));
   app.use("/api", withLegacyDeprecation(userRoutes, "/api/v1/user"));
-  app.use("/api", withLegacyDeprecation(digilockerRoutes, "/api/v1/digilocker"));
+  app.use("/api", digilockerRouter);
   app.use("/api/trust-score", withLegacyDeprecation(trustScoreRoutes, "/api/v1/trust-score"));
   app.use("/api/reputation", withLegacyDeprecation(reputationRoutes, "/api/v1/reputation"));
   app.use("/api", withLegacyDeprecation(complianceRoutes, "/api/v1/compliance"));

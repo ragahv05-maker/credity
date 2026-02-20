@@ -168,6 +168,35 @@ router.post('/verify', async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/v1/claims/user/:userId
+ * List all claims filed by a specific user (holder-facing view)
+ */
+router.get('/user/:userId', async (req: Request, res: Response) => {
+    try {
+        const { userId } = req.params;
+        const claims = await claimsPersistence.listClaimsForUser(userId);
+
+        res.json({
+            success: true,
+            claims: claims.map(c => ({
+                id: c.id,
+                claim_type: c.claimType,
+                trust_score: c.trustScore,
+                recommendation: c.recommendation,
+                status: c.status ?? null,
+                reviewed_at: c.reviewedAt ?? null,
+                created_at: c.createdAt,
+                processed_at: c.processedAt,
+            })),
+            total: claims.length,
+        });
+    } catch (error: any) {
+        console.error('List user claims error:', error);
+        res.status(500).json({ success: false, error: 'Failed to list claims' });
+    }
+});
+
+/**
  * GET /api/v1/claims/:id
  * Get claim verification status
  */
@@ -210,6 +239,55 @@ router.get('/:id', async (req: Request, res: Response) => {
             success: false,
             error: 'Failed to get claim'
         });
+    }
+});
+
+/**
+ * PATCH /api/v1/claims/:id/status
+ * Update a claim's review status (admin/reviewer override of AI recommendation)
+ */
+router.patch('/:id/status', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const statusSchema = z.object({
+            status: z.enum(['approved', 'rejected', 'needs_review']),
+            reviewed_by: z.string().optional(),
+            review_note: z.string().max(2000).optional(),
+        });
+
+        const parsed = statusSchema.safeParse(req.body);
+        if (!parsed.success) {
+            return res.status(400).json({
+                success: false,
+                error: 'validation_error',
+                details: parsed.error.flatten(),
+            });
+        }
+
+        const updated = await claimsPersistence.updateClaimStatus(
+            id,
+            parsed.data.status,
+            parsed.data.reviewed_by,
+            parsed.data.review_note,
+        );
+
+        if (!updated) {
+            return res.status(404).json({ success: false, error: 'Claim not found' });
+        }
+
+        res.json({
+            success: true,
+            claim: {
+                id: updated.id,
+                status: updated.status,
+                reviewed_by: updated.reviewedBy ?? null,
+                review_note: updated.reviewNote ?? null,
+                reviewed_at: updated.reviewedAt,
+            },
+        });
+    } catch (error: any) {
+        console.error('Update claim status error:', error);
+        res.status(500).json({ success: false, error: 'Failed to update claim status' });
     }
 });
 

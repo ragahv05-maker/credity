@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import {
   exportRecruiterAuditLog,
@@ -13,7 +13,8 @@ import {
   verifyRecruiterInstant,
 } from '../lib/api-client';
 import { requireProtectedAction } from '../lib/protected-action';
-import { colors } from '../theme/tokens';
+import { useTheme } from '../theme/ThemeContext';
+import type { ColorPalette } from '../theme/tokens';
 
 interface Props {
   onSwitchRole: () => void;
@@ -21,6 +22,9 @@ interface Props {
 }
 
 export function RecruiterDashboardScreen({ onSwitchRole, onLogout }: Props) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
+
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
   const [records, setRecords] = useState<any[]>([]);
@@ -235,76 +239,80 @@ export function RecruiterDashboardScreen({ onSwitchRole, onLogout }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: 16, gap: 14, paddingBottom: 40 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
-  headerButtons: { flexDirection: 'row', gap: 8 },
-  kicker: {
-    color: colors.muted,
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-  },
-  title: { color: colors.text, fontSize: 26, fontWeight: '800' },
-  subtitle: { color: colors.muted, marginTop: 4, maxWidth: 220 },
-  card: {
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    padding: 14,
-    gap: 8,
-    shadowColor: '#0F172A',
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-  },
-  cardTitle: { color: colors.text, fontWeight: '700', fontSize: 16 },
-  meta: { color: colors.muted, fontSize: 13 },
-  rowItem: {
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  rowTitle: { color: colors.text, fontWeight: '600' },
-  input: {
-    backgroundColor: colors.elevated,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: colors.text,
-  },
-  textarea: {
-    minHeight: 96,
-    textAlignVertical: 'top',
-  },
-  primaryButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    paddingVertical: 10,
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  primaryButtonText: { color: 'white', fontWeight: '800' },
-  secondaryButton: {
-    backgroundColor: colors.elevated,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  secondaryButtonText: { color: colors.text, fontWeight: '700' },
-  smallButton: {
-    backgroundColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  danger: { backgroundColor: colors.danger },
-  smallButtonText: { color: 'white', fontWeight: '700' },
-});
+function makeStyles(colors: ColorPalette) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.bg },
+    content: { padding: 16, gap: 14, paddingBottom: 40 },
+    headerRow: { flexDirection: 'row' as const, justifyContent: 'space-between' as const, gap: 12 },
+    headerButtons: { flexDirection: 'row' as const, gap: 8 },
+    kicker: {
+      color: colors.muted,
+      fontSize: 12,
+      fontWeight: '700' as const,
+      fontFamily: 'Inter_700Bold',
+      letterSpacing: 0.6,
+      textTransform: 'uppercase' as const,
+    },
+    title: { color: colors.text, fontSize: 26, fontWeight: '800' as const, fontFamily: 'Inter_800ExtraBold' },
+    subtitle: { color: colors.muted, marginTop: 4, maxWidth: 220, fontFamily: 'Inter_400Regular' },
+    card: {
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 16,
+      padding: 14,
+      gap: 8,
+      shadowColor: colors.shadow,
+      shadowOpacity: 0.04,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 4 },
+    },
+    cardTitle: { color: colors.text, fontWeight: '700' as const, fontFamily: 'Inter_700Bold', fontSize: 16 },
+    meta: { color: colors.muted, fontSize: 13, fontFamily: 'Inter_400Regular' },
+    rowItem: {
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    rowTitle: { color: colors.text, fontWeight: '600' as const, fontFamily: 'Inter_600SemiBold' },
+    input: {
+      backgroundColor: colors.input,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      color: colors.text,
+      fontFamily: 'Inter_400Regular',
+    },
+    textarea: {
+      minHeight: 96,
+      textAlignVertical: 'top' as const,
+    },
+    primaryButton: {
+      backgroundColor: colors.primary,
+      borderRadius: 12,
+      paddingVertical: 10,
+      alignItems: 'center' as const,
+      marginTop: 4,
+    },
+    primaryButtonText: { color: 'white', fontWeight: '800' as const, fontFamily: 'Inter_800ExtraBold' },
+    secondaryButton: {
+      backgroundColor: colors.input,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingVertical: 10,
+      alignItems: 'center' as const,
+    },
+    secondaryButtonText: { color: colors.text, fontWeight: '700' as const, fontFamily: 'Inter_700Bold' },
+    smallButton: {
+      backgroundColor: colors.border,
+      borderRadius: 10,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+    },
+    danger: { backgroundColor: colors.danger },
+    smallButtonText: { color: 'white', fontWeight: '700' as const, fontFamily: 'Inter_700Bold' },
+  });
+}

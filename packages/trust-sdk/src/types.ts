@@ -38,6 +38,7 @@ export interface VerifyRequest {
   subjectDid?: string;
   vertical: TrustVertical;
   requiredScore?: number;
+  includeZkProof?: boolean;
 }
 
 export interface VerifyResult {
@@ -47,7 +48,7 @@ export interface VerifyResult {
   requiredScore: number;
   normalizedScore: number;
   confidence: 'HIGH' | 'MEDIUM' | 'LOW';
-  zkProof: null;
+  zkProof: ProofGenerationResultWithCode | null;
   raw: ReputationScoreContract | SafeDateScoreContract;
 }
 

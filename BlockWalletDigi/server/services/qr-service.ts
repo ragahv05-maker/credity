@@ -1,4 +1,5 @@
 import { generateAccessToken, validateAccessToken, sha256 } from './crypto-utils';
+import QRCode from 'qrcode';
 
 /**
  * QR Code Service for CredVerse Wallet
@@ -171,22 +172,14 @@ export class QRService {
     }
 
     /**
-     * Generate QR code data URL (using simple SVG)
+     * Generate QR code SVG string
      */
-    generateQRCodeSVG(data: string, size: number = 200): string {
-        // This is a placeholder - in production use 'qrcode' npm package
-        // For MVP, we'll return the data as a simple encoded format
-        const encoded = Buffer.from(JSON.stringify(data)).toString('base64');
-
-        // Return a simple QR-like SVG with the encoded data
-        return `data:image/svg+xml,${encodeURIComponent(`
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}">
-        <rect width="${size}" height="${size}" fill="white"/>
-        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="10">
-          QR: ${encoded.slice(0, 20)}...
-        </text>
-      </svg>
-    `)}`;
+    async generateQRCodeSVG(data: string, size: number = 200): Promise<string> {
+        return QRCode.toString(data, {
+            type: 'svg',
+            width: size,
+            errorCorrectionLevel: 'M',
+        });
     }
 }
 

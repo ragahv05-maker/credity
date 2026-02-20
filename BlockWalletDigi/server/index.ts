@@ -9,11 +9,13 @@ import express, { type Request, Response, NextFunction } from "express";
 import helmet from "helmet";
 import cors from "cors";
 import { errorHandler } from "./middleware/error-handler";
+import { deviceFingerprintMiddleware } from "./middleware/device-fingerprint";
 import { setupSecurity } from "@credverse/shared-auth";
 import { initAuth } from "@credverse/shared-auth";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import passport from "passport";
 
 const app = express();
 const httpServer = createServer(app);
@@ -25,6 +27,9 @@ if (requireDatabase && !process.env.DATABASE_URL) {
 }
 if (requireDatabase) {
   console.log('[Startup] Database persistence policy is enforced.');
+}
+if (!process.env.DIGILOCKER_CLIENT_ID) {
+  console.warn('[Startup] DIGILOCKER_CLIENT_ID is not set — DigiLocker integration will run in sandbox/mock mode. Set DIGILOCKER_CLIENT_ID and DIGILOCKER_CLIENT_SECRET for production.');
 }
 
 initAuth({
@@ -61,6 +66,12 @@ app.use(
 );
 
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+
+// Device fingerprinting (Agent 1) — must run before all routes
+app.use(deviceFingerprintMiddleware);
+
+// Passport for OAuth flows (Agent 1)
+app.use(passport.initialize());
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {

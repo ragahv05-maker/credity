@@ -570,3 +570,228 @@ export async function requestRecruiterDataExport(subjectId: string, reason?: str
 export async function exportRecruiterAuditLog(format: 'json' | 'ndjson' = 'json'): Promise<any> {
   return requestRole<any>('recruiter', `v1/compliance/audit-log/export?format=${format}`);
 }
+// ---------------------------------------------------------------------------
+// OTP + Password Reset helpers (Agent 1)
+// ---------------------------------------------------------------------------
+
+export async function sendEmailOtp(email: string): Promise<void> {
+  await requestRole('holder', 'v1/auth/send-email-otp', {
+    method: 'POST',
+    body: { email },
+    skipAuth: true,
+    retryOnAuthFailure: false,
+  });
+}
+
+export async function verifyEmailOtp(email: string, code: string): Promise<void> {
+  await requestRole('holder', 'v1/auth/verify-email-otp', {
+    method: 'POST',
+    body: { email, code },
+    skipAuth: true,
+    retryOnAuthFailure: false,
+  });
+}
+
+export async function sendPhoneOtp(phone: string): Promise<void> {
+  await requestRole('holder', 'v1/auth/send-phone-otp', {
+    method: 'POST',
+    body: { phone },
+    skipAuth: true,
+    retryOnAuthFailure: false,
+  });
+}
+
+export async function verifyPhoneOtp(phone: string, code: string): Promise<void> {
+  await requestRole('holder', 'v1/auth/verify-phone-otp', {
+    method: 'POST',
+    body: { phone, code },
+    skipAuth: true,
+    retryOnAuthFailure: false,
+  });
+}
+
+export async function sendForgotPasswordEmail(email: string): Promise<void> {
+  await requestRole('holder', 'v1/auth/forgot-password', {
+    method: 'POST',
+    body: { email },
+    skipAuth: true,
+    retryOnAuthFailure: false,
+  });
+}
+
+export async function resetPassword(email: string, code: string, newPassword: string): Promise<void> {
+  await requestRole('holder', 'v1/auth/reset-password', {
+    method: 'POST',
+    body: { email, code, newPassword },
+    skipAuth: true,
+    retryOnAuthFailure: false,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Connections (holder)
+// ---------------------------------------------------------------------------
+
+export async function getHolderConnections(): Promise<any[]> {
+  const data = await requestRole<any>('holder', 'v1/connections');
+  return Array.isArray(data) ? data : data?.connections || [];
+}
+
+export async function getPendingConnections(): Promise<any[]> {
+  try {
+    const data = await requestRole<any>('holder', 'v1/connections/pending');
+    return Array.isArray(data) ? data : data?.pending || data?.requests || [];
+  } catch {
+    const fallback = await requestRole<any>('holder', 'v1/connections/requests');
+    return Array.isArray(fallback) ? fallback : fallback?.requests || [];
+  }
+}
+
+export async function approveConnection(connectionId: string): Promise<any> {
+  const encoded = encodeURIComponent(connectionId);
+  try {
+    return await requestRole('holder', `v1/connections/${encoded}/approve`, {
+      method: 'POST',
+    });
+  } catch {
+    return requestRole('holder', `v1/connections/requests/${encoded}/approve`, {
+      method: 'POST',
+    });
+  }
+}
+
+export async function denyConnection(connectionId: string): Promise<any> {
+  const encoded = encodeURIComponent(connectionId);
+  try {
+    return await requestRole('holder', `v1/connections/${encoded}/deny`, {
+      method: 'POST',
+    });
+  } catch {
+    return requestRole('holder', `v1/connections/requests/${encoded}/deny`, {
+      method: 'POST',
+    });
+  }
+}
+
+export async function disconnectConnection(connectionId: string): Promise<any> {
+  return requestRole('holder', `v1/connections/${encodeURIComponent(connectionId)}`, {
+    method: 'DELETE',
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Liveness (holder)
+// ---------------------------------------------------------------------------
+
+export async function startLivenessSession(): Promise<{ sessionId: string; challenges: any[] }> {
+  const data = await requestRole<any>('holder', 'v1/identity/liveness/start', {
+    method: 'POST',
+    body: { userId: '1' },
+  });
+
+  const challenges = Array.isArray(data?.challenges)
+    ? data.challenges
+    : data?.currentChallenge
+      ? [data.currentChallenge]
+      : [];
+
+  return {
+    sessionId: data?.sessionId || data?.session_id || '',
+    challenges,
+  };
+}
+
+export async function submitLivenessChallenge(input: {
+  sessionId: string;
+  challengeId: string;
+  completed: boolean;
+}): Promise<any> {
+  return requestRole('holder', 'v1/identity/liveness/challenge', {
+    method: 'POST',
+    body: {
+      sessionId: input.sessionId,
+      challengeId: input.challengeId,
+      completed: input.completed,
+    },
+  });
+}
+
+export async function completeLivenessSession(
+  sessionId: string,
+): Promise<{ passed: boolean; score: number; message?: string }> {
+  try {
+    const data = await requestRole<any>('holder', 'v1/identity/liveness/complete', {
+      method: 'POST',
+      body: {
+        sessionId,
+        userId: '1',
+        passed: true,
+      },
+    });
+
+    const rawScore = Number(data?.score ?? data?.result?.score ?? data?.result?.confidence ?? 0);
+    return {
+      passed: Boolean(data?.passed ?? data?.verified ?? data?.success),
+      score: Number.isFinite(rawScore) ? Math.max(0, Math.min(100, Math.round(rawScore))) : 0,
+      message: data?.message || data?.error,
+    };
+  } catch {
+    const fallback = await requestRole<any>('holder', `v1/identity/liveness/${encodeURIComponent(sessionId)}`);
+    const rawScore = Number(fallback?.result?.score ?? fallback?.result?.confidence ?? 0);
+    return {
+      passed: Boolean(fallback?.success),
+      score: Number.isFinite(rawScore) ? Math.max(0, Math.min(100, Math.round(rawScore))) : 0,
+      message: fallback?.message || fallback?.error,
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Activity (holder) — H-3
+// ---------------------------------------------------------------------------
+
+export async function getHolderActivity(): Promise<Array<{
+  id: string;
+  title: string;
+  description: string;
+  status: 'verified' | 'pending' | 'revoked';
+  timestamp: string;
+}>> {
+  const data = await requestRole<any>('holder', 'v1/activity');
+  const raw: any[] = Array.isArray(data) ? data : data?.activities || data?.items || [];
+  return raw.map((item: any) => ({
+    id: String(item.id || Math.random().toString(16).slice(2)),
+    title: item.title || item.type || 'Activity',
+    description: item.description || item.detail || '',
+    status: (item.status === 'revoked' || item.status === 'pending') ? item.status : 'verified',
+    timestamp: item.timestamp || item.createdAt || item.created_at || new Date().toISOString(),
+  }));
+}
+
+// ---------------------------------------------------------------------------
+// Credential revoke (holder) — H-5
+// ---------------------------------------------------------------------------
+
+export async function revokeCredential(credentialId: string): Promise<void> {
+  await requestRole('holder', `v1/wallet/credentials/${encodeURIComponent(credentialId)}/revoke`, {
+    method: 'POST',
+    body: {},
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Trust score suggestions (holder) — M-6
+// ---------------------------------------------------------------------------
+
+export async function getHolderTrustSuggestions(): Promise<{
+  quickWins: Array<{ action: string; points: number; category: string }>;
+  longTerm: Array<{ action: string; points: number; category: string }>;
+  potentialPoints: number;
+}> {
+  const data = await requestRole<any>('holder', 'v1/trust-score/suggestions');
+  return {
+    quickWins: Array.isArray(data?.quickWins) ? data.quickWins : [],
+    longTerm: Array.isArray(data?.longTerm) ? data.longTerm : [],
+    potentialPoints: Number(data?.potentialPoints ?? 0),
+  };
+}

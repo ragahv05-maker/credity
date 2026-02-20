@@ -96,7 +96,7 @@ function buildVerificationEvidence(events: ReputationEventRecord[]): Verificatio
 
 async function buildCandidateVerificationSummary(userId: number): Promise<CandidateVerificationSummary> {
     const { reputationScore, safeDate } = await buildSafeDateSnapshot(userId);
-    const recentEvents = listReputationEvents(userId);
+    const recentEvents = await listReputationEvents(userId);
 
     const confidence = Math.max(0.5, Math.min(0.99, Number((reputationScore.score / 1000).toFixed(2))));
     const riskScore = Number((1 - confidence).toFixed(2));
@@ -140,11 +140,11 @@ async function buildSafeDateSnapshot(userId: number): Promise<{ reputationScore:
         }
     }
 
-    const reputationScore = calculateReputationScore(userId);
+    const reputationScore = await calculateReputationScore(userId);
     const user = await storage.getUser(userId);
     const liveness = livenessService.getUserLivenessStatus(String(userId));
     const documentStatus = documentService.getDocumentVerificationStatus(String(userId));
-    const dynamicInputs = deriveSafeDateInputs(userId);
+    const dynamicInputs = await deriveSafeDateInputs(userId);
 
     const safeDate = calculateSafeDateScore(userId, reputationScore, {
         identityVerified: Boolean(user?.did) || documentStatus.verified,
@@ -172,7 +172,7 @@ router.get('/events', async (req: Request, res: Response) => {
                 : undefined;
         const limit = Math.max(1, Math.min(500, Number(req.query.limit) || 100));
 
-        const events = listReputationEvents(userId, category).slice(0, limit);
+        const events = (await listReputationEvents(userId, category)).slice(0, limit);
         return res.json({
             success: true,
             events,
@@ -213,7 +213,7 @@ router.post('/events', async (req: Request, res: Response) => {
             });
         }
 
-        const result = upsertReputationEvent({
+        const result = await upsertReputationEvent({
             ...body,
             platform_id: platformId,
         });

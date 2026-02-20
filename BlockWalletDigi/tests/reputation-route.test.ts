@@ -5,13 +5,7 @@ import reputationRoutes from '../server/routes/reputation';
 import { storage } from '../server/storage';
 import { resetReputationRailStore, upsertReputationEvent } from '../server/services/reputation-rail-service';
 
-// Mock dependencies
-vi.mock('../server/storage', () => ({
-  storage: {
-    getUser: vi.fn(),
-  },
-}));
-
+// Only mock external services — use real storage for reputation data
 vi.mock('../server/services/liveness-service', () => ({
   getUserLivenessStatus: vi.fn().mockReturnValue({ verified: true }),
 }));
@@ -25,16 +19,14 @@ app.use(express.json());
 app.use('/api/reputation', reputationRoutes);
 
 describe('reputation routes', () => {
-  beforeEach(() => {
-    resetReputationRailStore();
+  beforeEach(async () => {
+    await resetReputationRailStore();
     vi.clearAllMocks();
+    vi.spyOn(storage, 'getUser').mockResolvedValue({ id: 1, did: 'did:key:123' } as any);
   });
 
   describe('GET /api/reputation/summary', () => {
     it('returns default neutral summary for new user (fallback behavior)', async () => {
-      // Setup: Mock storage returning user but no events
-      (storage.getUser as any).mockResolvedValue({ id: 1, did: 'did:key:123' });
-
       const response = await request(app)
         .get('/api/reputation/summary?userId=1')
         .expect(200);
@@ -48,17 +40,17 @@ describe('reputation routes', () => {
     });
 
     it('returns approve decision for high reputation user', async () => {
-      (storage.getUser as any).mockResolvedValue({ id: 2, did: 'did:key:456' });
+      vi.spyOn(storage, 'getUser').mockResolvedValue({ id: 2, did: 'did:key:456' } as any);
 
       // Ingest positive events
-      upsertReputationEvent({
+      await upsertReputationEvent({
         user_id: 2,
         platform_id: 'linkedin',
         category: 'employment',
         signal_type: 'endorsement',
         score: 100,
       });
-      upsertReputationEvent({
+      await upsertReputationEvent({
         user_id: 2,
         platform_id: 'airbnb',
         category: 'accommodation',
@@ -71,7 +63,7 @@ describe('reputation routes', () => {
         // If we spam high score events, cross-platform points will rise.
 
       for(let i=0; i<10; i++) {
-        upsertReputationEvent({
+        await upsertReputationEvent({
             event_id: `evt-${i}`,
             user_id: 2,
             platform_id: 'uber',
@@ -81,14 +73,14 @@ describe('reputation routes', () => {
         });
       }
       // Add social validation for "endorsementCount"
-      upsertReputationEvent({
+      await upsertReputationEvent({
         user_id: 2,
         platform_id: 'social',
         category: 'social',
         signal_type: 'endorsement',
         score: 100,
       });
-      upsertReputationEvent({
+      await upsertReputationEvent({
         user_id: 2,
         platform_id: 'social',
         category: 'social',

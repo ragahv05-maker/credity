@@ -22,6 +22,11 @@ export interface StoredClaimRecord {
   authenticityScore: number;
   trustScore: number;
   recommendation: ClaimVerifyResponse['recommendation'];
+  /** Reviewer-set status that overrides the AI recommendation. */
+  status?: 'approved' | 'rejected' | 'needs_review';
+  reviewedBy?: string;
+  reviewNote?: string;
+  reviewedAt?: string;
   redFlags: string[];
   reasonCodes?: ClaimVerifyResponse['reasonCodes'];
   riskSignals?: ClaimVerifyResponse['riskSignals'];
@@ -126,6 +131,30 @@ export class ClaimsPersistence {
   async getEvidence(id: string): Promise<StoredEvidenceRecord | undefined> {
     await this.ensureHydrated();
     return this.state.evidence.find((e) => e.id === id);
+  }
+
+  async listClaimsForUser(userId: string): Promise<StoredClaimRecord[]> {
+    await this.ensureHydrated();
+    return this.state.claims
+      .filter((c) => c.claimantUserId === userId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async updateClaimStatus(
+    claimId: string,
+    status: 'approved' | 'rejected' | 'needs_review',
+    reviewedBy?: string,
+    reviewNote?: string,
+  ): Promise<StoredClaimRecord | undefined> {
+    await this.ensureHydrated();
+    const claim = this.state.claims.find((c) => c.id === claimId);
+    if (!claim) return undefined;
+    claim.status = status;
+    claim.reviewedBy = reviewedBy;
+    claim.reviewNote = reviewNote;
+    claim.reviewedAt = new Date().toISOString();
+    await this.persist();
+    return claim;
   }
 
   async resetForTests(): Promise<void> {

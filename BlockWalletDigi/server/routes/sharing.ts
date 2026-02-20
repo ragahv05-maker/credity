@@ -82,7 +82,7 @@ router.post('/wallet/proofs/generate', requireProofAuth(['holder', 'admin']), as
     }
 });
 
-router.post('/wallet/proofs/verify', requireProofAuth(['holder', 'verifier', 'recruiter', 'issuer', 'admin']), async (req, res) => {
+router.post('/wallet/proofs/verify', requireProofAuth(['holder', 'verifier', 'issuer', 'admin']), async (req, res) => {
     try {
         const parsed = proofVerifySchema.safeParse(req.body);
         if (!parsed.success) {
@@ -185,6 +185,9 @@ router.post('/credentials/:id/qr', async (req, res) => {
             }
         );
 
+        const qrData = JSON.stringify(qrPayload);
+        const qrImageSvg = await qrService.generateQRCodeSVG(qrData, 250);
+
         // Log activity
         await storage.createActivity({
             userId: credential.userId,
@@ -195,7 +198,8 @@ router.post('/credentials/:id/qr', async (req, res) => {
         res.json({
             success: true,
             qrPayload,
-            qrData: JSON.stringify(qrPayload),
+            qrData,
+            qrImageSvg,
         });
     } catch (error) {
         console.error('Error generating QR:', error);

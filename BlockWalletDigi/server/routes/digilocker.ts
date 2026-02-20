@@ -1,13 +1,132 @@
 import { Router } from "express";
+import crypto from 'crypto';
 import { storage } from "../storage";
 import { digilockerService } from "../services/digilocker-service";
 import { walletService } from "../services/wallet-service";
 import { authMiddleware } from '../services/auth-service';
 import { getAuthenticatedUserId } from '../utils/authz';
+import {
+    exchangeUserPullCode,
+    getStoredUserPullTokens,
+    getUserPullAuthUrl,
+    listUserDocuments as listUserPullDocuments,
+    pullDocument as pullUserPullDocument,
+} from '../services/digilocker-pull-service';
 
 const router = Router();
 const allowDemoRoutes =
     process.env.NODE_ENV !== 'production' && process.env.ALLOW_DEMO_ROUTES === 'true';
+
+/**
+ * User-pull: Redirect authenticated user to DigiLocker OAuth.
+ */
+router.get('/connections/digilocker/auth', authMiddleware, async (req, res) => {
+    try {
+        const userId = getAuthenticatedUserId(req, res);
+        if (!userId) return;
+
+        const nonce = crypto.randomBytes(16).toString('hex');
+        const authUrl = await getUserPullAuthUrl(String(userId), nonce);
+        res.redirect(authUrl);
+    } catch (error: any) {
+        console.error('[DigiLocker User Pull] Auth redirect error:', error);
+        res.status(500).json({ error: error.message || 'Failed to initiate DigiLocker user-pull auth' });
+    }
+});
+
+/**
+ * User-pull callback: exchange code, persist tokens, then redirect to frontend.
+ */
+router.get('/connections/digilocker/callback', async (req, res) => {
+    const frontendBaseUrl = (process.env.BLOCKWALLET_URL || 'http://localhost:5000').replace(/\/+$/, '');
+    const frontendPath = `${frontendBaseUrl}/connections`;
+
+    try {
+        const { code, state, error } = req.query;
+
+        if (error) {
+            return res.redirect(`${frontendPath}?digilocker=error&reason=${encodeURIComponent(String(error))}`);
+        }
+
+        if (!code || !state) {
+            return res.redirect(`${frontendPath}?digilocker=error&reason=missing_params`);
+        }
+
+        await exchangeUserPullCode(String(code), String(state));
+        res.redirect(`${frontendPath}?digilocker=connected`);
+    } catch (error: any) {
+        console.error('[DigiLocker User Pull] Callback error:', error);
+        res.redirect(`${frontendPath}?digilocker=error&reason=${encodeURIComponent(error.message || 'callback_failed')}`);
+    }
+});
+
+/**
+ * User-pull: list documents available in the connected DigiLocker account.
+ */
+router.get('/connections/digilocker/documents', authMiddleware, async (req, res) => {
+    try {
+        const userId = getAuthenticatedUserId(req, res);
+        if (!userId) return;
+
+        const tokens = await getStoredUserPullTokens(userId);
+        if (!tokens?.accessToken) {
+            return res.status(401).json({ error: 'Not connected to DigiLocker' });
+        }
+
+        const documents = await listUserPullDocuments(tokens.accessToken);
+        res.json({ success: true, documents });
+    } catch (error: any) {
+        console.error('[DigiLocker User Pull] List documents error:', error);
+        res.status(500).json({ error: error.message || 'Failed to list DigiLocker documents' });
+    }
+});
+
+/**
+ * User-pull: import selected DigiLocker document into wallet credentials.
+ */
+router.post('/connections/digilocker/import', authMiddleware, async (req, res) => {
+    try {
+        const userId = getAuthenticatedUserId(req, res);
+        if (!userId) return;
+
+        const { documentUri, documentType } = req.body || {};
+        if (!documentUri || !documentType) {
+            return res.status(400).json({ error: 'documentUri and documentType are required' });
+        }
+
+        const tokens = await getStoredUserPullTokens(userId);
+        if (!tokens?.accessToken) {
+            return res.status(401).json({ error: 'Not connected to DigiLocker' });
+        }
+
+        const pulled = await pullUserPullDocument(tokens.accessToken, String(documentUri));
+        const credential = await storage.createCredential({
+            userId,
+            type: ['VerifiableCredential', String(documentType), 'DigiLockerDocument'],
+            issuer: 'DigiLocker',
+            issuanceDate: new Date(),
+            data: {
+                source: 'DigiLocker',
+                documentUri: String(documentUri),
+                documentType: String(documentType),
+                mimeType: pulled.mimeType,
+                base64: pulled.base64,
+            },
+            jwt: null,
+        });
+
+        await storage.createActivity({
+            userId,
+            type: 'credential_imported',
+            description: `Imported ${String(documentType)} from DigiLocker`,
+        });
+
+        res.json({ success: true, credentialId: credential.id });
+    } catch (error: any) {
+        console.error('[DigiLocker User Pull] Import error:', error);
+        res.status(500).json({ error: error.message || 'Failed to import DigiLocker document' });
+    }
+});
 
 /**
  * Get authorization URL for DigiLocker OAuth flow
@@ -212,7 +331,9 @@ router.post("/digilocker/import-all", authMiddleware, async (req, res) => {
         }
 
         if (credentialsToStore.length > 0) {
-            await walletService.storeCredentials(userId, credentialsToStore);
+            for (const credential of credentialsToStore) {
+                await walletService.storeCredential(userId, credential);
+            }
             imported.push(...successDocs);
         }
 
@@ -302,7 +423,9 @@ router.post("/digilocker/connect", authMiddleware, async (req, res) => {
             }
 
             if (credentialsToStore.length > 0) {
-                await walletService.storeCredentials(userId, credentialsToStore);
+                for (const credential of credentialsToStore) {
+                    await walletService.storeCredential(userId, credential);
+                }
             }
 
             await storage.createActivity({

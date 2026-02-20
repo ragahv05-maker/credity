@@ -6,6 +6,8 @@ import type {
     ReputationScoreContract,
     SafeDateScoreContract,
 } from '@credverse/shared-auth';
+import { storage } from '../storage';
+import type { ReputationEvent, NewReputationEvent } from '@shared/schema';
 
 export type ReputationCategory = ReputationCategoryContract;
 
@@ -74,9 +76,6 @@ const SOCIAL_VALIDATION_SIGNALS = new Set<string>([
     'verified_reference',
 ]);
 
-const byUser = new Map<number, ReputationEventRecord[]>();
-const byDedupe = new Map<string, ReputationEventRecord>();
-
 function toIsoDate(input?: string): string {
     if (!input) return new Date().toISOString();
     const date = new Date(input);
@@ -130,45 +129,77 @@ function decayMultiplier(occurredAtIso: string): number {
     return Math.pow(0.5, halfLives);
 }
 
-export function upsertReputationEvent(input: ReputationEventInput): UpsertResult {
-    validateInput(input);
-    const occurredAtIso = toIsoDate(input.occurred_at);
-    const dedupeKey = dedupeKeyFor(input, occurredAtIso);
-    const existing = byDedupe.get(dedupeKey);
-    if (existing) {
-        return { accepted: false, duplicate: true, event: existing };
-    }
+// ── Mapping between storage (schema) types and service contract types ──────────
 
-    const event: ReputationEventRecord = {
-        id: randomUUID(),
-        event_id: input.event_id || randomUUID(),
-        user_id: input.user_id,
-        platform_id: input.platform_id.trim().toLowerCase(),
-        category: input.category,
-        signal_type: input.signal_type.trim().toLowerCase(),
-        score: Math.round(input.score),
-        occurred_at: occurredAtIso,
-        metadata: input.metadata || {},
-        created_at: new Date().toISOString(),
-        dedupe_key: dedupeKey,
+function toStorageEvent(record: ReputationEventRecord): NewReputationEvent {
+    const weight = CATEGORY_WEIGHTS[record.category as ReputationCategory] || 0;
+    const decay = decayMultiplier(record.occurred_at);
+    return {
+        userId: record.user_id,
+        eventId: record.dedupe_key,
+        platform: record.platform_id,
+        category: record.category,
+        signalType: record.signal_type,
+        score: record.score,
+        weight,
+        decayFactor: decay.toFixed(4),
+        metadata: {
+            ...record.metadata,
+            _recordUuid: record.id,
+            _originalEventId: record.event_id,
+        },
+        eventDate: new Date(record.occurred_at),
     };
-
-    const current = byUser.get(event.user_id) || [];
-    current.push(event);
-    byUser.set(event.user_id, current);
-    byDedupe.set(dedupeKey, event);
-
-    return { accepted: true, duplicate: false, event };
 }
 
-export function listReputationEvents(userId: number, category?: ReputationCategory): ReputationEventRecord[] {
-    const all = byUser.get(userId) || [];
-    const filtered = category ? all.filter((event) => event.category === category) : all;
-    return [...filtered].sort((a, b) => b.occurred_at.localeCompare(a.occurred_at));
+function toEventRecord(stored: ReputationEvent): ReputationEventRecord {
+    const meta = (stored.metadata || {}) as Record<string, unknown>;
+    const { _recordUuid, _originalEventId, ...cleanMeta } = meta;
+    return {
+        id: String(_recordUuid || stored.id),
+        event_id: String(_originalEventId || stored.eventId),
+        user_id: stored.userId,
+        platform_id: stored.platform,
+        category: stored.category as ReputationCategory,
+        signal_type: stored.signalType,
+        score: stored.score,
+        occurred_at: stored.eventDate.toISOString(),
+        metadata: cleanMeta,
+        created_at: stored.createdAt?.toISOString() || new Date().toISOString(),
+        dedupe_key: stored.eventId,
+    };
 }
 
-export function calculateReputationScore(userId: number): ReputationScoreSnapshot {
-    const events = listReputationEvents(userId);
+// ── Async score recalculation (Task 3.4) ───────────────────────────────────────
+
+async function calculateAndPersistScore(userId: number): Promise<void> {
+    const storedEvents = await storage.getReputationEventsByUserId(userId);
+    const events = storedEvents.map(toEventRecord);
+    const score = computeReputationScore(events);
+    await storage.upsertReputationScore(userId, {
+        rawScore: score.score,
+        normalizedScore: score.score,
+        categoryBreakdown: score.category_breakdown,
+        eventCount: events.length,
+        lastCalculatedAt: new Date(),
+    });
+    const safeDateInputs = computeSafeDateInputs(events);
+    const safeDateScore = calculateSafeDateScore(userId, score, {
+        identityVerified: false,
+        livenessVerified: false,
+        ...safeDateInputs,
+    });
+    await storage.upsertSafeDateScore(userId, {
+        score: safeDateScore.score,
+        trustLevel: safeDateScore.score >= 70 ? 'high' : safeDateScore.score >= 45 ? 'medium' : 'low',
+        inputs: safeDateInputs,
+        calculatedAt: new Date(),
+    });
+}
+
+// ── Pure computation helpers (no data access) ──────────────────────────────────
+
+function computeReputationScore(events: ReputationEventRecord[]): ReputationScoreSnapshot {
     const breakdown: ReputationCategoryBreakdown[] = CATEGORY_LIST.map((category) => {
         const categoryEvents = events.filter((event) => event.category === category);
         let weightedNumerator = 0;
@@ -198,7 +229,7 @@ export function calculateReputationScore(userId: number): ReputationScoreSnapsho
     const score1000 = Math.max(0, Math.min(1000, Math.round(score100 * 10)));
 
     return {
-        user_id: userId,
+        user_id: events.length > 0 ? events[0].user_id : 0,
         score: score1000,
         event_count: events.length,
         category_breakdown: breakdown,
@@ -206,8 +237,7 @@ export function calculateReputationScore(userId: number): ReputationScoreSnapsho
     };
 }
 
-export function deriveSafeDateInputs(userId: number): Omit<SafeDateInputs, 'identityVerified' | 'livenessVerified'> {
-    const events = listReputationEvents(userId);
+function computeSafeDateInputs(events: ReputationEventRecord[]): Omit<SafeDateInputs, 'identityVerified' | 'livenessVerified'> {
     let backgroundFlags = 0;
     let endorsementCount = 0;
     let harassmentReports = 0;
@@ -225,6 +255,62 @@ export function deriveSafeDateInputs(userId: number): Omit<SafeDateInputs, 'iden
     }
 
     return { backgroundFlags, endorsementCount, harassmentReports };
+}
+
+// ── Exported async service functions ───────────────────────────────────────────
+
+export async function upsertReputationEvent(input: ReputationEventInput): Promise<UpsertResult> {
+    validateInput(input);
+    const occurredAtIso = toIsoDate(input.occurred_at);
+    const dedupeKey = dedupeKeyFor(input, occurredAtIso);
+
+    const existingStored = await storage.getReputationEventByEventId(dedupeKey);
+    if (existingStored) {
+        return { accepted: false, duplicate: true, event: toEventRecord(existingStored) };
+    }
+
+    const event: ReputationEventRecord = {
+        id: randomUUID(),
+        event_id: input.event_id || randomUUID(),
+        user_id: input.user_id,
+        platform_id: input.platform_id.trim().toLowerCase(),
+        category: input.category,
+        signal_type: input.signal_type.trim().toLowerCase(),
+        score: Math.round(input.score),
+        occurred_at: occurredAtIso,
+        metadata: input.metadata || {},
+        created_at: new Date().toISOString(),
+        dedupe_key: dedupeKey,
+    };
+
+    await storage.upsertReputationEvent(toStorageEvent(event));
+
+    // Trigger async score recalculation (non-blocking)
+    calculateAndPersistScore(event.user_id).catch(err =>
+        console.error('[ReputationRail] Score recalculation failed:', err)
+    );
+
+    return { accepted: true, duplicate: false, event };
+}
+
+export async function listReputationEvents(userId: number, category?: ReputationCategory): Promise<ReputationEventRecord[]> {
+    const storedEvents = await storage.getReputationEventsByUserId(userId);
+    const all = storedEvents.map(toEventRecord);
+    const filtered = category ? all.filter((event) => event.category === category) : all;
+    return [...filtered].sort((a, b) => b.occurred_at.localeCompare(a.occurred_at));
+}
+
+export async function calculateReputationScore(userId: number): Promise<ReputationScoreSnapshot> {
+    const events = await listReputationEvents(userId);
+    return {
+        ...computeReputationScore(events),
+        user_id: userId,
+    };
+}
+
+export async function deriveSafeDateInputs(userId: number): Promise<Omit<SafeDateInputs, 'identityVerified' | 'livenessVerified'>> {
+    const events = await listReputationEvents(userId);
+    return computeSafeDateInputs(events);
 }
 
 export function calculateSafeDateScore(
@@ -278,7 +364,6 @@ export function calculateSafeDateScore(
     };
 }
 
-export function resetReputationRailStore(): void {
-    byUser.clear();
-    byDedupe.clear();
+export async function resetReputationRailStore(): Promise<void> {
+    await storage.clearReputationData();
 }

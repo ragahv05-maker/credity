@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { IssuerDashboardScreen } from '../screens/issuer-dashboard-screen';
 import { ActivityScreen } from '../screens/activity-screen';
 import { SettingsScreen } from '../screens/settings-screen';
-import { colors } from '../theme/tokens';
+import { useTheme } from '../theme/ThemeContext';
 import { createBottomTabOptions } from './tab-style';
 
 interface Props {
@@ -14,8 +14,9 @@ interface Props {
 const Tab = createBottomTabNavigator();
 
 export function IssuerTabs({ onSwitchRole, onLogout }: Props) {
+  const { colors } = useTheme();
   return (
-    <Tab.Navigator screenOptions={createBottomTabOptions(colors.issuer)}>
+    <Tab.Navigator screenOptions={createBottomTabOptions(colors.issuer, colors)}>
       <Tab.Screen name="Dashboard" options={{ title: 'Dashboard' }}>
         {() => <IssuerDashboardScreen onSwitchRole={onSwitchRole} onLogout={onLogout} />}
       </Tab.Screen>

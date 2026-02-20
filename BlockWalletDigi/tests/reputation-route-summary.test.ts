@@ -64,7 +64,7 @@ describe('wallet reputation summary route trust-sdk integration', () => {
     trustGetReputationScore.mockReset();
     trustGetSafeDateScore.mockReset();
 
-    calculateReputationScore.mockReturnValue({
+    calculateReputationScore.mockResolvedValue({
       user_id: 7,
       score: 640,
       event_count: 2,
@@ -89,13 +89,13 @@ describe('wallet reputation summary route trust-sdk integration', () => {
       },
     });
 
-    deriveSafeDateInputs.mockReturnValue({
+    deriveSafeDateInputs.mockResolvedValue({
       backgroundFlags: 0,
       endorsementCount: 0,
       harassmentReports: 0,
     });
 
-    listReputationEvents.mockReturnValue([
+    listReputationEvents.mockResolvedValue([
       {
         id: 'event-1',
         event_id: 'event-1',
@@ -109,7 +109,7 @@ describe('wallet reputation summary route trust-sdk integration', () => {
       },
     ]);
 
-    upsertReputationEvent.mockReturnValue({
+    upsertReputationEvent.mockResolvedValue({
       accepted: true,
       duplicate: false,
       event: {

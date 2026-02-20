@@ -3,6 +3,9 @@
  * Implements field-level disclosure for credentials
  */
 
+import * as fs from 'fs';
+import * as path from 'path';
+
 export interface SelectiveDisclosureRequest {
     credentialId: string;
     requestedFields: string[];
@@ -39,9 +42,68 @@ export interface ConsentLog {
     userAgent?: string;
 }
 
-// In-memory storage
-const disclosureTokens = new Map<string, DisclosureToken>();
-const consentLogs: ConsentLog[] = [];
+// ---------------------------------------------------------------------------
+// File-backed persistence for consent logs and disclosure tokens
+// ---------------------------------------------------------------------------
+const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data');
+const CONSENT_LOGS_FILE = path.join(DATA_DIR, 'consent-logs.json');
+const DISCLOSURE_TOKENS_FILE = path.join(DATA_DIR, 'disclosure-tokens.json');
+
+function ensureDataDir(): void {
+    if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+}
+
+function loadConsentLogs(): ConsentLog[] {
+    try {
+        const raw = fs.readFileSync(CONSENT_LOGS_FILE, 'utf8');
+        const arr = JSON.parse(raw) as any[];
+        return arr.map((l) => ({ ...l, timestamp: new Date(l.timestamp) }));
+    } catch {
+        return [];
+    }
+}
+
+function saveConsentLogs(logs: ConsentLog[]): void {
+    try {
+        ensureDataDir();
+        fs.writeFileSync(CONSENT_LOGS_FILE, JSON.stringify(logs, null, 2));
+    } catch (err) {
+        console.error('[selective-disclosure] Failed to persist consent logs:', err);
+    }
+}
+
+function loadDisclosureTokens(): Map<string, DisclosureToken> {
+    try {
+        const raw = fs.readFileSync(DISCLOSURE_TOKENS_FILE, 'utf8');
+        const obj = JSON.parse(raw) as Record<string, any>;
+        const map = new Map<string, DisclosureToken>();
+        for (const [k, v] of Object.entries(obj)) {
+            map.set(k, { ...v, expiry: new Date(v.expiry) });
+        }
+        return map;
+    } catch {
+        return new Map();
+    }
+}
+
+function saveDisclosureTokens(tokens: Map<string, DisclosureToken>): void {
+    try {
+        ensureDataDir();
+        const obj: Record<string, DisclosureToken> = {};
+        for (const [k, v] of tokens.entries()) {
+            obj[k] = v;
+        }
+        fs.writeFileSync(DISCLOSURE_TOKENS_FILE, JSON.stringify(obj, null, 2));
+    } catch (err) {
+        console.error('[selective-disclosure] Failed to persist disclosure tokens:', err);
+    }
+}
+
+// Load persisted state on module init
+const disclosureTokens = loadDisclosureTokens();
+const consentLogs: ConsentLog[] = loadConsentLogs();
 
 /**
  * Selective Disclosure Service
@@ -142,6 +204,7 @@ export class SelectiveDisclosureService {
         };
 
         disclosureTokens.set(token.id, token);
+        saveDisclosureTokens(disclosureTokens);
         return token;
     }
 
@@ -174,6 +237,7 @@ export class SelectiveDisclosureService {
         };
 
         consentLogs.push(log);
+        saveConsentLogs(consentLogs);
         return log;
     }
 
@@ -212,7 +276,9 @@ export class SelectiveDisclosureService {
      * Revoke a disclosure token
      */
     revokeDisclosureToken(tokenId: string): boolean {
-        return disclosureTokens.delete(tokenId);
+        const deleted = disclosureTokens.delete(tokenId);
+        if (deleted) saveDisclosureTokens(disclosureTokens);
+        return deleted;
     }
 
     /**
