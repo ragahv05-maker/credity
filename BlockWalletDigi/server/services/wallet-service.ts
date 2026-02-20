@@ -327,42 +327,67 @@ export class WalletService {
             category?: string;
         }
     ): Promise<StoredCredential> {
+        const results = await this.storeCredentials(userId, [credential]);
+        return results[0];
+    }
+
+    /**
+     * Store multiple credentials efficiently (batched persistence)
+     */
+    async storeCredentials(
+        userId: number,
+        credentials: Array<{
+            type: string[];
+            issuer: string;
+            issuanceDate: Date;
+            expirationDate?: Date;
+            data: any;
+            jwt?: string;
+            category?: string;
+        }>
+    ): Promise<StoredCredential[]> {
         const wallet = await this.getOrCreateWallet(userId);
+        const storedCredentials: StoredCredential[] = [];
 
-        // Encrypt sensitive data
-        const encryptedData = this.encrypt(JSON.stringify(credential.data));
-        const hash = this.hashCredential(credential.data);
+        for (const credential of credentials) {
+            // Encrypt sensitive data
+            const encryptedData = this.encrypt(JSON.stringify(credential.data));
+            const hash = this.hashCredential(credential.data);
 
-        const storedCredential: StoredCredential = {
-            id: `cred-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-            type: credential.type,
-            issuer: credential.issuer,
-            issuanceDate: credential.issuanceDate,
-            expirationDate: credential.expirationDate,
-            data: credential.data, // Keep decrypted for display
-            jwt: credential.jwt,
-            encryptedData,
-            hash,
-            anchorStatus: 'pending',
-            category: (credential.category as any) || 'other',
-            verificationCount: 0,
-        };
+            const storedCredential: StoredCredential = {
+                id: `cred-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                type: credential.type,
+                issuer: credential.issuer,
+                issuanceDate: credential.issuanceDate,
+                expirationDate: credential.expirationDate,
+                data: credential.data, // Keep decrypted for display
+                jwt: credential.jwt,
+                encryptedData,
+                hash,
+                anchorStatus: 'pending',
+                category: (credential.category as any) || 'other',
+                verificationCount: 0,
+            };
 
-        wallet.credentials.push(storedCredential);
+            wallet.credentials.push(storedCredential);
+            storedCredentials.push(storedCredential);
 
-        // Add notification
-        this.addNotification(userId, {
-            type: 'credential_received',
-            title: 'New Credential Received',
-            message: `${credential.issuer} issued you a new ${credential.type[0] || 'credential'}`,
-            data: { credentialId: storedCredential.id },
-        });
+            // Add notification
+            this.addNotification(userId, {
+                type: 'credential_received',
+                title: 'New Credential Received',
+                message: `${credential.issuer} issued you a new ${credential.type[0] || 'credential'}`,
+                data: { credentialId: storedCredential.id },
+            });
 
-        // Simulate blockchain anchoring
-        setTimeout(() => this.simulateAnchor(userId, storedCredential.id), 2000);
+            // Simulate blockchain anchoring
+            setTimeout(() => this.simulateAnchor(userId, storedCredential.id), 2000);
+        }
+
+        // Single persistence call for all credentials
         await queuePersist();
 
-        return storedCredential;
+        return storedCredentials;
     }
 
     /**
