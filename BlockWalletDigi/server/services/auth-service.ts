@@ -27,7 +27,8 @@ const EFFECTIVE_JWT_REFRESH_SECRET = JWT_REFRESH_SECRET || 'dev-only-refresh-sec
 
 // In-memory token storage (use Redis in production)
 const refreshTokens = new Map<string, { userId: number; expiresAt: Date }>();
-const invalidatedTokens = new Set<string>();
+// Map of token -> expiration time (ms)
+const invalidatedTokens = new Map<string, number>();
 
 export interface AuthUser {
     id: number;
@@ -174,10 +175,42 @@ export function invalidateRefreshToken(token: string): void {
  * Invalidate access token
  */
 export function invalidateAccessToken(token: string): void {
-    invalidatedTokens.add(token);
-    // Clean up old tokens periodically
-    if (invalidatedTokens.size > 10000) {
-        invalidatedTokens.clear();
+    try {
+        // Only blacklist valid and unexpired tokens.
+        // If verify fails (invalid signature, expired, malformed),
+        // verifyAccessToken would reject it anyway, so we don't need to store it.
+        const decoded = jwt.verify(token, EFFECTIVE_JWT_SECRET, { algorithms: [JWT_ALGORITHM] }) as TokenPayload;
+
+        // Calculate expiration time
+        // jwt.verify ensures exp exists if we configure it, but here we just use decoded.exp
+        // The TokenPayload interface doesn't strictly include exp, but jwt.verify returns it.
+        const exp = (decoded as any).exp;
+        const expiresAt = exp ? exp * 1000 : Date.now() + 15 * 60 * 1000;
+
+        invalidatedTokens.set(token, expiresAt);
+
+        // Clean up old tokens periodically
+        if (invalidatedTokens.size > 10000) {
+            const now = Date.now();
+            // First pass: remove expired tokens
+            for (const [t, expiration] of invalidatedTokens.entries()) {
+                if (expiration < now) {
+                    invalidatedTokens.delete(t);
+                }
+            }
+
+            // Second pass: if still too large, remove oldest entries (insertion order)
+            if (invalidatedTokens.size > 10000) {
+                const keys = invalidatedTokens.keys();
+                while (invalidatedTokens.size > 10000) {
+                    const first = keys.next().value;
+                    if (first) invalidatedTokens.delete(first);
+                    else break;
+                }
+            }
+        }
+    } catch {
+        // Token is invalid or expired; no need to blacklist
     }
 }
 
