@@ -152,8 +152,11 @@ export function setupPassport(app: Express) {
       if (!isValid) {
         return done(null, false, { message: "Incorrect password." });
       }
-      // Ensure user object matches Express.User interface (requires userId)
-      return done(null, { ...user, userId: user.id });
+      // Ensure user object matches Express.User interface (requires userId, role, type)
+      // TokenPayload requires: userId, username, role, type
+      // Storage User has: id, username, role... but we need to ensure type exists or is added
+      // Role can be null in DB, but TokenPayload expects string. Default to 'user'.
+      return done(null, { ...user, userId: user.id, type: 'access', role: user.role || 'user' });
     } catch (err) {
       return done(err);
     }
@@ -169,7 +172,8 @@ export function setupPassport(app: Express) {
       if (user) {
         // Adapt user object to match TokenPayload structure used elsewhere
         // TokenPayload has userId, existing code uses req.user.userId
-        const adaptedUser = { ...user, userId: user.id };
+        // Role can be null in DB, but TokenPayload expects string. Default to 'user'.
+        const adaptedUser = { ...user, userId: user.id, type: 'access' as const, role: user.role || 'user' };
         // Remove password hash from session user
         delete (adaptedUser as any).password;
         done(null, adaptedUser);
