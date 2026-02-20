@@ -9,11 +9,14 @@
     "build": "tsx script/build.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
+    "precheck": "npm run build:deps",
     "db:push": "drizzle-kit push",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "build:deps": "(cd ../packages/shared-auth && npm install && npm run build) && (cd ../packages/trust-sdk && npm install && npm run build)",
+    "pretest": "npm run build:deps",
     "test": "vitest run --testTimeout=15000",
     "test:watch": "vitest",
     "test:sepolia-smoke": "RUN_SEPOLIA_SMOKE=true vitest run tests/sepolia-smoke.test.ts --testTimeout=180000",
@@ -138,8 +141,5 @@
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
-  },
-  "overrides": {
-    "minimatch": "^10.0.0"
   }
 }
