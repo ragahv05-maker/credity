@@ -9,6 +9,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
+    "pretest": "cd ../../packages/shared-auth && npm run build",
     "test": "vitest run --config vitest.config.ts"
   },
   "dependencies": {

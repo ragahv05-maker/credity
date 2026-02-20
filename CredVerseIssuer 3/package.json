@@ -9,6 +9,7 @@
     "build": "tsx script/build.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
+    "pretest": "cd ../packages/shared-auth && npm run build",
     "db:push": "drizzle-kit push",
     "test": "vitest run",
     "test:watch": "vitest",

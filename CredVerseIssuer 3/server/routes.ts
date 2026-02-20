@@ -61,10 +61,10 @@ export async function registerRoutes(
   // auth routes first
   app.use("/api/v1", authRoutes);
   app.use("/api/v1", twoFactorRoutes); // 2FA routes
+  app.use("/api/v1", verifyRoutes);
   app.use("/api/v1", registryRoutes);
   app.use("/api/v1", templateRoutes);
   app.use("/api/v1", issuanceRoutes);
-  app.use("/api/v1", verifyRoutes);
   app.use("/api/v1", analyticsRoutes);
   app.use("/api/v1", studentsRoutes);
   app.use("/api/v1", teamRoutes);

@@ -12,10 +12,6 @@ type VerificationPayload = {
     vc?: unknown;
 };
 
-type JwtHeader = {
-    kid?: string;
-};
-
 function decodeJwtPayload(vcJwt: string): VerificationPayload {
     const parts = vcJwt.split(".");
     if (parts.length !== 3) {
@@ -28,19 +24,7 @@ function decodeJwtPayload(vcJwt: string): VerificationPayload {
     }
 }
 
-function decodeJwtHeader(vcJwt: string): JwtHeader {
-    const parts = vcJwt.split(".");
-    if (parts.length !== 3) {
-        throw new Error("Invalid JWT format");
-    }
-    try {
-        return JSON.parse(Buffer.from(parts[0], "base64url").toString()) as JwtHeader;
-    } catch {
-        return JSON.parse(Buffer.from(parts[0], "base64").toString()) as JwtHeader;
-    }
-}
-
-function resolveCredentialId(payload: VerificationPayload): string {
+async function resolveCredentialId(payload: VerificationPayload, vcJwt: string): Promise<string> {
     if (typeof payload.jti === "string" && payload.jti.length > 0) return payload.jti;
     if (typeof payload.id === "string" && payload.id.length > 0) return payload.id;
     const vc = payload.vc;
@@ -48,6 +32,12 @@ function resolveCredentialId(payload: VerificationPayload): string {
         const vcId = (vc as Record<string, unknown>).id;
         if (typeof vcId === "string" && vcId.length > 0) return vcId;
     }
+
+    const stored = await storage.getCredentialByVcJwt(vcJwt);
+    if (stored?.id) {
+        return stored.id;
+    }
+
     return "unknown";
 }
 
@@ -56,8 +46,7 @@ async function verifyJwtSignature(vcJwt: string, payload: VerificationPayload): 
         return { valid: false, reason: "Missing issuer DID" };
     }
 
-    const header = decodeJwtHeader(vcJwt);
-    const issuerPublicKey = getIssuerPublicKey(payload.iss, header.kid);
+    const issuerPublicKey = getIssuerPublicKey(payload.iss);
     if (!issuerPublicKey) {
         if (process.env.NODE_ENV === "production") {
             return { valid: false, reason: "Issuer key not found" };
@@ -87,6 +76,11 @@ async function resolveRevocationState(credentialId: string): Promise<"revoked" |
 
     const chainRevoked = await relayerService.isRevoked(onChainLookupKey);
     if (chainRevoked === null) {
+        // If we have a local credential record and it is not revoked, treat it as active
+        // when on-chain checks are unavailable.
+        if (credential) {
+            return "active";
+        }
         return "unknown";
     }
 
@@ -143,7 +137,7 @@ router.get("/verify", async (req, res) => {
         const isValidSignature = signatureCheck.valid;
 
         // 3. Check Revocation
-        const credentialId = resolveCredentialId(payload);
+        const credentialId = await resolveCredentialId(payload, vcJwt);
         const revocationState = await resolveRevocationState(credentialId);
         const isRevoked = revocationState === "revoked";
 

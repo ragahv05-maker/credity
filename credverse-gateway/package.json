@@ -8,6 +8,8 @@
     "dev:server": "NODE_ENV=development tsx server/index.ts",
     "dev:full": "concurrently \"npm run dev\" \"npm run dev:server\"",
     "build": "tsx script/build.ts",
+    "test": "npm run test:proxy",
+    "pretest": "cd ../packages/shared-auth && npm run build",
     "test:proxy": "tsx --test server/routes/mobile-proxy.test.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

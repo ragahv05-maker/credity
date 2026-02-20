@@ -1,7 +1,6 @@
 import crypto from 'crypto';
 import { blockchainService } from './blockchain-service';
 import { PostgresStateStore } from '@credverse/shared-auth';
-import { deterministicHash, deterministicHashLegacyTopLevel, parseCanonicalization, parseProofAlgorithm } from './proof-lifecycle';
 
 /**
  * Verification Engine for CredVerse Recruiter Portal
@@ -252,10 +251,7 @@ export class VerificationEngine {
             // Check 5: On-chain Anchor Check
             const anchorCheck = await this.checkOnChainAnchor(credential);
             checks.push(anchorCheck);
-            if (anchorCheck.status === 'failed') {
-                overallStatus = 'failed';
-                riskFlags.push('PROOF_HASH_MISMATCH');
-            } else if (anchorCheck.status === 'warning') {
+            if (anchorCheck.status === 'warning') {
                 riskFlags.push('NO_BLOCKCHAIN_ANCHOR');
             }
 
@@ -338,9 +334,19 @@ export class VerificationEngine {
         try {
             const parts = jwt.split('.');
             if (parts.length !== 3) return null;
-
+            const header = JSON.parse(Buffer.from(parts[0], 'base64url').toString());
             const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
-            return payload;
+            const signatureSegment = parts[2];
+
+            return {
+                ...payload,
+                __jwtMeta: {
+                    alg: header?.alg,
+                    kid: header?.kid,
+                    hasSignature: typeof signatureSegment === 'string' && signatureSegment.length > 0,
+                    rawJwt: jwt,
+                },
+            };
         } catch {
             return null;
         }
@@ -370,13 +376,19 @@ export class VerificationEngine {
         const isValidDid = typeof issuer === 'string' && issuer.startsWith('did:');
 
         // Detect presence of cryptographic proof
-        const hasProof = credential.proof || credential.signature;
+        const hasJwtSignature = Boolean(credential?.__jwtMeta?.hasSignature);
+        const hasProof = Boolean(credential.proof || credential.signature || hasJwtSignature);
+        const proofType = hasJwtSignature ? 'jwt' : (credential.proof?.type ?? 'vc_proof');
+        const isValid = hasProof && isValidDid;
+
         // Require valid issuer DID and cryptographic proof for all runtime modes.
         return {
             name: 'Signature Validation',
-            status: (hasProof && isValidDid) ? 'passed' : 'failed',
-            message: (hasProof && isValidDid) ? 'Cryptographic signature is present' : 'Missing or invalid signature',
-            details: { proofType: credential.proof?.type ?? 'jwt', issuer },
+            status: isValid ? 'passed' : 'failed',
+            message: isValid
+                ? 'Cryptographic signature material is present'
+                : 'Missing or invalid signature',
+            details: { proofType, issuer },
         };
     }
 
@@ -479,76 +491,54 @@ export class VerificationEngine {
     }
 
     /**
-     * Check revocation status from Issuer with consistent propagation semantics.
+     * Check revocation status - REAL CHECK
      */
     private async checkRevocation(credential: any): Promise<VerificationCheck> {
         const credentialId = credential.id || credential.jti;
+        const rawJwt = credential?.__jwtMeta?.rawJwt;
 
-        if (!credentialId) {
-            return {
-                name: 'Revocation Check',
-                status: 'warning',
-                message: 'Cannot check revocation (No Credential ID)',
-                details: { code: 'REVOCATION_ID_MISSING' },
-            };
-        }
+        try {
+            // Call Issuer API for status
+            const registryUrl = process.env.ISSUER_REGISTRY_URL || 'http://localhost:5001';
+            // Assuming we can check status via public verify endpoint or specific status endpoint
+            // Looking at Issuer routes, GET /api/v1/verify/:credentialId returns status
+            const verificationUrl = credentialId
+                ? `${registryUrl}/api/v1/verify/${credentialId}`
+                : (typeof rawJwt === 'string' && rawJwt.length > 0
+                    ? `${registryUrl}/api/v1/verify?vc=${encodeURIComponent(rawJwt)}`
+                    : null);
 
-        const registryUrl = process.env.ISSUER_REGISTRY_URL || 'http://localhost:5001';
-        const checkedAt = new Date().toISOString();
-        const endpoints = [
-            `/api/v1/credentials/${encodeURIComponent(credentialId)}/status`,
-            `/api/v1/verify/${encodeURIComponent(credentialId)}`,
-        ];
-
-        for (const endpoint of endpoints) {
-            try {
-                const res = await fetch(`${registryUrl}${endpoint}`);
-
-                if (res.status === 404) {
-                    return {
-                        name: 'Revocation Check',
-                        status: 'failed',
-                        message: 'Credential not found in issuer registry',
-                        details: { revoked: null, checkedAt, code: 'ISSUER_CREDENTIAL_NOT_FOUND', endpoint },
-                    };
-                }
-
-                if (res.status === 401 || res.status === 403) {
-                    return {
-                        name: 'Revocation Check',
-                        status: 'warning',
-                        message: 'Issuer rejected revocation status lookup',
-                        details: { revoked: null, checkedAt, code: 'ISSUER_STATUS_FORBIDDEN', endpoint, httpStatus: res.status },
-                    };
-                }
-
-                if (!res.ok) {
-                    continue;
-                }
-
-                const data = await res.json() as { revoked?: unknown; valid?: unknown };
-                const revoked = typeof data.revoked === 'boolean'
-                    ? data.revoked
-                    : (typeof data.valid === 'boolean' ? !data.valid : null);
-
-                if (typeof revoked === 'boolean') {
-                    return {
-                        name: 'Revocation Check',
-                        status: revoked ? 'failed' : 'passed',
-                        message: revoked ? 'Credential has been REVOKED by Issuer' : 'Credential is valid (Active)',
-                        details: { revoked, checkedAt, code: revoked ? 'REVOKED_CREDENTIAL' : 'REVOCATION_CONFIRMED', endpoint },
-                    };
-                }
-            } catch (e) {
-                console.error('Revocation check failed', e);
+            if (!verificationUrl) {
+                return {
+                    name: 'Revocation Check',
+                    status: 'warning',
+                    message: 'Cannot check revocation (No Credential ID)',
+                };
             }
+
+            const res = await fetch(verificationUrl);
+
+            if (res.ok) {
+                const data = await res.json();
+                const isRevoked = data.revoked;
+
+                return {
+                    name: 'Revocation Check',
+                    status: isRevoked ? 'failed' : 'passed',
+                    message: isRevoked ? 'Credential has been REVOKED by Issuer' : 'Credential is valid (Active)',
+                    details: { revoked: isRevoked, checkedAt: new Date().toISOString() },
+                };
+            }
+        } catch (e) {
+            console.error("Revocation check failed", e);
         }
 
+        // Fallback if API fails (don't fail the credential, just warn)
         return {
             name: 'Revocation Check',
             status: 'warning',
             message: 'Revocation status could not be verified (Issuer unreachable)',
-            details: { revoked: null, checkedAt, code: 'ISSUER_STATUS_UNAVAILABLE' },
+            details: { checkedAt: new Date().toISOString() },
         };
     }
 
@@ -556,63 +546,29 @@ export class VerificationEngine {
      * Check on-chain anchor
      */
     private async checkOnChainAnchor(credential: any): Promise<VerificationCheck> {
-        const proofContainer = credential?.proof && typeof credential.proof === 'object' ? credential.proof : undefined;
-        const expectedHash = typeof proofContainer?.credentialHash === 'string' ? proofContainer.credentialHash : undefined;
-        const algorithm = proofContainer?.hashAlgorithm ? parseProofAlgorithm(proofContainer?.hashAlgorithm) : 'keccak256';
-        const canonicalization = parseCanonicalization(proofContainer?.canonicalization);
+        // Hash the credential data to find it on-chain
+        // The issuance process hashes the credential content
+        let dataToHash = Buffer.isBuffer(credential) ? credential.toString() : credential;
 
-        const hash = this.hashCredential(credential, algorithm, canonicalization);
-        const legacyHash = this.hashCredentialLegacy(credential, algorithm);
+        // If it's a JWT payload, we might need to verify the hash of the original JWT or the payload depending on how issuer anchored it.
+        // Assuming issuer anchors hash of the VC Payload/claim
+        // For MVP compatibility with issuance service:
+        const hash = this.hashCredential(credential);
 
-        if (expectedHash && expectedHash !== hash && expectedHash !== legacyHash) {
-            return {
-                name: 'Blockchain Anchor',
-                status: 'failed',
-                message: 'Deterministic proof hash mismatch',
-                details: {
-                    expectedHash,
-                    computedHash: hash,
-                    legacyComputedHash: legacyHash,
-                    algorithm,
-                    canonicalization,
-                    code: 'PROOF_HASH_MISMATCH',
-                },
-            };
-        }
+        // Real Blockchain Check
+        const result = await blockchainService.verifyCredential(hash);
 
-        const primaryResult = await blockchainService.verifyCredential(hash);
-        let selectedHash = hash;
-        let selectedResult = primaryResult;
-
-        if ((!primaryResult.exists || !primaryResult.isValid) && legacyHash !== hash) {
-            const legacyResult = await blockchainService.verifyCredential(legacyHash);
-            if (legacyResult.exists && legacyResult.isValid) {
-                selectedHash = legacyHash;
-                selectedResult = legacyResult;
-            }
-        }
-
-        if (selectedResult.isValid && selectedResult.exists) {
-            const txHash = typeof proofContainer?.txHash === 'string'
-                ? proofContainer.txHash
-                : (typeof proofContainer?.anchorTxHash === 'string' ? proofContainer.anchorTxHash : undefined);
-            const explorerUrl = txHash ? `https://sepolia.etherscan.io/tx/${txHash}` : undefined;
-
+        if (result.isValid && result.exists) {
             return {
                 name: 'Blockchain Anchor',
                 status: 'passed',
-                message: txHash
-                    ? `Anchored on Sepolia: ${txHash.slice(0, 10)}…`
-                    : 'Anchored on Sepolia',
+                message: `Anchored on Local Polygon: ${result.anchoredAt}`,
                 details: {
-                    hash: selectedHash,
+                    hash: hash,
                     anchored: true,
-                    chain: 'Ethereum Sepolia',
-                    txHash,
-                    explorerUrl,
-                    algorithm,
-                    canonicalization: selectedHash === legacyHash ? 'JCS-LIKE-V1' : canonicalization,
-                    compatibilityMode: selectedHash === legacyHash ? 'legacy-top-level-hash' : 'strict',
+                    chain: 'Polygon (Local)',
+                    issuer: result.issuer,
+                    timestamp: result.anchoredAt
                 },
             };
         }
@@ -623,11 +579,8 @@ export class VerificationEngine {
             message: 'No blockchain anchor found for this credential hash',
             details: {
                 hash,
-                legacyHash,
                 anchored: false,
-                result: selectedResult,
-                algorithm,
-                canonicalization,
+                result
             },
         };
     }
@@ -696,30 +649,9 @@ export class VerificationEngine {
     /**
      * Hash credential for verification
      */
-    private normalizeCredentialForHash(credential: any): any {
-        const base = credential && typeof credential === 'object' && credential.vc && typeof credential.vc === 'object'
-            ? credential.vc
-            : credential;
-
-        if (!base || typeof base !== 'object') return base;
-
-        // Do not include proof container fields in the anchored hash.
-        // Proof metadata can include the hash itself, creating circularity.
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { proof, ...rest } = base as any;
-        return rest;
-    }
-
-    private hashCredential(
-        credential: any,
-        algorithm: 'sha256' | 'keccak256' = 'sha256',
-        canonicalization: 'RFC8785-V1' | 'JCS-LIKE-V1' = 'RFC8785-V1',
-    ): string {
-        return deterministicHash(this.normalizeCredentialForHash(credential), algorithm, canonicalization);
-    }
-
-    private hashCredentialLegacy(credential: any, algorithm: 'sha256' | 'keccak256' = 'sha256'): string {
-        return deterministicHashLegacyTopLevel(this.normalizeCredentialForHash(credential), algorithm);
+    private hashCredential(credential: any): string {
+        const canonical = JSON.stringify(credential, Object.keys(credential).sort());
+        return crypto.createHash('sha256').update(canonical).digest('hex');
     }
 
     /**

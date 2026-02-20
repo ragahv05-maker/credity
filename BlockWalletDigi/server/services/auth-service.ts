@@ -9,21 +9,21 @@ const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 const ACCESS_TOKEN_EXPIRY = '15m';
 const REFRESH_TOKEN_EXPIRY = '7d';
 const JWT_ALGORITHM = 'HS256' as const;
-
 const requireStrictSecrets =
     process.env.NODE_ENV === 'production' || process.env.REQUIRE_DATABASE === 'true';
+const missingJwtSecrets = !JWT_SECRET || !JWT_REFRESH_SECRET;
 
-if (!JWT_SECRET || !JWT_REFRESH_SECRET) {
-    if (requireStrictSecrets) {
-        console.error('FATAL: JWT_SECRET and JWT_REFRESH_SECRET must be set in environment variables');
-        process.exit(1);
-    }
-    console.warn('WARNING: JWT secrets are missing; using development fallbacks. Set JWT_SECRET and JWT_REFRESH_SECRET for staging/production.');
+if (missingJwtSecrets && requireStrictSecrets) {
+    console.error('FATAL: JWT_SECRET and JWT_REFRESH_SECRET must be set in environment variables');
+    process.exit(1);
 }
 
-// Fallback for local development only
+// Fallback for development only (logged warning)
 const EFFECTIVE_JWT_SECRET = JWT_SECRET || 'dev-only-secret-not-for-production';
 const EFFECTIVE_JWT_REFRESH_SECRET = JWT_REFRESH_SECRET || 'dev-only-refresh-secret-not-for-production';
+if (missingJwtSecrets && !requireStrictSecrets) {
+    console.warn('WARNING: Using development JWT secrets. Set JWT_SECRET and JWT_REFRESH_SECRET for staging/production.');
+}
 
 // In-memory token storage (use Redis in production)
 const refreshTokens = new Map<string, { userId: number; expiresAt: Date }>();
@@ -33,7 +33,7 @@ export interface AuthUser {
     id: number;
     username: string;
     email?: string;
-    role: 'admin' | 'issuer' | 'holder' | 'verifier' | 'recruiter';
+    role: 'admin' | 'issuer' | 'holder' | 'verifier';
 }
 
 export interface TokenPayload {

@@ -12,18 +12,19 @@ const JWT_ALGORITHM = 'HS256' as const;
 
 const requireStrictSecrets =
     process.env.NODE_ENV === 'production' || process.env.REQUIRE_DATABASE === 'true';
+const missingJwtSecrets = !JWT_SECRET || !JWT_REFRESH_SECRET;
 
-if (!JWT_SECRET || !JWT_REFRESH_SECRET) {
-    if (requireStrictSecrets) {
-        console.error('FATAL: JWT_SECRET and JWT_REFRESH_SECRET must be set in environment variables');
-        process.exit(1);
-    }
-    console.warn('WARNING: JWT secrets are missing; using development fallbacks. Set JWT_SECRET and JWT_REFRESH_SECRET for staging/production.');
+if (missingJwtSecrets && requireStrictSecrets) {
+    console.error('FATAL: JWT_SECRET and JWT_REFRESH_SECRET must be set in environment variables');
+    process.exit(1);
 }
 
-// Fallback for local development only
+// Fallback for local development only (logged warning)
 const EFFECTIVE_JWT_SECRET = JWT_SECRET || 'dev-only-secret-not-for-production';
 const EFFECTIVE_JWT_REFRESH_SECRET = JWT_REFRESH_SECRET || 'dev-only-refresh-secret-not-for-production';
+if (missingJwtSecrets && !requireStrictSecrets) {
+    console.warn('WARNING: Using development JWT secrets. Set JWT_SECRET and JWT_REFRESH_SECRET for staging/production.');
+}
 
 // Stateless token mode avoids process-local auth state.
 // For global logout/token revocation use a shared session store or JWT denylist service.

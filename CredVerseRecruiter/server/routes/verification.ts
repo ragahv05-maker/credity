@@ -1,22 +1,11 @@
 import { Router } from 'express';
 import { verificationEngine } from '../services/verification-engine';
 import { fraudDetector } from '../services/fraud-detector';
-import { authMiddleware, verifyAccessToken } from '../services/auth-service';
+import { authMiddleware } from '../services/auth-service';
 import { storage, VerificationRecord } from '../storage';
 import crypto from 'crypto';
 import { idempotencyMiddleware, PostgresStateStore, signWebhook } from '@credverse/shared-auth';
-import type {
-    CandidateVerificationSummary,
-    ProofVerificationRequestContract,
-    ReasonCode,
-    VerificationDecision,
-    VerificationEvidence,
-    VerificationResultContract,
-    WorkScoreBreakdown,
-} from '@credverse/shared-auth';
-import { deterministicHash, deterministicHashLegacyTopLevel, parseCanonicalization, parseProofAlgorithm } from '../services/proof-lifecycle';
-import { verifyProofContract, ProofVerificationError } from '../services/proof-verifier-service';
-import { z } from 'zod';
+import type { VerificationResultContract } from '@credverse/shared-auth';
 
 const router = Router();
 const writeIdempotency = idempotencyMiddleware({ ttlMs: 6 * 60 * 60 * 1000 });
@@ -25,74 +14,6 @@ const MAX_JWT_BYTES = 16 * 1024;
 const VP_REQUEST_TTL_MS = Number(process.env.OID4VP_REQUEST_TTL_MS || 15 * 60 * 1000);
 const LEGACY_VERIFY_SUNSET_HEADER =
     process.env.API_LEGACY_SUNSET ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
-const MAX_PROOF_BYTES = 128 * 1024;
-const PROOF_REPLAY_TTL_MS = Number(process.env.PROOF_REPLAY_TTL_MS || 10 * 60 * 1000);
-const proofReplayCache = new Map<string, number>();
-const ALLOWED_PROOF_FORMATS = ['sd-jwt-vc', 'jwt_vp', 'ldp_vp', 'ldp_vc', 'merkle-membership'] as const;
-const didPattern = /^did:[a-z0-9]+:[A-Za-z0-9._:%-]+(?:[;/:?#][^\s]*)?$/;
-
-const proofVerificationSchema = z.object({
-    format: z.enum(ALLOWED_PROOF_FORMATS),
-    proof: z.union([z.string().min(1).max(MAX_PROOF_BYTES), z.record(z.unknown())]),
-    challenge: z.string().trim().max(512).optional(),
-    domain: z.string().trim().max(255).optional(),
-    expected_issuer_did: z.string().trim().regex(didPattern, 'Invalid expected_issuer_did').optional(),
-    expected_subject_did: z.string().trim().regex(didPattern, 'Invalid expected_subject_did').optional(),
-    expected_claims: z.record(z.unknown()).optional(),
-    revocation_witness: z
-        .object({
-            credential_id: z.string().trim().min(1).max(512),
-            revoked: z.boolean(),
-            status_list: z
-                .object({
-                    list_id: z.string().trim().min(1).max(512),
-                    index: z.number().int().nonnegative(),
-                    revoked: z.boolean(),
-                    updated_at: z.string().max(128).optional(),
-                })
-                .nullable()
-                .optional(),
-            anchor_proof: z
-                .object({
-                    batch_id: z.string().trim().min(1).max(512),
-                    root: z.string().trim().min(1).max(512),
-                    proof: z.array(z.string().trim().max(1024)).max(128),
-                })
-                .nullable()
-                .optional(),
-        })
-        .optional(),
-    expected_hash: z.string().trim().min(1).max(256).optional(),
-    hash_algorithm: z.enum(['sha256', 'keccak256']).optional(),
-});
-
-const proofMetadataSchema = z.object({
-    credential: z.record(z.unknown()),
-    hash_algorithm: z.enum(['sha256', 'keccak256']).optional(),
-});
-
-function requireProofAccess(req: any, res: any, next: any): void {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        res.status(401).json({ error: 'Authentication required', code: 'PROOF_AUTH_REQUIRED' });
-        return;
-    }
-
-    const payload = verifyAccessToken(authHeader.substring(7));
-    if (!payload) {
-        res.status(401).json({ error: 'Invalid or expired token', code: 'PROOF_AUTH_INVALID' });
-        return;
-    }
-
-    const role = String(payload.role || '').toLowerCase();
-    if (role !== 'recruiter' && role !== 'admin' && role !== 'verifier') {
-        res.status(403).json({ error: 'Insufficient permissions', code: 'PROOF_FORBIDDEN' });
-        return;
-    }
-
-    req.user = payload;
-    next();
-}
 type Oid4vpRequestState = {
     vpRequests: Array<[string, { id: string; nonce: string; createdAt: number; purpose: string; state?: string }]>;
 };
@@ -156,37 +77,6 @@ function pruneExpiredVpRequests(): boolean {
     return changed;
 }
 
-function pruneProofReplayCache(): void {
-    const now = Date.now();
-    for (const [key, expiresAt] of proofReplayCache.entries()) {
-        if (expiresAt <= now) {
-            proofReplayCache.delete(key);
-        }
-    }
-}
-
-function markProofReplayFingerprint(fingerprint: string): boolean {
-    pruneProofReplayCache();
-    if (proofReplayCache.has(fingerprint)) {
-        return false;
-    }
-    proofReplayCache.set(fingerprint, Date.now() + PROOF_REPLAY_TTL_MS);
-    return true;
-}
-
-function deriveProofReplayFingerprint(input: {
-    format: string;
-    proof: string | Record<string, unknown>;
-    challenge?: string;
-    domain?: string;
-}): string {
-    const proofDigest =
-        typeof input.proof === 'string'
-            ? crypto.createHash('sha256').update(input.proof).digest('hex')
-            : deterministicHash(input.proof, 'sha256');
-    return `${input.format}:${input.challenge || ''}:${input.domain || ''}:${proofDigest}`;
-}
-
 function mapCredentialValidity(
     status: 'verified' | 'failed' | 'suspicious' | 'pending',
 ): VerificationResultContract['credential_validity'] {
@@ -205,6 +95,44 @@ function mapAnchorValidity(riskFlags: string[]): VerificationResultContract['anc
     return 'anchored';
 }
 
+function deriveDecision(
+    verificationStatus: 'verified' | 'failed' | 'suspicious' | 'pending',
+    riskFlags: string[],
+    fraudRecommendation: string | undefined,
+    riskScore: number,
+): VerificationResultContract['decision'] {
+    const hardRejectFlags = new Set(['INVALID_SIGNATURE', 'REVOKED_CREDENTIAL', 'EXPIRED_CREDENTIAL', 'PARSE_FAILED']);
+    if (verificationStatus === 'failed' || riskFlags.some((flag) => hardRejectFlags.has(flag))) {
+        return 'reject';
+    }
+
+    if (fraudRecommendation === 'reject') {
+        return 'reject';
+    }
+
+    if (verificationStatus === 'suspicious' || riskScore >= 40 || fraudRecommendation === 'review') {
+        return 'review';
+    }
+
+    if (verificationStatus === 'verified' && fraudRecommendation === 'accept') {
+        return 'approve';
+    }
+
+    return 'investigate';
+}
+
+function mapDecisionToLegacyRecommendation(decision: VerificationResultContract['decision']): 'accept' | 'review' | 'reject' {
+    switch (decision) {
+        case 'approve':
+            return 'accept';
+        case 'reject':
+            return 'reject';
+        case 'review':
+        case 'investigate':
+            return 'review';
+    }
+}
+
 function mapDecision(recommendation: string | undefined): VerificationResultContract['decision'] {
     switch (recommendation) {
         case 'accept':
@@ -216,94 +144,6 @@ function mapDecision(recommendation: string | undefined): VerificationResultCont
         default:
             return 'investigate';
     }
-}
-
-
-function isUnsignedOrScannedCredential(credentialData: Record<string, unknown> | null): boolean {
-    if (!credentialData) return false;
-    const hasCryptographicProof = Boolean((credentialData as any).proof || (credentialData as any).signature);
-    if (!hasCryptographicProof) return true;
-
-    const scanHints = [
-        (credentialData as any).scanned,
-        (credentialData as any).scanResult,
-        (credentialData as any).scanSource,
-        (credentialData as any).documentScan,
-        (credentialData as any).ocr,
-    ];
-
-    return scanHints.some((value) => {
-        if (value === true) return true;
-        if (typeof value === 'string') {
-            const lowered = value.toLowerCase();
-            return lowered.includes('scan') || lowered.includes('ocr');
-        }
-        return false;
-    });
-}
-
-function applyLockedVerificationDecisionPolicy(input: {
-    riskFlags: string[];
-    recommendation?: string;
-    credentialData: Record<string, unknown> | null;
-}): VerificationResultContract['decision'] {
-    if (input.riskFlags.includes('INVALID_SIGNATURE')) {
-        return 'reject';
-    }
-    if (isUnsignedOrScannedCredential(input.credentialData)) {
-        return 'review';
-    }
-    return mapDecision(input.recommendation);
-}
-
-function toCandidateDecision(decision: VerificationResultContract['decision']): VerificationDecision {
-    return decision;
-}
-
-function buildCandidateSummaryContract(input: {
-    candidateId: string;
-    verificationResult: { confidence: number; riskScore: number; timestamp: Date; checks: Array<{ name: string; status: string }>; riskFlags: string[] };
-    decision: VerificationResultContract['decision'];
-    issuer?: string;
-}): CandidateVerificationSummary {
-    const confidence = Number(Math.max(0, Math.min(1, input.verificationResult.confidence)).toFixed(2));
-    const risk_score = Number((Math.max(0, Math.min(100, input.verificationResult.riskScore)) / 100).toFixed(2));
-    const score = Math.max(0, Math.min(1000, Math.round(confidence * 1000)));
-
-    const breakdown: WorkScoreBreakdown[] = input.verificationResult.checks.map((check) => ({
-        category: String(check.name || 'verification').toLowerCase().replace(/\s+/g, '_'),
-        weight: Number((1 / Math.max(input.verificationResult.checks.length, 1)).toFixed(2)),
-        score: check.status === 'passed' ? 100 : check.status === 'warning' ? 60 : 20,
-        weighted_score: check.status === 'passed' ? 100 : check.status === 'warning' ? 60 : 20,
-        event_count: 1,
-    }));
-
-    const evidence: VerificationEvidence[] = [
-        {
-            id: `verification-${input.verificationResult.timestamp.getTime()}`,
-            type: 'external_check',
-            issuer: input.issuer,
-            metadata: {
-                risk_flags: input.verificationResult.riskFlags,
-            },
-            verified_at: input.verificationResult.timestamp.toISOString(),
-        },
-    ];
-
-    return {
-        candidate_id: input.candidateId,
-        decision: toCandidateDecision(input.decision),
-        confidence,
-        risk_score,
-        reason_codes: input.verificationResult.riskFlags as ReasonCode[],
-        work_score: {
-            score,
-            max_score: 1000,
-            computed_at: input.verificationResult.timestamp.toISOString(),
-            breakdown,
-        },
-        evidence,
-    };
 }
 
 async function emitVerificationWebhook(event: string, payload: Record<string, unknown>): Promise<void> {
@@ -413,6 +253,14 @@ router.post('/verify/instant', writeIdempotency, async (req, res) => {
             ? await fraudDetector.analyzeCredential(credentialData)
             : { score: 0, flags: [], recommendation: 'review', details: [] };
 
+        const derivedDecision = deriveDecision(
+            verificationResult.status,
+            verificationResult.riskFlags,
+            fraudAnalysis.recommendation,
+            verificationResult.riskScore,
+        );
+        const recommendation = mapDecisionToLegacyRecommendation(derivedDecision);
+
         // Store in history
         const record: VerificationRecord = {
             id: verificationResult.verificationId,
@@ -422,61 +270,24 @@ router.post('/verify/instant', writeIdempotency, async (req, res) => {
             status: verificationResult.status,
             riskScore: verificationResult.riskScore,
             fraudScore: fraudAnalysis.score,
-            recommendation: fraudAnalysis.recommendation,
+            recommendation,
             timestamp: new Date(),
             verifiedBy,
         };
         await storage.addVerification(record);
-
-        const reasonCodes = verificationResult.riskFlags;
-        const severity: 'info' | 'low' | 'medium' | 'high' =
-            verificationResult.riskScore >= 75 ? 'high'
-            : verificationResult.riskScore >= 45 ? 'medium'
-            : verificationResult.riskScore > 0 ? 'low'
-            : 'info';
-
-        const riskSignals = reasonCodes.map((code) => ({
-            id: code,
-            score: verificationResult.riskScore,
-            severity,
-            source: 'rules' as const,
-            reason_codes: [code],
-        }));
-
-        const lockedDecision = applyLockedVerificationDecisionPolicy({
-            riskFlags: verificationResult.riskFlags,
-            recommendation: fraudAnalysis.recommendation,
-            credentialData,
-        });
-
-        const candidateSummary = buildCandidateSummaryContract({
-            candidateId: readSubjectName(credentialData) || verificationResult.verificationId,
-            verificationResult,
-            decision: lockedDecision,
-            issuer: readIssuer(credentialData),
-        });
 
         const responseBody = {
             success: true,
             verification: verificationResult,
             fraud: fraudAnalysis,
             record,
-            candidate_summary: candidateSummary,
-            reason_codes: reasonCodes,
-            risk_signals_version: 'risk-v1',
-            risk_signals: riskSignals,
-            evidence_links: [],
             v1: {
-                reason_codes: reasonCodes,
-                risk_signals_version: 'risk-v1',
-                risk_signals: riskSignals,
-                evidence_links: [],
                 credential_validity: verificationResult.status === 'verified' ? 'valid' : 'invalid',
                 status_validity: verificationResult.riskFlags.includes('REVOKED_CREDENTIAL') ? 'revoked' : 'active',
                 anchor_validity: verificationResult.riskFlags.includes('NO_BLOCKCHAIN_ANCHOR') ? 'pending' : 'anchored',
                 fraud_score: fraudAnalysis.score,
                 fraud_explanations: fraudAnalysis.flags,
-                decision: lockedDecision,
+                decision: recommendation,
                 decision_reason_codes: verificationResult.riskFlags,
             },
         };
@@ -586,7 +397,7 @@ router.get('/verify/bulk/:jobId', async (req, res) => {
 
 
 // New route: Verify credential via link URL
-router.post('/verify/link', requireProofAccess, writeIdempotency, async (req, res) => {
+router.post('/verify/link', writeIdempotency, async (req, res) => {
     try {
         const { link } = req.body;
         if (!link) {
@@ -662,22 +473,14 @@ router.post('/v1/oid4vp/requests', authMiddleware, writeIdempotency, async (req,
     }
 
     const { purpose = 'credential_verification', state } = req.body || {};
-    if (typeof purpose !== 'string' || purpose.trim().length === 0 || purpose.length > 128) {
-        return res.status(400).json({ error: 'invalid purpose' });
-    }
-    if (state !== undefined && (typeof state !== 'string' || state.length === 0 || state.length > 512)) {
-        return res.status(400).json({ error: 'invalid state' });
-    }
-
     const requestId = `vp_req_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
     const nonce = crypto.randomBytes(16).toString('hex');
-    const createdAt = Date.now();
 
     vpRequests.set(requestId, {
         id: requestId,
         nonce,
-        createdAt,
-        purpose: purpose.trim(),
+        createdAt: Date.now(),
+        purpose,
         state,
     });
     await queuePersist();
@@ -686,7 +489,6 @@ router.post('/v1/oid4vp/requests', authMiddleware, writeIdempotency, async (req,
         request_id: requestId,
         nonce,
         state: state || null,
-        expires_at: new Date(createdAt + VP_REQUEST_TTL_MS).toISOString(),
         presentation_definition: {
             id: requestId,
             input_descriptors: [
@@ -709,38 +511,15 @@ router.post('/v1/oid4vp/responses', authMiddleware, writeIdempotency, async (req
             await queuePersist();
         }
 
-        const { request_id: requestId, vp_token: vpToken, credential, jwt, state } = req.body || {};
-        if (typeof requestId !== 'string' || requestId.trim().length === 0) {
-            return res.status(400).json({ error: 'request_id is required' });
-        }
-
-        const request = vpRequests.get(requestId);
-        if (!request) {
+        const { request_id: requestId, vp_token: vpToken, credential, jwt } = req.body || {};
+        const request = requestId ? vpRequests.get(requestId) : undefined;
+        if (requestId && !request) {
             return res.status(400).json({ error: 'unknown request_id' });
         }
 
-        if (!vpToken && !jwt && !credential) {
-            return res.status(400).json({ error: 'vp_token, jwt, or credential is required' });
-        }
-
-        const bindingJwt = typeof (jwt || vpToken) === 'string' ? String(jwt || vpToken) : null;
-        if (bindingJwt) {
-            const payload = parseJwtPayloadSafely(bindingJwt);
-            const presentedNonce = readString(payload.nonce, '');
-            if (!presentedNonce || presentedNonce !== request.nonce) {
-                return res.status(400).json({ error: 'nonce mismatch' });
-            }
-
-            if (request.state) {
-                const presentedState =
-                    (typeof state === 'string' && state) ||
-                    readString(payload.state, '');
-                if (!presentedState || presentedState !== request.state) {
-                    return res.status(400).json({ error: 'state mismatch' });
-                }
-            }
-        } else if (request.state && (!state || state !== request.state)) {
-            return res.status(400).json({ error: 'state mismatch' });
+        if (requestId && request) {
+            vpRequests.delete(requestId);
+            await queuePersist();
         }
 
         const verificationResult = await verificationEngine.verifyCredential({
@@ -748,11 +527,8 @@ router.post('/v1/oid4vp/responses', authMiddleware, writeIdempotency, async (req
             raw: credential,
         });
 
-        vpRequests.delete(requestId);
-        await queuePersist();
-
         res.json({
-            request_id: requestId,
+            request_id: requestId || null,
             status: verificationResult.status,
             verification_id: verificationResult.verificationId,
             checks: verificationResult.checks,
@@ -761,82 +537,6 @@ router.post('/v1/oid4vp/responses', authMiddleware, writeIdempotency, async (req
     } catch (error) {
         console.error('OID4VP response processing failed:', error);
         res.status(500).json({ error: 'failed to process presentation response' });
-    }
-});
-
-router.post('/v1/proofs/verify', requireProofAccess, writeIdempotency, async (req, res) => {
-    try {
-        const parsed = proofVerificationSchema.safeParse(req.body || {});
-        if (!parsed.success) {
-            return res.status(400).json({
-                error: 'Invalid proof verification input',
-                code: 'PROOF_INPUT_INVALID',
-                details: parsed.error.flatten(),
-            });
-        }
-
-        const payload = parsed.data as ProofVerificationRequestContract & {
-            expected_hash?: string;
-            hash_algorithm?: 'sha256' | 'keccak256';
-        };
-        const proof = payload.proof;
-
-        if (payload.challenge || payload.domain) {
-            const fingerprint = deriveProofReplayFingerprint({
-                format: payload.format,
-                proof,
-                challenge: payload.challenge,
-                domain: payload.domain,
-            });
-            if (!markProofReplayFingerprint(fingerprint)) {
-                return res.status(409).json({
-                    error: 'Duplicate proof replay detected',
-                    code: 'PROOF_REPLAY_DETECTED',
-                });
-            }
-        }
-
-        const result = await verifyProofContract(payload);
-        res.json(result);
-    } catch (error: any) {
-        if (error instanceof ProofVerificationError) {
-            return res.status(error.status).json({ error: error.message, code: error.code });
-        }
-        console.error('Proof verification failed:', error);
-        res.status(500).json({ error: 'proof verification failed', code: 'PROOF_VERIFY_INTERNAL_ERROR' });
-    }
-});
-
-router.post('/v1/proofs/metadata', requireProofAccess, writeIdempotency, async (req, res) => {
-    try {
-        const parsed = proofMetadataSchema.safeParse(req.body || {});
-        if (!parsed.success) {
-            return res.status(400).json({
-                error: 'credential object is required',
-                code: 'PROOF_METADATA_INPUT_INVALID',
-                details: parsed.error.flatten(),
-            });
-        }
-
-        const credentialBytes = Buffer.byteLength(JSON.stringify(parsed.data.credential), 'utf8');
-        if (credentialBytes > MAX_PROOF_BYTES) {
-            return res.status(400).json({ error: 'credential payload too large', code: 'PROOF_METADATA_INPUT_INVALID' });
-        }
-
-        const algorithm = parseProofAlgorithm(parsed.data.hash_algorithm);
-        const canonicalization = parseCanonicalization(req.body?.canonicalization);
-        const hash = deterministicHash(parsed.data.credential, algorithm, canonicalization);
-        return res.json({
-            hash,
-            hash_algorithm: algorithm,
-            canonicalization,
-            proof_version: '1.0',
-            checked_at: new Date().toISOString(),
-            code: 'PROOF_METADATA_READY',
-        });
-    } catch (error) {
-        console.error('Proof metadata failed:', error);
-        return res.status(500).json({ error: 'proof metadata failed', code: 'PROOF_METADATA_INTERNAL_ERROR' });
     }
 });
 
@@ -868,6 +568,14 @@ router.post('/v1/verifications/instant', authMiddleware, writeIdempotency, async
             ? await fraudDetector.analyzeCredential(credentialData)
             : { score: 0, flags: [], recommendation: 'review', details: [] };
 
+        const derivedDecision = deriveDecision(
+            verificationResult.status,
+            verificationResult.riskFlags,
+            fraudAnalysis.recommendation,
+            verificationResult.riskScore,
+        );
+        const recommendation = mapDecisionToLegacyRecommendation(derivedDecision);
+
         const record: VerificationRecord = {
             id: verificationResult.verificationId,
             credentialType: readCredentialType(credentialData),
@@ -876,17 +584,11 @@ router.post('/v1/verifications/instant', authMiddleware, writeIdempotency, async
             status: verificationResult.status,
             riskScore: verificationResult.riskScore,
             fraudScore: fraudAnalysis.score,
-            recommendation: fraudAnalysis.recommendation,
+            recommendation,
             timestamp: new Date(),
             verifiedBy,
         };
         await storage.addVerification(record);
-
-        const lockedDecision = applyLockedVerificationDecisionPolicy({
-            riskFlags: verificationResult.riskFlags,
-            recommendation: fraudAnalysis.recommendation,
-            credentialData,
-        });
 
         const contractResult: VerificationResultContract = {
             id: verificationResult.verificationId,
@@ -895,20 +597,12 @@ router.post('/v1/verifications/instant', authMiddleware, writeIdempotency, async
             anchor_validity: mapAnchorValidity(verificationResult.riskFlags),
             fraud_score: fraudAnalysis.score,
             fraud_explanations: fraudAnalysis.flags,
-            decision: lockedDecision,
+            decision: derivedDecision,
             decision_reason_codes: verificationResult.riskFlags,
         };
 
-        const candidateSummary = buildCandidateSummaryContract({
-            candidateId: readSubjectName(credentialData) || verificationResult.verificationId,
-            verificationResult,
-            decision: lockedDecision,
-            issuer: readIssuer(credentialData),
-        });
-
         res.json({
             ...contractResult,
-            candidate_summary: candidateSummary,
             verification_id: contractResult.id,
             checks: verificationResult.checks,
         });

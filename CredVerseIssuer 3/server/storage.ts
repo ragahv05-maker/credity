@@ -115,6 +115,7 @@ export interface IStorage {
 
   // Credential
   getCredential(id: string): Promise<Credential | undefined>;
+  getCredentialByVcJwt(vcJwt: string): Promise<Credential | undefined>;
   createCredential(credential: InsertCredential): Promise<Credential>;
   listCredentials(tenantId: string): Promise<Credential[]>;
 }
@@ -353,6 +354,10 @@ export class MemStorage implements IStorage {
   // Credential
   async getCredential(id: string): Promise<Credential | undefined> {
     return this.credentials.get(id);
+  }
+
+  async getCredentialByVcJwt(vcJwt: string): Promise<Credential | undefined> {
+    return Array.from(this.credentials.values()).find((credential) => credential.vcJwt === vcJwt);
   }
 
   async createCredential(insertCredential: InsertCredential): Promise<Credential> {
