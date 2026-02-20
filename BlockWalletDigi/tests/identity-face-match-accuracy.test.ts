@@ -33,4 +33,31 @@ describe('identity face match accuracy', () => {
     expect(noMatchRes.body.matched).toBe(false);
     expect(noMatchRes.body.confidence).toBeLessThan(0.3);
   });
+
+  it('rejects invalid threshold and malformed embeddings', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/api/v1/identity', identityRoutes);
+
+    const badThreshold = await request(app)
+      .post('/api/v1/identity/face-match')
+      .send({
+        idFaceEmbedding: [0.2, 0.1, 0.6, 0.4],
+        liveFaceEmbedding: [0.21, 0.11, 0.59, 0.41],
+        threshold: 1.5,
+      });
+
+    expect(badThreshold.status).toBe(400);
+    expect(String(badThreshold.body.error)).toContain('threshold');
+
+    const badEmbedding = await request(app)
+      .post('/api/v1/identity/face-match')
+      .send({
+        idFaceEmbedding: [0.2, null, 0.6, 0.4],
+        liveFaceEmbedding: [0.21, 0.11, 0.59, 0.41],
+      });
+
+    expect(badEmbedding.status).toBe(400);
+    expect(String(badEmbedding.body.error)).toContain('non-numeric');
+  });
 });

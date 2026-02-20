@@ -396,7 +396,7 @@ router.post('/auth/apple', async (req, res) => {
 
         if (state) appleStateCache.delete(state);
 
-        const payload = verifyAppleIdentityToken(identityToken);
+        const payload = await verifyAppleIdentityToken(identityToken);
         const email = payload.email ?? `apple_${payload.sub}@privaterelay.appleid.com`;
 
         let user = await storage.getUserByEmail(email);
