@@ -507,15 +507,34 @@ router.get('/api/v1/credentials/:id/status', async (req, res) => {
     });
 });
 
-function mapProofFormat(format: unknown): ProofGenerationResultContract['format'] {
-    return format === 'jwt_vp' || format === 'ldp_vp' || format === 'merkle-membership' ? format : 'sd-jwt-vc';
+const supportedProofFormats = new Set<ProofGenerationResultContract['format']>([
+    'sd-jwt-vc',
+    'jwt_vp',
+    'ldp_vp',
+    'ldp_vc',
+    'merkle-membership',
+]);
+
+function parseProofFormat(format: unknown): ProofGenerationResultContract['format'] | null {
+    if (typeof format !== 'string') return null;
+    return supportedProofFormats.has(format as ProofGenerationResultContract['format'])
+        ? (format as ProofGenerationResultContract['format'])
+        : null;
 }
 
 router.post('/api/v1/proofs/generate', apiKeyOrAuthMiddleware, enforceProofRouteAccess, writeIdempotency, async (req, res) => {
     try {
         const payload = (req.body || {}) as Partial<ProofGenerationRequestContract>;
-        const format = mapProofFormat(payload.format);
+        const format = parseProofFormat(payload.format);
         const credentialId = typeof payload.credential_id === 'string' ? payload.credential_id : null;
+
+        if (!format) {
+            return res.status(400).json({
+                message: 'Unsupported proof format',
+                code: 'PROOF_FORMAT_INVALID',
+                allowed_formats: Array.from(supportedProofFormats),
+            });
+        }
 
         if (!credentialId && !payload.subject_did) {
             return res.status(400).json({ message: 'credential_id or subject_did is required', code: 'PROOF_INPUT_INVALID' });
@@ -543,8 +562,15 @@ router.post('/api/v1/proofs/generate', apiKeyOrAuthMiddleware, enforceProofRoute
             issuerBaseUrl: `${req.protocol}://${req.get('host')}`,
         });
 
-        const statusCode = result.status === 'generated' ? 201 : 202;
-        return res.status(statusCode).json({ ...result, code: result.status === 'generated' ? 'PROOF_GENERATED' : 'PROOF_UNSUPPORTED_FORMAT' });
+        if (result.status !== 'generated') {
+            return res.status(501).json({
+                ...result,
+                code: 'PROOF_INTEGRATION_REQUIRED',
+                integration_required: true,
+            });
+        }
+
+        return res.status(201).json({ ...result, code: 'PROOF_GENERATED' });
     } catch (error: any) {
         if (error instanceof ProofGenerationError) {
             return res.status(error.status).json({ message: error.message, code: error.code });

@@ -64,13 +64,18 @@ export function evaluateWorkScore(payload: WorkScoreEvaluationRequestContract): 
     ? payload.evidence?.docs_checked.filter((item): item is string => typeof item === 'string')
     : [];
 
+  const summary = payload.evidence?.summary?.trim();
+  if (!summary && process.env.NODE_ENV === 'production') {
+    throw new Error('WorkScore evidence.summary is required in production');
+  }
+
   return {
     score,
     breakdown,
     decision: mapWorkScoreDecision(score),
     reason_codes: normalizeWorkScoreReasonCodes(payload.reason_codes),
     evidence: {
-      summary: payload.evidence?.summary || 'WorkScore evidence stub',
+      summary: summary || 'WorkScore evidence not provided',
       anchors_checked,
       docs_checked,
     },

@@ -9,14 +9,17 @@ It is safe to commit as-is (no secrets included).
 ## Quick start
 
 ```bash
-cd /Users/raghav/Desktop/credity12
+cd /Users/raghav/Desktop/credity
 cp scripts/db-migration/env/.env.db-migration.example scripts/db-migration/env/.env.db-migration.local
 # fill values in .env.db-migration.local
 
-scripts/db-migration/00-preflight.sh
-scripts/db-migration/01-schema-baseline.sh
-scripts/db-migration/02-backfill.sh
-scripts/db-migration/03-verify.sh
+scripts/db-migration/run-staged.sh all
+# or run individual stages:
+# scripts/db-migration/00-preflight.sh
+# scripts/db-migration/01-schema-baseline.sh
+# scripts/db-migration/02-backfill.sh
+# scripts/db-migration/03-verify.sh
+# scripts/db-migration/04-method-verify.sh
 ```
 
 ## Files
@@ -24,6 +27,9 @@ scripts/db-migration/03-verify.sh
 - `01-schema-baseline.sh` – runs baseline SQL (extensions, state-store table)
 - `02-backfill.sh` – runs `pg_dump` + `pg_restore` (optional dry-run)
 - `03-verify.sh` – executes verification SQL files
+- `04-method-verify.sh` – hard-gate verification (rowcount parity + state-store key presence)
+- `run-staged.sh` – executes staged workflow end-to-end or by phase
+- `ROLLBACK_REHEARSAL_CHECKLIST.md` – timed rollback drill checklist
 - `sql/*.sql` – migration-safe SQL snippets/checks
 - `env/.env.db-migration.example` – non-secret env contract template
 

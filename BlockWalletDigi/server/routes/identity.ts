@@ -14,11 +14,13 @@
 
 import { Router, Request, Response } from 'express';
 import * as livenessService from '../services/liveness-service';
+import { LivenessValidationError } from '../services/liveness-service';
 import * as biometricsService from '../services/biometrics-service';
 import * as documentService from '../services/document-scanner-service';
 import { aiService } from '../services/ai-service';
 import { validateDocumentByType } from '../services/document-type-validator-service';
 import { matchFace } from '../services/face-match-service';
+import { extractEmbedding } from '../services/model-sidecar-service';
 
 const router = Router();
 
@@ -58,28 +60,16 @@ router.post('/liveness/start', async (req: Request, res: Response) => {
  */
 router.post('/liveness/challenge', async (req: Request, res: Response) => {
     try {
-        const { sessionId, challengeId, frameData } = req.body;
+        const { sessionId, challengeId, frameData, cameraEvidence } = req.body;
 
-        if (!sessionId || !challengeId) {
+        if (!sessionId || !challengeId || !frameData || !cameraEvidence) {
             return res.status(400).json({
                 success: false,
-                error: 'sessionId and challengeId are required'
+                error: 'sessionId, challengeId, frameData and cameraEvidence are required'
             });
         }
 
-        // Check for spoofing if frame data provided
-        if (frameData) {
-            const spoofCheck = livenessService.detectSpoofing(frameData);
-            if (spoofCheck.isSpoofed) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Spoofing detected'
-                });
-            }
-        }
-
-        // completeChallenge now accepts an optional frame for AI spoof detection
-        const result = await livenessService.completeChallenge(sessionId, challengeId, frameData);
+        const result = await livenessService.completeChallenge(sessionId, challengeId, frameData, cameraEvidence);
 
         res.json({
             success: result.success,
@@ -88,8 +78,37 @@ router.post('/liveness/challenge', async (req: Request, res: Response) => {
             result: result.sessionComplete ? livenessService.getSessionResult(sessionId) : null
         });
     } catch (error: any) {
+        if (error instanceof LivenessValidationError) {
+            return res.status(error.statusCode).json({ success: false, code: error.code, error: error.message });
+        }
         console.error('Liveness challenge error:', error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ success: false, error: 'liveness_challenge_failed' });
+    }
+});
+
+router.post('/liveness/challenge-response', async (req: Request, res: Response) => {
+    try {
+        const { sessionId, challengeId, frameData, cameraEvidence } = req.body;
+        if (!sessionId || !challengeId || !frameData || !cameraEvidence) {
+            return res.status(400).json({
+                success: false,
+                error: 'sessionId, challengeId, frameData and cameraEvidence are required'
+            });
+        }
+
+        const result = await livenessService.completeChallenge(sessionId, challengeId, frameData, cameraEvidence);
+        return res.json({
+            success: result.success,
+            nextChallenge: result.nextChallenge,
+            sessionComplete: result.sessionComplete,
+            result: result.sessionComplete ? livenessService.getSessionResult(sessionId) : null
+        });
+    } catch (error: any) {
+        if (error instanceof LivenessValidationError) {
+            return res.status(error.statusCode).json({ success: false, code: error.code, error: error.message });
+        }
+        console.error('Liveness challenge-response error:', error);
+        return res.status(500).json({ success: false, error: 'liveness_challenge_failed' });
     }
 });
 
@@ -99,64 +118,28 @@ router.post('/liveness/challenge', async (req: Request, res: Response) => {
  */
 router.post('/liveness/complete', async (req: Request, res: Response) => {
     try {
-        const { userId, passed, frameData } = req.body;
+        const { sessionId } = req.body;
 
-        if (!userId) {
-            return res.status(400).json({
-                success: false,
-                error: 'userId is required'
-            });
+        if (!sessionId) {
+            return res.status(400).json({ success: false, error: 'sessionId is required' });
         }
 
-        let isVerified = passed;
-        let aiDetails = null;
-
-        // If frame data is provided, use AI to verify liveness
-        if (frameData) {
-            console.log('Analyzing liveness frame with AI...');
-            const analysis = await aiService.analyzeLivenessFrame(frameData);
-
-            aiDetails = analysis;
-
-            if (!analysis.isReal || analysis.spoofingDetected || !analysis.faceDetected) {
-                console.log('AI Liveness Check Failed:', analysis);
-                isVerified = false;
-            } else {
-                console.log('AI Liveness Check Passed:', analysis);
-                isVerified = true;
-            }
-        }
-
-        if (isVerified) {
-            // Create a completed session for the user
-            const session = livenessService.startLivenessSession(userId);
-
-            // Mark all challenges as complete
-            for (const challenge of session.challenges) {
-                await livenessService.completeChallenge(session.id, challenge.id);
-            }
-
-            const result = livenessService.getSessionResult(session.id);
-
-            // Add AI analysis to result if available
-            if (result && aiDetails) {
-                (result as any).aiAnalysis = aiDetails;
-            }
-
-            res.json({
-                success: true,
-                verified: true,
-                result,
-                aiAnalysis: aiDetails
-            });
-        } else {
-            res.json({
+        const result = livenessService.getSessionResult(sessionId);
+        if (!result) {
+            return res.status(409).json({
                 success: false,
                 verified: false,
-                error: 'Liveness check failed',
-                details: aiDetails ? aiDetails.details : 'Verification failed'
+                error: 'liveness_session_incomplete',
             });
         }
+
+        return res.json({
+            success: !!result.success,
+            verified: !!result.success,
+            result,
+            passed: !!result.success,
+            score: result.score,
+        });
     } catch (error: any) {
         console.error('Liveness complete error:', error);
         res.status(500).json({ success: false, error: error.message });
@@ -226,7 +209,7 @@ router.get('/biometrics/status', async (req: Request, res: Response) => {
  */
 router.post('/biometrics/enroll', async (req: Request, res: Response) => {
     try {
-        const { userId, type, deviceId } = req.body;
+        const { userId, type, deviceId, faceEmbedding, frameData, livenessSessionId } = req.body;
 
         if (!userId || !type) {
             return res.status(400).json({
@@ -235,10 +218,36 @@ router.post('/biometrics/enroll', async (req: Request, res: Response) => {
             });
         }
 
+        let embeddingToStore: number[] | undefined;
+        if (Array.isArray(faceEmbedding)) {
+            if (process.env.ALLOW_CLIENT_EMBEDDING_INGEST === 'true') {
+                embeddingToStore = faceEmbedding;
+            } else {
+                return res.status(400).json({
+                    success: false,
+                    error: 'raw_client_embedding_rejected',
+                });
+            }
+        } else if (typeof frameData === 'string' && frameData.length > 32) {
+            embeddingToStore = await extractEmbedding({
+                frameData,
+                source: 'enrollment',
+                sessionId: typeof livenessSessionId === 'string' ? livenessSessionId : undefined,
+                userId,
+            });
+        } else if (typeof livenessSessionId === 'string') {
+            const livenessResult = livenessService.getSessionResult(livenessSessionId);
+            if (!livenessResult?.success || !Array.isArray(livenessResult.faceEmbeddingVector)) {
+                return res.status(400).json({ success: false, error: 'liveness_embedding_not_available' });
+            }
+            embeddingToStore = livenessResult.faceEmbeddingVector;
+        }
+
         const enrollment = biometricsService.enrollBiometrics(
             userId,
             type,
-            deviceId || 'web-browser'
+            deviceId || 'web-browser',
+            embeddingToStore
         );
 
         res.json({
@@ -247,12 +256,13 @@ router.post('/biometrics/enroll', async (req: Request, res: Response) => {
                 id: enrollment.id,
                 type: enrollment.type,
                 enrolledAt: enrollment.enrolledAt,
-                status: enrollment.status
+                status: enrollment.status,
+                metadata: enrollment.metadata,
             }
         });
     } catch (error: any) {
         console.error('Biometrics enroll error:', error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(400).json({ success: false, error: error.message });
     }
 });
 
@@ -262,13 +272,32 @@ router.post('/biometrics/enroll', async (req: Request, res: Response) => {
  */
 router.post('/biometrics/verify', async (req: Request, res: Response) => {
     try {
-        const { userId, action, deviceId, success: verifySuccess, method } = req.body;
+        const {
+            userId,
+            action,
+            deviceId,
+            success: verifySuccess,
+            method,
+            liveFaceEmbedding,
+            challengeId,
+            antiSpoof,
+        } = req.body;
 
         if (!userId) {
             return res.status(400).json({
                 success: false,
                 error: 'userId is required'
             });
+        }
+
+        if (Array.isArray(liveFaceEmbedding)) {
+            const result = biometricsService.verifyBiometricEmbedding(
+                userId,
+                challengeId || `bio_challenge_${Date.now()}`,
+                liveFaceEmbedding,
+                antiSpoof
+            );
+            return res.json({ success: true, verified: result.success, result });
         }
 
         // If this is a verification response
@@ -302,7 +331,7 @@ router.post('/biometrics/verify', async (req: Request, res: Response) => {
         });
     } catch (error: any) {
         console.error('Biometrics verify error:', error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(400).json({ success: false, error: error.message });
     }
 });
 
@@ -412,6 +441,7 @@ router.post('/face-match', async (req: Request, res: Response) => {
             idImageData,
             liveImageData,
             threshold,
+            antiSpoof,
         } = req.body;
 
         const result = matchFace({
@@ -420,6 +450,7 @@ router.post('/face-match', async (req: Request, res: Response) => {
             idImageData,
             liveImageData,
             threshold,
+            antiSpoof,
         });
 
         res.json({

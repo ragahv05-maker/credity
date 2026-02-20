@@ -27,7 +27,7 @@ describe('issuer proof-service', () => {
     expect((result.public_signals as any).leaf_hash).toBe((result.proof as any).leaf_hash);
   });
 
-  it('returns unsupported for non-enabled proof formats', () => {
+  it('returns unsupported with explicit integration requirement reason for non-enabled proof formats', () => {
     const result = generateProof({
       request: { format: 'sd-jwt-vc', credential_id: 'cred-1' },
       credential: { id: 'cred-1' },
@@ -35,6 +35,7 @@ describe('issuer proof-service', () => {
 
     expect(result.status).toBe('unsupported');
     expect(result.proof).toBeNull();
+    expect(String(result.reason || '')).toContain('requires a production prover integration');
   });
 
   it('throws deterministic error when credential is missing for merkle-membership', () => {

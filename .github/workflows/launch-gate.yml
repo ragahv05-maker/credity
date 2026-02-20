@@ -18,8 +18,24 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Launch gate docs/config checks (non-strict)
+      - name: Launch gate docs/config checks (strict with placeholder env)
+        env:
+          LAUNCH_GATE_STRICT: '1'
+          NODE_ENV: production
+          ALLOW_DEMO_ROUTES: 'false'
+          REQUIRE_DATABASE: 'true'
+          REQUIRE_QUEUE: 'true'
+          JWT_SECRET: placeholder-jwt-secret
+          JWT_REFRESH_SECRET: placeholder-jwt-refresh-secret
+          REDIS_URL: redis://placeholder
+          SENTRY_DSN: https://example.invalid/1
+          ISSUER_KEY_ENCRYPTION: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          RELAYER_PRIVATE_KEY: 0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          REGISTRY_CONTRACT_ADDRESS: 0x6060250FC92538571adde5c66803F8Cbe77145a1
+          SEPOLIA_RPC_URL: https://example.invalid/rpc
         run: node scripts/launch-gate-check.mjs
+      - name: Production workflow healthcheck (smoke/env/rollback integrity)
+        run: npm run healthcheck:prod-workflow
 
   evidence-pack:
     needs: gate

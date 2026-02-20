@@ -6,8 +6,7 @@ export class IpfsService {
     private gateway: string;
 
     constructor() {
-        // In production, load from env vars
-        this.jwt = process.env.PINATA_JWT || "mock_jwt";
+        this.jwt = process.env.PINATA_JWT || "";
         this.gateway = process.env.PINATA_GATEWAY || "gateway.pinata.cloud";
 
         this.pinata = new PinataSDK({
@@ -18,16 +17,16 @@ export class IpfsService {
 
     async uploadJSON(data: any): Promise<string> {
         try {
-            if (this.jwt === "mock_jwt") {
-                console.warn("Pinata JWT not set, skipping real upload");
-                return "Qm_mock_cid_pinata_not_set";
-            }
+            this.requireJwt();
 
             const upload = await this.pinata.upload.json(data);
             console.log(`Uploaded to IPFS: ${upload.IpfsHash}`);
             return upload.IpfsHash;
         } catch (error) {
             console.error("Failed to upload to IPFS:", error);
+            if (error instanceof Error && error.message.includes('PINATA_JWT is required')) {
+                throw error;
+            }
             throw new Error("IPFS upload failed");
         }
     }
@@ -36,11 +35,14 @@ export class IpfsService {
         return `https://${this.gateway}/ipfs/${cid}`;
     }
 
-    async uploadFile(buffer: Buffer, fileName: string, mimeType: string, retries = 3): Promise<string> {
-        if (this.jwt === "mock_jwt") {
-            console.warn("Pinata JWT not set, skipping real file upload");
-            return "Qm_mock_file_cid_pinata_not_set";
+    private requireJwt(): void {
+        if (!this.jwt) {
+            throw new Error("PINATA_JWT is required for IPFS uploads");
         }
+    }
+
+    async uploadFile(buffer: Buffer, fileName: string, mimeType: string, retries = 3): Promise<string> {
+        this.requireJwt();
 
         let lastError: Error | null = null;
         for (let attempt = 0; attempt < retries; attempt++) {

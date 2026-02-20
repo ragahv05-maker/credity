@@ -333,10 +333,10 @@ export async function scanDocument(request: DocumentScanRequest): Promise<Docume
         ? (hasOcr ? detectDocumentTypeFromText(textBlocks) : 'aadhaar')
         : request.documentType;
 
-    // Extract fields — real OCR if available, mock fallback otherwise
+    // Extract fields — fail closed in production when OCR is unavailable.
     const extractedFields = hasOcr
         ? extractFieldsFromOcrText(textBlocks, documentType)
-        : getMockFields(documentType);
+        : (isProduction ? [] : getMockFields(documentType));
 
     // Parse extracted data
     const extractedData = parseExtractedData(extractedFields, documentType);

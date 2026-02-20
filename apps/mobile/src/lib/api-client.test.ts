@@ -5,6 +5,7 @@ import {
   exportRecruiterAuditLog,
   getHolderConsents,
   getIssuerDeadLetterEntries,
+  loginWithAppleIdentityToken,
   replayIssuerDeadLetterEntry,
   submitHolderDataDelete,
   submitHolderDataExport,
@@ -62,6 +63,16 @@ describe('mobile api client route wiring', () => {
       if (inputString.includes('/compliance/data-requests/delete')) {
         return jsonResponse({ id: 'delete-1', status: 'completed' }, 202);
       }
+      if (inputString.includes('/v1/auth/apple') && init?.method === 'POST') {
+        return jsonResponse({
+          success: true,
+          user: { id: 5, username: 'apple.user@example.com' },
+          tokens: {
+            accessToken: 'apple-access-token',
+            refreshToken: 'apple-refresh-token',
+          },
+        });
+      }
 
       return jsonResponse({ ok: true });
     }) as unknown as typeof fetch;
@@ -105,5 +116,18 @@ describe('mobile api client route wiring', () => {
     await submitHolderDataDelete(7, 'test_delete');
     expect(fetchCalls[2]?.input).toContain('/api/mobile/wallet/v1/compliance/data-requests/delete');
     expect(fetchCalls[2]?.init?.method).toBe('POST');
+  });
+
+  it('exchanges Apple identity token via holder auth endpoint and stores session', async () => {
+    await loginWithAppleIdentityToken('apple-id-token');
+
+    expect(fetchCalls[0]?.input).toContain('/api/mobile/wallet/v1/auth/apple');
+    expect(fetchCalls[0]?.init?.method).toBe('POST');
+    const body = JSON.parse(String(fetchCalls[0]?.init?.body || '{}'));
+    expect(body.identityToken).toBe('apple-id-token');
+
+    const holderSession = useSessionStore.getState().sessions.holder;
+    expect(holderSession.accessToken).toBe('apple-access-token');
+    expect(holderSession.refreshToken).toBe('apple-refresh-token');
   });
 });

@@ -397,7 +397,7 @@ router.get('/verify/bulk/:jobId', async (req, res) => {
 
 
 // New route: Verify credential via link URL
-router.post('/verify/link', writeIdempotency, async (req, res) => {
+router.post('/verify/link', authMiddleware, writeIdempotency, async (req, res) => {
     try {
         const { link } = req.body;
         if (!link) {

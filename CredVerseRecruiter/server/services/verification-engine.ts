@@ -151,22 +151,7 @@ export class VerificationEngine {
      * Initialize known issuers registry
      */
     private initializeIssuerRegistry() {
-        const trustedIssuers: IssuerInfo[] = [
-            {
-                did: 'did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnn3Zua2F72', // Matches seeded Issuer
-                name: 'Demo University',
-                type: 'academic',
-                trustLevel: 'high',
-                verified: true,
-            },
-            {
-                did: 'did:key:stanford-university',
-                name: 'Stanford University',
-                type: 'academic',
-                trustLevel: 'high',
-                verified: true,
-            },
-        ];
+        const trustedIssuers: IssuerInfo[] = [];
 
         trustedIssuers.forEach(issuer => {
             this.issuerRegistry.set(issuer.did, issuer);
@@ -497,48 +482,66 @@ export class VerificationEngine {
         const credentialId = credential.id || credential.jti;
         const rawJwt = credential?.__jwtMeta?.rawJwt;
 
+        const checkedAt = new Date().toISOString();
+        const registryUrl = process.env.ISSUER_REGISTRY_URL || 'http://localhost:5001';
+
+        if (!credentialId && !(typeof rawJwt === 'string' && rawJwt.length > 0)) {
+            return {
+                name: 'Revocation Check',
+                status: 'warning',
+                message: 'Cannot check revocation (No Credential ID)',
+                details: { code: 'REVOCATION_INPUT_MISSING', checkedAt },
+            };
+        }
+
+        const candidates = credentialId
+            ? [
+                `${registryUrl}/api/v1/credentials/${encodeURIComponent(String(credentialId))}/status`,
+                `${registryUrl}/api/v1/verify/${encodeURIComponent(String(credentialId))}`,
+            ]
+            : [`${registryUrl}/api/v1/verify?vc=${encodeURIComponent(String(rawJwt))}`];
+
         try {
-            // Call Issuer API for status
-            const registryUrl = process.env.ISSUER_REGISTRY_URL || 'http://localhost:5001';
-            // Assuming we can check status via public verify endpoint or specific status endpoint
-            // Looking at Issuer routes, GET /api/v1/verify/:credentialId returns status
-            const verificationUrl = credentialId
-                ? `${registryUrl}/api/v1/verify/${credentialId}`
-                : (typeof rawJwt === 'string' && rawJwt.length > 0
-                    ? `${registryUrl}/api/v1/verify?vc=${encodeURIComponent(rawJwt)}`
-                    : null);
+            for (const url of candidates) {
+                const res = await fetch(url);
 
-            if (!verificationUrl) {
-                return {
-                    name: 'Revocation Check',
-                    status: 'warning',
-                    message: 'Cannot check revocation (No Credential ID)',
-                };
-            }
+                if (res.status === 404) {
+                    return {
+                        name: 'Revocation Check',
+                        status: 'failed',
+                        message: 'Credential not found in issuer registry',
+                        details: { code: 'ISSUER_CREDENTIAL_NOT_FOUND', revoked: true, checkedAt, source: url },
+                    };
+                }
 
-            const res = await fetch(verificationUrl);
+                if (!res.ok) {
+                    continue;
+                }
 
-            if (res.ok) {
                 const data = await res.json();
-                const isRevoked = data.revoked;
+                const isRevoked = Boolean(data?.revoked);
 
                 return {
                     name: 'Revocation Check',
                     status: isRevoked ? 'failed' : 'passed',
                     message: isRevoked ? 'Credential has been REVOKED by Issuer' : 'Credential is valid (Active)',
-                    details: { revoked: isRevoked, checkedAt: new Date().toISOString() },
+                    details: {
+                        code: isRevoked ? 'CREDENTIAL_REVOKED' : 'REVOCATION_CONFIRMED',
+                        revoked: isRevoked,
+                        checkedAt,
+                        source: url,
+                    },
                 };
             }
         } catch (e) {
-            console.error("Revocation check failed", e);
+            console.error('Revocation check failed', e);
         }
 
-        // Fallback if API fails (don't fail the credential, just warn)
         return {
             name: 'Revocation Check',
             status: 'warning',
             message: 'Revocation status could not be verified (Issuer unreachable)',
-            details: { checkedAt: new Date().toISOString() },
+            details: { code: 'REVOCATION_STATUS_UNKNOWN', checkedAt },
         };
     }
 

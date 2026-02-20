@@ -19,9 +19,11 @@ export default function ReceiveCredential() {
       return;
     }
 
-    // If scanning, we might simulate a URL or use one passed from scanner
-    // For now, if url is empty during scan simulation, we mock it or fail
-    const targetUrl = url || "http://localhost:5001/api/v1/public/issuance/offer/consume?token=demo";
+    const targetUrl = url.trim();
+    if (!targetUrl) {
+      toast({ title: "Error", description: "Credential offer URL is required", variant: "destructive" });
+      return;
+    }
 
     // 1. Verify Biometrics before claiming
     try {
@@ -131,7 +133,7 @@ export default function ReceiveCredential() {
                     [Camera Feed Mockup]
                   </div>
                   <Button variant="ghost" onClick={() => setStep("input")}>Cancel</Button>
-                  <Button onClick={handleProcess}>Simulate Scan (Demo)</Button>
+                  <Button onClick={handleProcess}>Process Scanned QR</Button>
                 </div>
               )}
 

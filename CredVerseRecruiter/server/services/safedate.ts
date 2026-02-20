@@ -63,13 +63,18 @@ export function evaluateSafeDate(payload: SafeDateEvaluationRequestContract): Sa
     ? payload.evidence.checks_run.filter((item): item is string => typeof item === 'string')
     : [];
 
+  const summary = payload.evidence?.summary?.trim();
+  if (!summary && process.env.NODE_ENV === 'production') {
+    throw new Error('SafeDate evidence.summary is required in production');
+  }
+
   return {
     score,
     factors,
     decision: mapSafeDateDecision(score),
     reason_codes: normalizeSafeDateReasonCodes(payload.reason_codes),
     evidence: {
-      summary: payload.evidence?.summary || 'SafeDate evidence stub',
+      summary: summary || 'SafeDate evidence not provided',
       signals_checked,
       checks_run,
     },

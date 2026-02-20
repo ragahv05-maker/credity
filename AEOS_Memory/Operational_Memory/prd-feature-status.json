@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-02-17",
-  "method": "evidence-only",
+  "generatedAt": "2026-02-21",
+  "method": "lane-output-evidence-reconciliation",
   "scale": {
     "DONE": 1,
     "PARTIAL": 0.5,
@@ -11,6 +11,15 @@
     "Identity Verification (Complete Flow)": "PARTIAL",
     "Reputation Rail (Cross-Platform Trust)": "PARTIAL",
     "SafeDate Score (Dating Safety Layer)": "PARTIAL",
-    "Gig Economy Onboarding Acceleration": "NOT_STARTED"
+    "Gig Economy Onboarding Acceleration": "NOT_STARTED",
+    "WorkScore (Comprehensive Employment Verification)": "PARTIAL",
+    "TenantScore (Rental Housing Verification)": "NOT_STARTED",
+    "HealthScore (Healthcare/Telemedicine Trust)": "NOT_STARTED",
+    "TutorScore (Education Marketplace Verification)": "NOT_STARTED",
+    "HomeWorkerScore (Domestic Services Verification)": "NOT_STARTED",
+    "TrustScore for Lending (Alternative Credit)": "NOT_STARTED",
+    "Trust Score Calculation": "PARTIAL",
+    "Credential Management": "PARTIAL",
+    "Platform Connections": "PARTIAL"
   }
 }

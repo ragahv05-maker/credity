@@ -70,7 +70,7 @@ export function generateProof({ request, credential, issuerBaseUrl }: GeneratePr
       public_signals: null,
       credential_id: request.credential_id ?? null,
       created_at: new Date().toISOString(),
-      reason: `Proof format ${format} is not enabled in this deployment`,
+      reason: `Proof format ${format} requires a production prover integration. This deployment only enables merkle-membership.`,
     };
   }
 

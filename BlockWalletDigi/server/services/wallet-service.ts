@@ -348,6 +348,11 @@ export class WalletService {
             verificationCount: 0,
         };
 
+        const anchor = await this.anchorCredential(storedCredential);
+        storedCredential.anchorStatus = 'anchored';
+        storedCredential.anchorTxHash = anchor.txHash;
+        storedCredential.blockNumber = anchor.blockNumber;
+
         wallet.credentials.push(storedCredential);
 
         // Add notification
@@ -358,8 +363,13 @@ export class WalletService {
             data: { credentialId: storedCredential.id },
         });
 
-        // Simulate blockchain anchoring
-        setTimeout(() => this.simulateAnchor(userId, storedCredential.id), 2000);
+        this.addNotification(userId, {
+            type: 'credential_received',
+            title: 'Credential Anchored',
+            message: `Your credential has been anchored to the blockchain`,
+            data: { credentialId: storedCredential.id, txHash: storedCredential.anchorTxHash },
+        });
+
         await queuePersist();
 
         return storedCredential;
@@ -888,25 +898,51 @@ export class WalletService {
         };
     }
 
-    private async simulateAnchor(userId: number, credentialId: string) {
-        await ensureHydrated();
-        const wallet = wallets.get(userId);
-        if (wallet) {
-            const credential = wallet.credentials.find(c => c.id === credentialId);
-            if (credential) {
-                credential.anchorStatus = 'anchored';
-                credential.anchorTxHash = `0x${crypto.randomBytes(32).toString('hex')}`;
-                credential.blockNumber = Math.floor(Math.random() * 1000000) + 50000000;
+    private async anchorCredential(credential: StoredCredential): Promise<{ txHash: string; blockNumber: number }> {
+        const anchorServiceUrl = process.env.WALLET_ANCHOR_SERVICE_URL?.trim();
 
-                this.addNotification(userId, {
-                    type: 'credential_received',
-                    title: 'Credential Anchored',
-                    message: `Your credential has been anchored to the blockchain`,
-                    data: { credentialId, txHash: credential.anchorTxHash },
-                });
-                await queuePersist();
+        if (anchorServiceUrl) {
+            const response = await fetch(anchorServiceUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    credentialId: credential.id,
+                    credentialHash: credential.hash,
+                    issuer: credential.issuer,
+                    type: credential.type,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorBody = await response.text();
+                throw new Error(`Credential anchoring failed: ${response.status} ${errorBody}`);
             }
+
+            const data = (await response.json()) as { txHash?: string; blockNumber?: number };
+            if (!data.txHash || typeof data.txHash !== 'string') {
+                throw new Error('Credential anchoring failed: anchor service response missing txHash');
+            }
+
+            return {
+                txHash: data.txHash,
+                blockNumber:
+                    typeof data.blockNumber === 'number' && Number.isFinite(data.blockNumber)
+                        ? Math.floor(data.blockNumber)
+                        : 0,
+            };
         }
+
+        const allowSimulatedAnchor = process.env.NODE_ENV !== 'production';
+        if (!allowSimulatedAnchor) {
+            throw new Error(
+                'Credential anchoring unavailable in production: configure WALLET_ANCHOR_SERVICE_URL',
+            );
+        }
+
+        return {
+            txHash: `0x${crypto.randomBytes(32).toString('hex')}`,
+            blockNumber: Math.floor(Math.random() * 1000000) + 50000000,
+        };
     }
 }
 

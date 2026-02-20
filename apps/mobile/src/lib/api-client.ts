@@ -225,6 +225,36 @@ export async function loginRole(role: AppRole, username: string, password: strin
   });
 }
 
+export async function loginWithAppleIdentityToken(identityToken: string, state?: string): Promise<void> {
+  const token = identityToken?.trim();
+  if (!token) {
+    throw new Error('Apple identity token is required');
+  }
+
+  const data = await requestRole<any>('holder', 'v1/auth/apple', {
+    method: 'POST',
+    body: {
+      identityToken: token,
+      ...(state ? { state } : {}),
+    },
+    skipAuth: true,
+    retryOnAuthFailure: false,
+  });
+
+  const accessToken = data?.tokens?.accessToken as string | undefined;
+  const refreshToken = data?.tokens?.refreshToken as string | undefined;
+  if (!accessToken || !refreshToken) {
+    throw new Error('Apple login succeeded but no tokens were returned');
+  }
+
+  await storeRefreshToken('holder', refreshToken);
+  useSessionStore.getState().setSession('holder', {
+    accessToken,
+    refreshToken,
+    user: data?.user || null,
+  });
+}
+
 export async function logoutRole(role: AppRole): Promise<void> {
   const session = useSessionStore.getState().sessions[role];
   try {

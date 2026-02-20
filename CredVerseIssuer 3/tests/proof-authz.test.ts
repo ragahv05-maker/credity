@@ -54,8 +54,33 @@ describe('issuer proof route authz', () => {
       .set('X-API-Key', 'test-api-key')
       .send({ credential_id: 'cred_missing', format: 'sd-jwt-vc' });
 
-    expect([202, 404]).toContain(res.status);
+    expect(res.status).toBe(404);
     expect(res.status).not.toBe(401);
     expect(res.status).not.toBe(403);
+  });
+
+  it('fails closed with explicit integration requirement for unsupported runtime formats', async () => {
+    const res = await request(app)
+      .post('/api/v1/proofs/generate')
+      .set('X-API-Key', 'test-api-key')
+      .send({ subject_did: 'did:key:holder-1', format: 'sd-jwt-vc' });
+
+    expect(res.status).toBe(501);
+    expect(res.body.status).toBe('unsupported');
+    expect(res.body.code).toBe('PROOF_INTEGRATION_REQUIRED');
+    expect(res.body.integration_required).toBe(true);
+    expect(String(res.body.reason || '')).toContain('requires a production prover integration');
+  });
+
+  it('rejects invalid proof formats instead of coercing to fallback formats', async () => {
+    const res = await request(app)
+      .post('/api/v1/proofs/generate')
+      .set('X-API-Key', 'test-api-key')
+      .send({ subject_did: 'did:key:holder-1', format: 'unknown-proof-format' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('PROOF_FORMAT_INVALID');
+    expect(Array.isArray(res.body.allowed_formats)).toBe(true);
+    expect(res.body.allowed_formats).toContain('ldp_vc');
   });
 });

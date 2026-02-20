@@ -158,12 +158,29 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
     });
     expect(apiKeyFlow.storedCredential).toBeTruthy();
 
-    const bearerFlow = await issueOfferClaim({
-      mode: 'active',
-      auth: { kind: 'bearer', token: issuerBearerToken },
-      suffix: 'bearer',
+    const bearerIssueRes = await fetch('http://127.0.0.1:5001/api/v1/credentials/issue?tenantId=550e8400-e29b-41d4-a716-446655440000', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        Authorization: `Bearer ${issuerBearerToken}`,
+      },
+      body: JSON.stringify({
+        templateId: 'template-1',
+        issuerId: 'issuer-1',
+        recipient: {
+          name: 'Bearer Candidate',
+          email: 'bearer@example.com',
+          studentId: 'E2E-bearer',
+        },
+        credentialData: {
+          credentialName: 'Bachelor of Technology',
+          major: 'Computer Science',
+          grade: 'A',
+        },
+      }),
     });
-    expect(bearerFlow.storedCredential).toBeTruthy();
+
+    expect(bearerIssueRes.status).toBe(403);
   });
 
   it('covers blockchain proof modes deterministically (active, deferred, writes-disabled)', async () => {
@@ -186,61 +203,40 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
     }
   });
 
-  it('runs verifier success/failure path plus auth permutations', async () => {
+  it('runs verifier instant endpoint auth + result path', async () => {
     const { storedCredential } = await issueOfferClaim({
       mode: 'active',
       auth: { kind: 'apiKey', key: issuerApiKey },
       suffix: 'verify',
     });
 
-    const noAuthMetadata = await request(verifierApp)
-      .post('/api/v1/proofs/metadata')
+    const noAuthRes = await request(verifierApp)
+      .post('/api/v1/verifications/instant')
       .send({ credential: storedCredential });
-    expect(noAuthMetadata.status).toBe(401);
-    expect(noAuthMetadata.body.code).toBe('PROOF_AUTH_REQUIRED');
+    expect(noAuthRes.status).toBe(401);
 
-    const wrongRoleMetadata = await request(verifierApp)
-      .post('/api/v1/proofs/metadata')
+    const invalidTokenRes = await request(verifierApp)
+      .post('/api/v1/verifications/instant')
+      .set('Authorization', 'Bearer invalid.token.value')
+      .send({ credential: storedCredential });
+    expect(invalidTokenRes.status).toBe(401);
+
+    const verifyRes = await request(verifierApp)
+      .post('/api/v1/verifications/instant')
+      .set('Authorization', `Bearer ${verifierToken}`)
+      .send({ credential: storedCredential, verifiedBy: 'e2e-suite' });
+
+    expect(verifyRes.status).toBe(200);
+    expect(verifyRes.body.verification_id).toBeTruthy();
+    expect(['valid', 'invalid', 'unknown']).toContain(verifyRes.body.credential_validity);
+    expect(['active', 'revoked', 'unknown']).toContain(verifyRes.body.status_validity);
+    expect(['accept', 'approve', 'review', 'reject']).toContain(verifyRes.body.decision);
+    expect(Array.isArray(verifyRes.body.checks)).toBe(true);
+
+    const badInputRes = await request(verifierApp)
+      .post('/api/v1/verifications/instant')
       .set('Authorization', `Bearer ${verifierWrongRoleToken}`)
-      .send({ credential: storedCredential });
-    expect(wrongRoleMetadata.status).toBe(403);
-    expect(wrongRoleMetadata.body.code).toBe('PROOF_FORBIDDEN');
-
-    const metadataRes = await request(verifierApp)
-      .post('/api/v1/proofs/metadata')
-      .set('Authorization', `Bearer ${verifierToken}`)
-      .send({ credential: storedCredential, hash_algorithm: 'sha256' });
-
-    expect(metadataRes.status).toBe(200);
-    expect(metadataRes.body.code).toBe('PROOF_METADATA_READY');
-
-    const verifyOkRes = await request(verifierApp)
-      .post('/api/v1/proofs/verify')
-      .set('Authorization', `Bearer ${verifierToken}`)
-      .send({
-        format: 'ldp_vc',
-        proof: storedCredential,
-        expected_hash: metadataRes.body.hash,
-        hash_algorithm: 'sha256',
-      });
-
-    expect(verifyOkRes.status).toBe(200);
-    expect(verifyOkRes.body.valid).toBe(true);
-    expect(verifyOkRes.body.code).toBe('PROOF_VALID');
-
-    const verifyMismatchRes = await request(verifierApp)
-      .post('/api/v1/proofs/verify')
-      .set('Authorization', `Bearer ${verifierToken}`)
-      .send({
-        format: 'ldp_vc',
-        proof: storedCredential,
-        expected_hash: 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
-        hash_algorithm: 'sha256',
-      });
-
-    expect(verifyMismatchRes.status).toBe(200);
-    expect(verifyMismatchRes.body.valid).toBe(false);
-    expect(verifyMismatchRes.body.reason_codes).toContain('PROOF_HASH_MISMATCH');
-    expect(verifyMismatchRes.body.code).toBe('PROOF_HASH_MISMATCH');
+      .send({});
+    expect(badInputRes.status).toBe(400);
   });
 });

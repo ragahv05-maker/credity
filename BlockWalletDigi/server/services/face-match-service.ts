@@ -6,13 +6,20 @@ export interface FaceMatchInput {
     idImageData?: string;
     liveImageData?: string;
     threshold?: number;
+    antiSpoof?: {
+        idSpoofRisk?: number;
+        liveSpoofRisk?: number;
+        requireLiveFace?: boolean;
+        liveFaceDetected?: boolean;
+    };
 }
 
 function embeddingFromImageData(imageData: string): number[] {
-    const digest = crypto.createHash('sha256').update(imageData).digest();
+    const seed = crypto.createHash('sha512').update(imageData).digest();
     const vector: number[] = [];
-    for (let i = 0; i < 16; i++) {
-        vector.push(digest[i] / 255);
+    for (let i = 0; i < 64; i++) {
+        const value = seed[i % seed.length] / 255;
+        vector.push(value);
     }
     return vector;
 }
@@ -47,6 +54,29 @@ function cosineSimilarity(a: number[], b: number[]): number {
     return dot / (Math.sqrt(normA) * Math.sqrt(normB));
 }
 
+function validateAntiSpoof(input?: FaceMatchInput['antiSpoof']): void {
+    if (!input) return;
+
+    const fields: Array<[string, number | undefined]> = [
+        ['idSpoofRisk', input.idSpoofRisk],
+        ['liveSpoofRisk', input.liveSpoofRisk],
+    ];
+
+    for (const [name, value] of fields) {
+        if (value !== undefined && (!Number.isFinite(value) || value < 0 || value > 1)) {
+            throw new Error(`${name} must be between 0 and 1`);
+        }
+    }
+
+    if (input.requireLiveFace && !input.liveFaceDetected) {
+        throw new Error('live face not detected');
+    }
+
+    if ((input.idSpoofRisk ?? 0) > 0.65 || (input.liveSpoofRisk ?? 0) > 0.65) {
+        throw new Error('anti_spoof_check_failed');
+    }
+}
+
 export function matchFace(input: FaceMatchInput): {
     confidence: number;
     matched: boolean;
@@ -56,6 +86,8 @@ export function matchFace(input: FaceMatchInput): {
     if (!Number.isFinite(threshold) || threshold < 0 || threshold > 1) {
         throw new Error('threshold must be a number between 0 and 1');
     }
+
+    validateAntiSpoof(input.antiSpoof);
 
     const idEmbedding = input.idFaceEmbedding ?? (input.idImageData ? embeddingFromImageData(input.idImageData) : null);
     const liveEmbedding = input.liveFaceEmbedding ?? (input.liveImageData ? embeddingFromImageData(input.liveImageData) : null);

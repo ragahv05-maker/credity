@@ -12,6 +12,7 @@
 import * as crypto from 'crypto';
 import { computeProofMetadataHash } from './evidence-linkage';
 import { detectDeepfakeFromUrl } from './deepfake-detection-service';
+import { assessSynthIdWatermark, type SynthIdAssessment } from './synthid-adapter';
 
 export interface EvidenceUploadRequest {
     userId: string;
@@ -38,6 +39,7 @@ export interface EvidenceAnalysisResult {
         locationPresent: boolean;
         softwareDetected: string | null;
         formatConsistent: boolean;
+        synthId?: SynthIdAssessment;
     };
 }
 
@@ -127,6 +129,13 @@ export async function analyzeEvidence(request: EvidenceUploadRequest): Promise<E
     // Check for AI generation via deepfake detection service
     const { isAiGenerated, unknownConfidencePenalty } = await checkAiGenerated(request);
 
+    // Optional SynthID watermark signal (currently adapter-first; availability depends on detector endpoint)
+    const synthId = await assessSynthIdWatermark({
+        mediaType: request.mediaType,
+        url: request.url,
+        metadata: request.metadata,
+    });
+
     // Calculate authenticity score
     const authenticityScore = calculateAuthenticityScore(
         metadataExtracted,
@@ -148,7 +157,8 @@ export async function analyzeEvidence(request: EvidenceUploadRequest): Promise<E
             timestampValid: metadataExtracted.timestampValid,
             locationPresent: !!metadataExtracted.gpsData,
             softwareDetected: manipulationAnalysis.software,
-            formatConsistent: true
+            formatConsistent: true,
+            synthId,
         }
     };
 }

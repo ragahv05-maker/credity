@@ -33,39 +33,13 @@ function timeoutSignal(ms: number): AbortSignal {
     return controller.signal;
 }
 
-function seededRatio(seed: string): number {
-    let hash = 0;
-    for (let i = 0; i < seed.length; i++) {
-        hash = ((hash << 5) - hash + seed.charCodeAt(i)) | 0;
-    }
-    return Math.abs(hash % 1000) / 1000;
-}
-
-class DeterministicFallbackAdapter implements AIAdapter {
-    async analyzeLiveness(imageBase64: string): Promise<LivenessResult> {
-        const ratio = seededRatio(imageBase64.slice(0, 256));
-        const spoofingDetected = ratio > 0.92;
-        const faceDetected = imageBase64.length > 128;
-        const isReal = faceDetected && !spoofingDetected;
-        const confidence = Number((isReal ? 0.82 + ratio * 0.15 : 0.35 + ratio * 0.3).toFixed(3));
-        return {
-            isReal,
-            confidence: Math.min(1, Math.max(0, confidence)),
-            spoofingDetected,
-            faceDetected,
-            reasoning: 'Deterministic fallback analysis used (provider unavailable).',
-        };
+class StrictUnavailableAdapter implements AIAdapter {
+    async analyzeLiveness(_imageBase64: string): Promise<LivenessResult> {
+        throw new Error('ai_provider_unavailable');
     }
 
-    async analyzeDocument(imageBase64: string, documentType: string): Promise<DocumentResult> {
-        const ratio = seededRatio(`${documentType}:${imageBase64.slice(0, 256)}`);
-        const fraudScore = Number((ratio > 0.9 ? 0.72 : 0.08 + ratio * 0.45).toFixed(3));
-        return {
-            isValid: fraudScore < 0.6,
-            extractedData: {},
-            fraudScore,
-            feedback: 'Deterministic fallback analysis used (provider unavailable).',
-        };
+    async analyzeDocument(_imageBase64: string, _documentType: string): Promise<DocumentResult> {
+        throw new Error('ai_provider_unavailable');
     }
 }
 
@@ -132,5 +106,5 @@ export function getAIAdapter(): AIAdapter {
     if (process.env.GEMINI_API_KEY) {
         return new GeminiAdapter();
     }
-    return new DeterministicFallbackAdapter();
+    return new StrictUnavailableAdapter();
 }

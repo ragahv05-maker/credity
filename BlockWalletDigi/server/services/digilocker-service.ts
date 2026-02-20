@@ -94,6 +94,10 @@ export class DigiLockerService {
         this.clientSecret = this.isConfigured ? configuredClientSecret : (this.demoMode ? 'demo_client_secret' : '');
         this.useSandbox = process.env.DIGILOCKER_SANDBOX === 'true';
 
+        if (!this.isConfigured && process.env.NODE_ENV === 'production') {
+            throw new Error('[DigiLocker] Missing DIGILOCKER_CLIENT_ID / DIGILOCKER_CLIENT_SECRET in production');
+        }
+
         if (!this.isConfigured && !this.demoMode) {
             console.warn('[DigiLocker] Credentials are not configured. DigiLocker operations are disabled.');
         }
@@ -180,6 +184,7 @@ export class DigiLockerService {
 
         // For demo mode, simulate token response
         if (this.demoMode) {
+            this.ensureDemoModeAllowed();
             console.log('[DigiLocker] Demo mode - simulating token exchange');
             const demoTokens: DigiLockerTokens = {
                 access_token: `demo_access_token_${crypto.randomBytes(16).toString('hex')}`,
@@ -231,6 +236,7 @@ export class DigiLockerService {
 
         // Demo mode
         if (this.demoMode) {
+            this.ensureDemoModeAllowed();
             return {
                 digilockerid: tokens.digilocker_id || 'DL-DEMO123',
                 name: 'Demo User',
@@ -264,6 +270,7 @@ export class DigiLockerService {
 
         // Demo mode - return sample documents
         if (this.demoMode) {
+            this.ensureDemoModeAllowed();
             return [
                 {
                     uri: 'in.gov.uidai-ADHAR-XXXXXXXX1234',
@@ -346,6 +353,7 @@ export class DigiLockerService {
 
         // Demo mode - return mock document data
         if (this.demoMode) {
+            this.ensureDemoModeAllowed();
             const docType = documentUri.split('-')[1];
 
             const mockData: Record<string, any> = {
@@ -428,6 +436,12 @@ export class DigiLockerService {
         }
 
         return response.json();
+    }
+
+    private ensureDemoModeAllowed(): void {
+        if (process.env.NODE_ENV === 'production') {
+            throw new Error('[DigiLocker] Demo mode is disabled in production');
+        }
     }
 
     /**

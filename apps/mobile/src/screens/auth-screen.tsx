@@ -21,7 +21,8 @@ import {
   View,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
-import { loginRole, registerRole, restoreRoleSession, sendPhoneOtp, verifyPhoneOtp } from '../lib/api-client';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import { loginRole, loginWithAppleIdentityToken, registerRole, restoreRoleSession, sendPhoneOtp, verifyPhoneOtp } from '../lib/api-client';
 import { useSessionStore } from '../store/session-store';
 import { useTheme } from '../theme/ThemeContext';
 import type { ColorPalette } from '../theme/tokens';
@@ -162,9 +163,46 @@ export function AuthScreen() {
     }
   }
 
-  function onAppleSignIn() {
-    // TODO: Implement with expo-apple-authentication (Sign in with Apple capability required)
-    Alert.alert('Coming soon', 'Apple Sign-In will be available in the next release.');
+  async function onAppleSignIn() {
+    if (Platform.OS !== 'ios') {
+      Alert.alert('Unavailable', 'Apple Sign-In is only available on iOS devices.');
+      return;
+    }
+
+    if (role !== 'holder') {
+      Alert.alert('Holder only', 'Apple Sign-In is currently supported for Holder Wallet accounts only.');
+      return;
+    }
+
+    try {
+      const isAvailable = await AppleAuthentication.isAvailableAsync();
+      if (!isAvailable) {
+        const fallbackUrl = `${BACKEND_URL}/api/v1/auth/apple`;
+        await WebBrowser.openBrowserAsync(fallbackUrl);
+        return;
+      }
+
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      if (!credential.identityToken) {
+        throw new Error('Apple did not return an identity token');
+      }
+
+      const identityToken = credential.identityToken;
+      await loginWithAppleIdentityToken(identityToken);
+    } catch (err: any) {
+      if (err?.code === 'ERR_REQUEST_CANCELED') {
+        return;
+      }
+
+      const message = err?.message || 'Unable to complete Apple sign-in.';
+      Alert.alert('Apple Sign-In failed', message);
+    }
   }
 
   return (
