@@ -203,9 +203,8 @@ export function hashApiKey(apiKey: string): string {
 // Express middleware types
 declare global {
     namespace Express {
-        interface Request {
-            user?: TokenPayload;
-        }
+        // Extend the existing User interface instead of redefining Request.user
+        interface User extends TokenPayload {}
     }
 }
 
