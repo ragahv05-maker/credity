@@ -25,6 +25,7 @@ import {
   History,
   ExternalLink,
   Clipboard,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMutation } from "@tanstack/react-query";
@@ -404,6 +405,35 @@ export default function InstantVerify() {
     }
   };
 
+  const handlePaste = async (setter: (val: string) => void) => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) {
+        setter(text);
+        toast({ title: "Pasted from clipboard" });
+      }
+    } catch {
+      toast({
+        title: "Paste failed",
+        description: "Check clipboard permissions",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const PasteActions = ({ onPaste, onClear, hasValue }: { onPaste: () => void; onClear: () => void; hasValue: boolean }) => (
+    <div className="flex gap-2">
+      <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={onPaste}>
+        <Clipboard className="w-3 h-3 mr-1" /> Paste
+      </Button>
+      {hasValue && (
+        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={onClear}>
+          <X className="w-3 h-3 mr-1" /> Clear
+        </Button>
+      )}
+    </div>
+  );
+
   return (
     <DashboardLayout title="Instant Verification">
       <div className="max-w-6xl mx-auto">
@@ -453,7 +483,10 @@ export default function InstantVerify() {
 
                   <TabsContent value="jwt" className="space-y-4">
                     <div className="space-y-2">
-                      <Label>VC-JWT Token</Label>
+                      <div className="flex items-center justify-between">
+                        <Label>VC-JWT Token</Label>
+                        <PasteActions onPaste={() => handlePaste(setJwtInput)} onClear={() => setJwtInput("")} hasValue={!!jwtInput} />
+                      </div>
                       <Textarea
                         placeholder="eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9..."
                         className="min-h-[150px] font-mono text-xs"
@@ -461,21 +494,36 @@ export default function InstantVerify() {
                         onChange={(e) => setJwtInput(e.target.value)}
                       />
                     </div>
-                    <Button className="w-full" onClick={() => handleVerify(jwtInput)} disabled={!jwtInput.trim() || verifyMutation.isPending}>
+                    <Button
+                      className="w-full"
+                      onClick={() => handleVerify(jwtInput)}
+                      disabled={!jwtInput.trim() || verifyMutation.isPending}
+                    >
+                      {verifyMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       {verifyMutation.isPending ? "Verifying..." : "Verify JWT"}
                     </Button>
                   </TabsContent>
 
                   <TabsContent value="link" className="space-y-4">
                     <div className="space-y-2">
-                      <Label>Credential URL</Label>
+                      <div className="flex items-center justify-between">
+                        <Label>Credential URL</Label>
+                        <PasteActions onPaste={() => handlePaste(setLinkInput)} onClear={() => setLinkInput("")} hasValue={!!linkInput} />
+                      </div>
                       <Input
                         placeholder="https://issuer.example.com/api/v1/public/issuance/offer/consume?token=..."
                         value={linkInput}
                         onChange={(e) => setLinkInput(e.target.value)}
                       />
                     </div>
-                    <Button className="w-full" onClick={handleVerifyLink} disabled={!linkInput.trim() || verifyLinkMutation.isPending}>
+                    <Button
+                      className="w-full"
+                      onClick={handleVerifyLink}
+                      disabled={!linkInput.trim() || verifyLinkMutation.isPending}
+                    >
+                      {verifyLinkMutation.isPending && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
                       {verifyLinkMutation.isPending ? "Verifying..." : "Verify Link"}
                     </Button>
                   </TabsContent>
