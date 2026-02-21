@@ -169,6 +169,7 @@ const stateStore = hasDatabase
 let hydrated = false;
 let hydrationPromise: Promise<void> | null = null;
 let persistChain = Promise.resolve();
+let nextBatchPromise: Promise<void> | null = null;
 
 function serializeWalletState(wallet: WalletState): PersistedWalletState {
     return {
@@ -259,21 +260,36 @@ async function ensureHydrated(): Promise<void> {
 
 async function queuePersist(): Promise<void> {
     if (!stateStore) return;
-    persistChain = persistChain
-        .then(async () => {
-            const payload: WalletServiceState = {
-                wallets: Array.from(wallets.entries()).map(([userId, wallet]) => [
-                    userId,
-                    serializeWalletState(wallet),
-                ]),
-                certInIncidents: Array.from(certInIncidents.entries()),
-            };
-            await stateStore.save(payload);
-        })
-        .catch((error) => {
-            console.error('[Wallet Service] Persist failed:', error);
-        });
-    await persistChain;
+
+    // Coalescing persist optimization:
+    // If a persist operation is already queued to run after the current one finishes, just return that promise.
+    // This prevents N+1 writes for N rapid changes, collapsing them into at most 2 writes.
+    if (nextBatchPromise) {
+        return nextBatchPromise;
+    }
+
+    const myPromise = persistChain.then(async () => {
+        // Clear the flag so subsequent calls can schedule a new batch
+        if (nextBatchPromise === myPromise) {
+            nextBatchPromise = null;
+        }
+
+        const payload: WalletServiceState = {
+            wallets: Array.from(wallets.entries()).map(([userId, wallet]) => [
+                userId,
+                serializeWalletState(wallet),
+            ]),
+            certInIncidents: Array.from(certInIncidents.entries()),
+        };
+        await stateStore.save(payload);
+    });
+
+    nextBatchPromise = myPromise;
+    persistChain = myPromise.catch((error) => {
+        console.error('[Wallet Service] Persist failed:', error);
+    });
+
+    return myPromise;
 }
 
 /**
@@ -328,7 +344,45 @@ export class WalletService {
         }
     ): Promise<StoredCredential> {
         const wallet = await this.getOrCreateWallet(userId);
+        const stored = this._addCredential(userId, wallet, credential);
+        await queuePersist();
+        return stored;
+    }
 
+    /**
+     * Store multiple credentials in batch
+     */
+    async storeCredentials(
+        userId: number,
+        credentials: Array<{
+            type: string[];
+            issuer: string;
+            issuanceDate: Date;
+            expirationDate?: Date;
+            data: any;
+            jwt?: string;
+            category?: string;
+        }>
+    ): Promise<StoredCredential[]> {
+        const wallet = await this.getOrCreateWallet(userId);
+        const stored = credentials.map((c) => this._addCredential(userId, wallet, c));
+        await queuePersist();
+        return stored;
+    }
+
+    private _addCredential(
+        userId: number,
+        wallet: WalletState,
+        credential: {
+            type: string[];
+            issuer: string;
+            issuanceDate: Date;
+            expirationDate?: Date;
+            data: any;
+            jwt?: string;
+            category?: string;
+        }
+    ): StoredCredential {
         // Encrypt sensitive data
         const encryptedData = this.encrypt(JSON.stringify(credential.data));
         const hash = this.hashCredential(credential.data);
@@ -360,7 +414,6 @@ export class WalletService {
 
         // Simulate blockchain anchoring
         setTimeout(() => this.simulateAnchor(userId, storedCredential.id), 2000);
-        await queuePersist();
 
         return storedCredential;
     }
