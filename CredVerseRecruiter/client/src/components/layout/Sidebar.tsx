@@ -11,7 +11,7 @@ import {
   Menu,
   BarChart3
 } from "lucide-react";
-import logo from "@assets/generated_images/minimalist_abstract_logo_for_credverse.png";
+// import logo from "@assets/generated_images/minimalist_abstract_logo_for_credverse.png";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -35,7 +35,7 @@ export function Sidebar() {
       <div className="flex h-16 items-center px-6 border-b border-sidebar-border/50 backdrop-blur-sm">
         <div className="relative group">
           <div className="absolute -inset-1 bg-primary/20 rounded-full blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
-          <img src={logo} alt="CredVerse Logo" className="relative h-8 w-8 mr-3" />
+          <ShieldCheck className="relative h-8 w-8 mr-3 text-primary-foreground" />
         </div>
         <span className="font-bold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80">CredVerse</span>
       </div>
