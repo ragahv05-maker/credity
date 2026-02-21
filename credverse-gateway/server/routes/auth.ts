@@ -174,8 +174,8 @@ function generateSSOToken(user: GoogleUser): string {
 /**
  * Verify SSO token
  */
-function verifySSOToken(token: string): Record<string, unknown> | null {
-    const decoded = verifyAccessToken(token);
+async function verifySSOToken(token: string): Promise<Record<string, unknown> | null> {
+    const decoded = await verifyAccessToken(token);
     if (!decoded || typeof decoded !== 'object') {
         return null;
     }
@@ -287,7 +287,7 @@ router.get('/auth/me', async (req, res) => {
 /**
  * Verify SSO token - used by other apps for cross-app auth
  */
-router.post('/auth/verify-token', (req, res) => {
+router.post('/auth/verify-token', async (req, res) => {
     let token = req.body?.token;
 
     if (!token) {
@@ -301,7 +301,7 @@ router.post('/auth/verify-token', (req, res) => {
         return res.json({ valid: false, error: 'No token provided' });
     }
 
-    const decoded = verifySSOToken(token);
+    const decoded = await verifySSOToken(token);
     if (decoded) {
         res.json({
             valid: true,

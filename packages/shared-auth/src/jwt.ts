@@ -2,14 +2,54 @@
  * JWT token generation and verification utilities
  */
 import jwt from 'jsonwebtoken';
-import type { AuthUser, TokenPayload, TokenPair, AuthConfig, VerifyTokenResult } from './types';
+import crypto from 'node:crypto';
+import type { AuthUser, TokenPayload, TokenPair, AuthConfig, VerifyTokenResult, TokenRevocationStore } from './types';
 
 const DEFAULT_ACCESS_EXPIRY = '15m';
 const DEFAULT_REFRESH_EXPIRY = '7d';
 const JWT_ALGORITHM = 'HS256' as const;
 
-// Stateless token mode avoids process-local auth state.
-// For global logout/token revocation use a shared session store or JWT denylist service.
+// Default In-Memory Store
+class InMemoryRevocationStore implements TokenRevocationStore {
+    private revoked = new Map<string, number>(); // token -> expiry timestamp
+    private cleanupInterval: NodeJS.Timeout;
+
+    constructor() {
+        // Cleanup every minute
+        this.cleanupInterval = setInterval(() => this.cleanup(), 60000);
+        if (typeof this.cleanupInterval.unref === 'function') {
+            this.cleanupInterval.unref();
+        }
+    }
+
+    add(token: string, expirySeconds: number = 900): void {
+        const expiresAt = Date.now() + (expirySeconds * 1000);
+        this.revoked.set(token, expiresAt);
+    }
+
+    has(token: string): boolean {
+        const expiresAt = this.revoked.get(token);
+        if (!expiresAt) return false;
+        if (Date.now() > expiresAt) {
+            this.revoked.delete(token);
+            return false;
+        }
+        return true;
+    }
+
+    remove(token: string): void {
+        this.revoked.delete(token);
+    }
+
+    cleanup() {
+        const now = Date.now();
+        for (const [token, expiry] of this.revoked.entries()) {
+            if (now > expiry) {
+                this.revoked.delete(token);
+            }
+        }
+    }
+}
 
 let config: AuthConfig = {
     jwtSecret: 'dev-only-secret-not-for-production',
@@ -17,6 +57,7 @@ let config: AuthConfig = {
     accessTokenExpiry: DEFAULT_ACCESS_EXPIRY,
     refreshTokenExpiry: DEFAULT_REFRESH_EXPIRY,
     app: 'unknown',
+    revocationStore: new InMemoryRevocationStore(),
 };
 
 /**
@@ -27,6 +68,10 @@ export function initAuth(authConfig: Partial<AuthConfig>): void {
         ...config,
         ...authConfig,
     };
+
+    if (!config.revocationStore) {
+        config.revocationStore = new InMemoryRevocationStore();
+    }
 
     if (process.env.NODE_ENV === 'production') {
         if (!config.jwtSecret || config.jwtSecret === 'dev-only-secret-not-for-production') {
@@ -52,6 +97,7 @@ export function generateAccessToken(user: AuthUser): string {
         role: user.role,
         type: 'access',
         app: config.app,
+        jti: crypto.randomUUID(),
     };
     return jwt.sign(payload, config.jwtSecret, {
         expiresIn: config.accessTokenExpiry || DEFAULT_ACCESS_EXPIRY,
@@ -69,6 +115,7 @@ export function generateRefreshToken(user: AuthUser): string {
         role: user.role,
         type: 'refresh',
         app: config.app,
+        jti: crypto.randomUUID(),
     };
     return jwt.sign(payload, config.jwtRefreshSecret, {
         expiresIn: config.refreshTokenExpiry || DEFAULT_REFRESH_EXPIRY,
@@ -88,10 +135,15 @@ export function generateTokenPair(user: AuthUser): TokenPair {
 }
 
 /**
- * Verify access token
+ * Verify access token (Async)
  */
-export function verifyAccessToken(token: string): TokenPayload | null {
+export async function verifyAccessToken(token: string): Promise<TokenPayload | null> {
     try {
+        // Check revocation
+        if (config.revocationStore && await config.revocationStore.has(token)) {
+            return null;
+        }
+
         const decoded = jwt.verify(token, config.jwtSecret, { algorithms: [JWT_ALGORITHM] }) as TokenPayload;
         if (decoded.type !== 'access') {
             return null;
@@ -103,10 +155,15 @@ export function verifyAccessToken(token: string): TokenPayload | null {
 }
 
 /**
- * Verify refresh token
+ * Verify refresh token (Async)
  */
-export function verifyRefreshToken(token: string): TokenPayload | null {
+export async function verifyRefreshToken(token: string): Promise<TokenPayload | null> {
     try {
+        // Check revocation
+        if (config.revocationStore && await config.revocationStore.has(token)) {
+            return null;
+        }
+
         const decoded = jwt.verify(token, config.jwtRefreshSecret, { algorithms: [JWT_ALGORITHM] }) as TokenPayload;
         if (decoded.type !== 'refresh') {
             return null;
@@ -120,8 +177,8 @@ export function verifyRefreshToken(token: string): TokenPayload | null {
 /**
  * Verify token and return structured result (for cross-app validation)
  */
-export function verifyToken(token: string): VerifyTokenResult {
-    const payload = verifyAccessToken(token);
+export async function verifyToken(token: string): Promise<VerifyTokenResult> {
+    const payload = await verifyAccessToken(token);
 
     if (!payload) {
         return { valid: false, error: 'Invalid or expired token' };
@@ -141,28 +198,34 @@ export function verifyToken(token: string): VerifyTokenResult {
 /**
  * Invalidate refresh token (logout)
  */
-export function invalidateRefreshToken(token: string): void {
-    void token;
+export async function invalidateRefreshToken(token: string): Promise<void> {
+    if (config.revocationStore) {
+        // Default refresh expiry 7d = 604800s
+        await config.revocationStore.add(token, 604800);
+    }
 }
 
 /**
  * Invalidate access token
  */
-export function invalidateAccessToken(token: string): void {
-    void token;
+export async function invalidateAccessToken(token: string): Promise<void> {
+    if (config.revocationStore) {
+        // Default access expiry 15m = 900s
+        await config.revocationStore.add(token, 900);
+    }
 }
 
 /**
  * Refresh access token using refresh token
  */
-export function refreshAccessToken(refreshToken: string): TokenPair | null {
-    const payload = verifyRefreshToken(refreshToken);
+export async function refreshAccessToken(refreshToken: string): Promise<TokenPair | null> {
+    const payload = await verifyRefreshToken(refreshToken);
     if (!payload) {
         return null;
     }
 
     // Invalidate old refresh token (rotation)
-    invalidateRefreshToken(refreshToken);
+    await invalidateRefreshToken(refreshToken);
 
     const user: AuthUser = {
         id: payload.userId,

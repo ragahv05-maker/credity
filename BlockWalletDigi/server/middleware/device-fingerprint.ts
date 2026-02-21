@@ -18,13 +18,17 @@ export function deviceFingerprintMiddleware(
   _res: Response,
   next: NextFunction,
 ): void {
-  const headerFp = req.headers['x-device-fingerprint'];
-  if (typeof headerFp === 'string' && headerFp.trim().length > 0) {
-    req.deviceFingerprint = headerFp.trim();
-  } else {
-    const ip = (req.headers['x-forwarded-for'] as string | undefined) ?? req.socket?.remoteAddress ?? 'unknown';
-    const ua = req.headers['user-agent'] ?? 'unknown';
-    req.deviceFingerprint = sha256(ip, ua);
-  }
+  // SECURITY: Ignore client-supplied 'x-device-fingerprint' header to prevent spoofing.
+  // Generate fingerprint server-side based on request properties.
+
+  const forwardedFor = req.headers['x-forwarded-for'];
+  const ip = (typeof forwardedFor === 'string' ? forwardedFor.split(',')[0].trim() : undefined)
+    ?? req.socket?.remoteAddress
+    ?? 'unknown';
+
+  const ua = req.headers['user-agent'] ?? 'unknown';
+  const acceptLang = req.headers['accept-language'] ?? 'unknown';
+
+  req.deviceFingerprint = sha256(ip, ua, acceptLang);
   next();
 }

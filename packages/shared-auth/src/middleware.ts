@@ -12,7 +12,7 @@ type AuthenticatedRequest = Request & {
 /**
  * JWT Authentication Middleware - requires valid token
  */
-export function authMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
+export async function authMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -21,7 +21,7 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
     }
 
     const token = authHeader.substring(7);
-    const payload = verifyAccessToken(token);
+    const payload = await verifyAccessToken(token);
 
     if (!payload) {
         res.status(401).json({ error: 'Invalid or expired token' });
@@ -35,12 +35,12 @@ export function authMiddleware(req: AuthenticatedRequest, res: Response, next: N
 /**
  * Optional auth middleware - doesn't fail if no token
  */
-export function optionalAuthMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction): void {
+export async function optionalAuthMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> {
     const authHeader = req.headers.authorization;
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.substring(7);
-        const payload = verifyAccessToken(token);
+        const payload = await verifyAccessToken(token);
         if (payload) {
             req.user = payload;
         }
