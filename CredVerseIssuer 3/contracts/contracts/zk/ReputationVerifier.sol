@@ -17,17 +17,30 @@ contract ReputationVerifier is AccessControl, ReentrancyGuard {
     // circuitId => expected public signal length
     mapping(uint256 => uint256) public expectedPublicSignalsLength;
 
+    struct NullifierConfig {
+        bool enabled;
+        uint256 index;
+    }
+    // circuitId => nullifier config
+    mapping(uint256 => NullifierConfig) public circuitNullifierConfig;
+    // circuitId => nullifier => used
+    mapping(uint256 => mapping(uint256 => bool)) public nullifiers;
+
     mapping(bytes32 => bool) public proofExists;
 
     event ZkVerifierUpdated(uint256 indexed circuitId, address indexed oldVerifier, address indexed newVerifier, address updatedBy);
     event ExpectedPublicSignalsLengthUpdated(uint256 indexed circuitId, uint256 oldLength, uint256 newLength, address updatedBy);
     event ProofVerified(bytes32 indexed proofHash, address indexed submitter, uint256 indexed circuitId);
+    event NullifierUsed(uint256 indexed circuitId, uint256 nullifier);
+    event NullifierConfigUpdated(uint256 indexed circuitId, bool enabled, uint256 index);
 
     error InvalidVerifier();
     error InvalidProof();
     error InvalidCircuitId(uint256 circuitId);
     error PublicSignalsLengthMismatch(uint256 circuitId, uint256 expected, uint256 actual);
     error ProofAlreadyStored(bytes32 proofHash);
+    error NullifierAlreadyUsed(uint256 nullifier);
+    error InvalidNullifierIndex(uint256 index, uint256 length);
 
     constructor(address scoreThresholdVerifier, address ageVerificationVerifier, address crossVerticalAggregateVerifier) {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -49,6 +62,12 @@ contract ReputationVerifier is AccessControl, ReentrancyGuard {
 
     function setExpectedPublicSignalsLength(uint256 circuitId, uint256 newLength) external onlyRole(PROOF_ADMIN_ROLE) {
         _setExpectedPublicSignalsLength(circuitId, newLength);
+    }
+
+    function setCircuitNullifierConfig(uint256 circuitId, bool enabled, uint256 index) external onlyRole(PROOF_ADMIN_ROLE) {
+        if (!_isSupportedCircuit(circuitId)) revert InvalidCircuitId(circuitId);
+        circuitNullifierConfig[circuitId] = NullifierConfig(enabled, index);
+        emit NullifierConfigUpdated(circuitId, enabled, index);
     }
 
     function _setCircuitVerifier(uint256 circuitId, address verifierAddress) internal {
@@ -94,6 +113,20 @@ contract ReputationVerifier is AccessControl, ReentrancyGuard {
         IGroth16Verifier verifier = zkVerifierByCircuit[circuitId];
         bool isValid = verifier.verifyProof(pA, pB, pC, pubSignals);
         if (!isValid) revert InvalidProof();
+
+        // Check Nullifier
+        NullifierConfig memory nullifierConfig = circuitNullifierConfig[circuitId];
+        if (nullifierConfig.enabled) {
+            if (nullifierConfig.index >= pubSignals.length) {
+                revert InvalidNullifierIndex(nullifierConfig.index, pubSignals.length);
+            }
+            uint256 nullifier = pubSignals[nullifierConfig.index];
+            if (nullifiers[circuitId][nullifier]) {
+                revert NullifierAlreadyUsed(nullifier);
+            }
+            nullifiers[circuitId][nullifier] = true;
+            emit NullifierUsed(circuitId, nullifier);
+        }
 
         bytes32 proofHash = keccak256(abi.encodePacked(pA, pB, pC, pubSignals));
         if (proofExists[proofHash]) revert ProofAlreadyStored(proofHash);
