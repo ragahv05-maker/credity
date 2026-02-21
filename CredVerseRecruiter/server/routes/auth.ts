@@ -12,6 +12,7 @@ import {
     authMiddleware,
     checkRateLimit,
     AuthUser,
+    validatePasswordStrength,
 } from '../services/auth-service';
 
 const router = Router();
@@ -30,6 +31,12 @@ router.post('/auth/register', async (req, res) => {
         // Rate limit registration
         if (!checkRateLimit(`register:${req.ip}`, 5, 60 * 60 * 1000)) {
             return res.status(429).json({ error: 'Too many registration attempts' });
+        }
+
+        // Validate password strength
+        const passwordStrength = validatePasswordStrength(password);
+        if (!passwordStrength.isValid) {
+            return res.status(400).json({ error: passwordStrength.errors.join('. ') });
         }
 
         // Check if user exists
