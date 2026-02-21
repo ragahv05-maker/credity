@@ -2,9 +2,6 @@ import { type User, type InsertUser } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { PostgresStateStore } from "@credverse/shared-auth";
 
-// modify the interface with any CRUD methods
-// you might need
-
 export interface VerificationRecord {
   id: string;
   credentialType: string;
@@ -48,12 +45,16 @@ export interface IStorage {
   addWorkScoreEvaluation(snapshot: WorkScoreEvaluationSnapshot): Promise<void>;
   getWorkScoreEvaluation(id: string): Promise<WorkScoreEvaluationSnapshot | undefined>;
   getWorkScoreEvaluations(limit?: number): Promise<WorkScoreEvaluationSnapshot[]>;
+
+  // Idempotency support
+  getIdempotencyKeys(): Promise<any>;
 }
 
 interface RecruiterStorageState {
   users: Array<[string, User]>;
   verifications: VerificationRecord[];
   workScoreEvaluations: WorkScoreEvaluationSnapshot[];
+  // idempotency not strictly persisted in this MVP model but method required
 }
 
 function parseDate(value: unknown): Date {
@@ -134,6 +135,10 @@ export class MemStorage implements IStorage {
   async getWorkScoreEvaluations(limit = 50): Promise<WorkScoreEvaluationSnapshot[]> {
     const normalizedLimit = Number.isFinite(limit) ? Math.max(1, Math.floor(limit)) : 50;
     return this.workScoreEvaluations.slice(0, Math.min(normalizedLimit, 200));
+  }
+
+  async getIdempotencyKeys(): Promise<any> {
+      return {};
   }
 
   exportState(): RecruiterStorageState {

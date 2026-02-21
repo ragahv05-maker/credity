@@ -9,7 +9,7 @@
     "build": "tsx script/build.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
-    "pretest": "cd ../packages/shared-auth && npm run build",
+    "pretest": "cd ../packages/shared-auth && npm run build && cd ../trust-sdk && npm install && npm run build",
     "db:push": "drizzle-kit push",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -145,5 +145,8 @@
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
+  },
+  "overrides": {
+    "minimatch": "^10.2.1"
   }
 }

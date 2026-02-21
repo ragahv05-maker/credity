@@ -18,6 +18,7 @@ export interface TokenPayload {
     app?: string;
     iat?: number;
     exp?: number;
+    jti?: string;
 }
 
 export interface TokenPair {
@@ -37,10 +38,17 @@ export interface VerifyTokenResult {
     error?: string;
 }
 
+export interface TokenRevocationStore {
+    add(token: string, expirySeconds?: number): Promise<void> | void;
+    has(token: string): Promise<boolean> | boolean;
+    remove(token: string): Promise<void> | void; // Optional cleanup
+}
+
 export interface AuthConfig {
     jwtSecret: string;
     jwtRefreshSecret: string;
     accessTokenExpiry?: string;
     refreshTokenExpiry?: string;
     app?: string;
+    revocationStore?: TokenRevocationStore;
 }

@@ -156,3 +156,18 @@ export {
     computeAuditEventHash,
     verifyAuditChain,
 } from './audit-chain.js';
+
+// Verification utilities
+export {
+    parseJwtPayloadSafely,
+    readCredentialType,
+    readIssuer,
+    readSubjectName,
+    mapDecisionToLegacyRecommendation,
+    deriveDecision,
+    mapCredentialValidity,
+    mapStatusValidity,
+    mapAnchorValidity,
+    mapDecision,
+    type VerificationRecord,
+} from './utils.js';
