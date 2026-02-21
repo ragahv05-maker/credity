@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Manrope:wght@400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Manrope:wght@400;500;600&display=swap");
 
 :root {
   --bg-0: #03050a;
@@ -24,8 +24,16 @@
   min-height: 100vh;
   color: var(--text);
   background:
-    radial-gradient(1200px 650px at -10% -20%, rgba(41, 183, 255, 0.2), transparent 58%),
-    radial-gradient(900px 600px at 110% 5%, rgba(94, 103, 255, 0.16), transparent 52%),
+    radial-gradient(
+      1200px 650px at -10% -20%,
+      rgba(41, 183, 255, 0.2),
+      transparent 58%
+    ),
+    radial-gradient(
+      900px 600px at 110% 5%,
+      rgba(94, 103, 255, 0.16),
+      transparent 52%
+    ),
     linear-gradient(160deg, var(--bg-0), var(--bg-1) 38%, #0b1323 100%);
   overflow: hidden;
 }
@@ -97,7 +105,7 @@ footer {
 
 .brand strong {
   display: block;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: "Plus Jakarta Sans", sans-serif;
   font-size: 0.97rem;
   letter-spacing: -0.01em;
 }
@@ -177,7 +185,7 @@ footer {
 
 .hero h1 {
   margin: 16px 0 0;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: "Plus Jakarta Sans", sans-serif;
   font-size: clamp(2rem, 4.7vw, 4.1rem);
   line-height: 0.98;
   letter-spacing: -0.04em;
@@ -208,7 +216,10 @@ footer {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease,
+    border-color 220ms ease;
 }
 
 .btn:hover {
@@ -256,7 +267,7 @@ footer {
 .panel-logo-wrap strong {
   display: block;
   margin-top: 2px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: "Plus Jakarta Sans", sans-serif;
   font-size: 0.96rem;
   letter-spacing: -0.01em;
 }
@@ -273,7 +284,9 @@ footer {
   padding: 11px 12px;
   margin-top: 8px;
   font-size: 13px;
-  transition: border-color 220ms ease, transform 220ms ease;
+  transition:
+    border-color 220ms ease,
+    transform 220ms ease;
 }
 
 .hero-panel a:hover {
@@ -303,7 +316,7 @@ footer {
 
 .metric-value {
   display: inline-flex;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: "Plus Jakarta Sans", sans-serif;
   font-size: clamp(1.5rem, 2.2vw, 2rem);
   letter-spacing: -0.03em;
   color: var(--white);
@@ -311,7 +324,7 @@ footer {
 
 .metric h3 {
   margin: 8px 0 0;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: "Plus Jakarta Sans", sans-serif;
   font-size: 0.85rem;
   letter-spacing: 0.01em;
   color: #cfe3ff;
@@ -330,7 +343,7 @@ footer {
 
 .section-head h2 {
   margin: 0;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: "Plus Jakarta Sans", sans-serif;
   font-size: clamp(1.36rem, 2.8vw, 2.2rem);
   letter-spacing: -0.03em;
 }
@@ -390,7 +403,7 @@ footer {
 
 .architecture-step h3 {
   margin: 0;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: "Plus Jakarta Sans", sans-serif;
   font-size: 1rem;
 }
 
@@ -403,7 +416,7 @@ footer {
 
 .pathway h3 {
   margin: 2px 0 0;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: "Plus Jakarta Sans", sans-serif;
   font-size: 1.08rem;
 }
 
@@ -435,7 +448,9 @@ footer {
 
 .card {
   padding: 14px;
-  transition: transform 260ms ease, border-color 260ms ease;
+  transition:
+    transform 260ms ease,
+    border-color 260ms ease;
 }
 
 .card:hover {
@@ -455,13 +470,17 @@ footer {
   border-radius: 10px;
   display: grid;
   place-items: center;
-  background: linear-gradient(130deg, rgba(126, 223, 255, 0.24), rgba(41, 183, 255, 0.15));
+  background: linear-gradient(
+    130deg,
+    rgba(126, 223, 255, 0.24),
+    rgba(41, 183, 255, 0.15)
+  );
   border: 1px solid rgba(126, 223, 255, 0.4);
 }
 
 .card h3 {
   margin: 0;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: "Plus Jakarta Sans", sans-serif;
   font-size: 1rem;
 }
 
@@ -517,7 +536,7 @@ footer {
 
 .audience-head h3 {
   margin: 0;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: "Plus Jakarta Sans", sans-serif;
   font-size: 1.02rem;
 }
 
@@ -582,7 +601,7 @@ footer {
 
 .bridge h3 {
   margin: 0;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: "Plus Jakarta Sans", sans-serif;
   font-size: 1.1rem;
 }
 
@@ -603,7 +622,7 @@ footer {
 .bridge-grid strong {
   display: block;
   margin-top: 8px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: "Plus Jakarta Sans", sans-serif;
   font-size: 0.88rem;
 }
 
@@ -628,7 +647,7 @@ footer {
 
 .evidence-grid h3 {
   margin: 0;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: "Plus Jakarta Sans", sans-serif;
   font-size: 1rem;
 }
 
@@ -699,7 +718,7 @@ footer {
 
 .links h3 {
   margin: 0 0 5px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: "Plus Jakarta Sans", sans-serif;
   font-size: 1.08rem;
 }
 

@@ -41,13 +41,21 @@ export interface IStorage {
 
   // Verification methods
   addVerification(record: VerificationRecord): Promise<void>;
-  getVerifications(filters?: { status?: string; startDate?: Date; endDate?: Date }): Promise<VerificationRecord[]>;
+  getVerifications(filters?: {
+    status?: string;
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<VerificationRecord[]>;
   getVerification(id: string): Promise<VerificationRecord | undefined>;
 
   // WorkScore evaluation snapshots
   addWorkScoreEvaluation(snapshot: WorkScoreEvaluationSnapshot): Promise<void>;
-  getWorkScoreEvaluation(id: string): Promise<WorkScoreEvaluationSnapshot | undefined>;
-  getWorkScoreEvaluations(limit?: number): Promise<WorkScoreEvaluationSnapshot[]>;
+  getWorkScoreEvaluation(
+    id: string,
+  ): Promise<WorkScoreEvaluationSnapshot | undefined>;
+  getWorkScoreEvaluations(
+    limit?: number,
+  ): Promise<WorkScoreEvaluationSnapshot[]>;
 }
 
 interface RecruiterStorageState {
@@ -100,39 +108,51 @@ export class MemStorage implements IStorage {
     }
   }
 
-  async getVerifications(filters?: { status?: string; startDate?: Date; endDate?: Date }): Promise<VerificationRecord[]> {
+  async getVerifications(filters?: {
+    status?: string;
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<VerificationRecord[]> {
     let results = [...this.verifications];
 
     if (filters?.status) {
-      results = results.filter(r => r.status === filters.status);
+      results = results.filter((r) => r.status === filters.status);
     }
     if (filters?.startDate) {
-      results = results.filter(r => r.timestamp >= filters.startDate!);
+      results = results.filter((r) => r.timestamp >= filters.startDate!);
     }
     if (filters?.endDate) {
-      results = results.filter(r => r.timestamp <= filters.endDate!);
+      results = results.filter((r) => r.timestamp <= filters.endDate!);
     }
 
     return results;
   }
 
   async getVerification(id: string): Promise<VerificationRecord | undefined> {
-    return this.verifications.find(r => r.id === id);
+    return this.verifications.find((r) => r.id === id);
   }
 
-  async addWorkScoreEvaluation(snapshot: WorkScoreEvaluationSnapshot): Promise<void> {
+  async addWorkScoreEvaluation(
+    snapshot: WorkScoreEvaluationSnapshot,
+  ): Promise<void> {
     this.workScoreEvaluations.unshift(snapshot);
     if (this.workScoreEvaluations.length > 5000) {
       this.workScoreEvaluations.pop();
     }
   }
 
-  async getWorkScoreEvaluation(id: string): Promise<WorkScoreEvaluationSnapshot | undefined> {
+  async getWorkScoreEvaluation(
+    id: string,
+  ): Promise<WorkScoreEvaluationSnapshot | undefined> {
     return this.workScoreEvaluations.find((row) => row.id === id);
   }
 
-  async getWorkScoreEvaluations(limit = 50): Promise<WorkScoreEvaluationSnapshot[]> {
-    const normalizedLimit = Number.isFinite(limit) ? Math.max(1, Math.floor(limit)) : 50;
+  async getWorkScoreEvaluations(
+    limit = 50,
+  ): Promise<WorkScoreEvaluationSnapshot[]> {
+    const normalizedLimit = Number.isFinite(limit)
+      ? Math.max(1, Math.floor(limit))
+      : 50;
     return this.workScoreEvaluations.slice(0, Math.min(normalizedLimit, 200));
   }
 
@@ -145,28 +165,36 @@ export class MemStorage implements IStorage {
   }
 
   importState(state: RecruiterStorageState): void {
-    this.users = new Map((state.users || []).map(([key, value]) => [key, {
-      ...value,
-      createdAt: parseDate((value as any).createdAt),
-    }]));
+    this.users = new Map(
+      (state.users || []).map(([key, value]) => [
+        key,
+        {
+          ...value,
+          createdAt: parseDate((value as any).createdAt),
+        },
+      ]),
+    );
     this.verifications = (state.verifications || []).map((row) => ({
       ...row,
       timestamp: parseDate((row as any).timestamp),
     }));
-    this.workScoreEvaluations = (state.workScoreEvaluations || []).map((row) => ({
-      ...row,
-      timestamp: parseDate((row as any).timestamp),
-    }));
+    this.workScoreEvaluations = (state.workScoreEvaluations || []).map(
+      (row) => ({
+        ...row,
+        timestamp: parseDate((row as any).timestamp),
+      }),
+    );
   }
 }
 
 const requirePersistentStorage =
-  process.env.NODE_ENV === "production" || process.env.REQUIRE_DATABASE === "true";
+  process.env.NODE_ENV === "production" ||
+  process.env.REQUIRE_DATABASE === "true";
 const databaseUrl = process.env.DATABASE_URL;
 
 if (requirePersistentStorage && !databaseUrl) {
   throw new Error(
-    "[Storage] REQUIRE_DATABASE policy is enabled but DATABASE_URL is missing."
+    "[Storage] REQUIRE_DATABASE policy is enabled but DATABASE_URL is missing.",
   );
 }
 
@@ -183,7 +211,14 @@ function createPersistedStorage(base: MemStorage, dbUrl?: string): MemStorage {
   let hydrated = false;
   let hydrationPromise: Promise<void> | null = null;
   let persistChain = Promise.resolve();
-  const mutatingPrefixes = ["create", "add", "update", "delete", "revoke", "bulk"];
+  const mutatingPrefixes = [
+    "create",
+    "add",
+    "update",
+    "delete",
+    "revoke",
+    "bulk",
+  ];
 
   const ensureHydrated = async () => {
     if (hydrated) return;

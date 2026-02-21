@@ -5,7 +5,9 @@
 **Commit:** `bedb8cd105d9f468d6c16806d47c33cf3ba16289`
 
 ## Scope
+
 Production-live readiness audit for:
+
 - `credverse-gateway` (assumed **Vercel**)
 - `CredVerseIssuer 3` (assumed **Railway**)
 - `BlockWalletDigi` (assumed **Railway**)
@@ -18,6 +20,7 @@ This audit is repo/static-config based (no confirmed live URLs were provided), s
 ## 1) Deployment topology readiness (assumption fit)
 
 ## ✅ What aligns with Vercel/Railway split
+
 - `credverse-gateway/vercel.json` exists and rewrites `/api/* -> /api/index.js`.
 - `railway.toml` exists for all 4 services with:
   - `startCommand = "npm run start"`
@@ -28,6 +31,7 @@ This audit is repo/static-config based (no confirmed live URLs were provided), s
   - Issuer/Wallet/Recruiter on Railway
 
 ## ⚠️ Topology caveat
+
 - Gateway also has `railway.toml`; docs recommend Vercel for gateway, but repo allows Railway deploy too. Ensure platform choice is intentional (avoid dual-prod drift).
 
 ---
@@ -62,6 +66,7 @@ curl -fsS "$RECRUITER_URL/api/health" | jq
 ```
 
 Expected baseline:
+
 - **Gateway**: `{"status":"ok","app":"credverse-gateway"}` (HTTP 200)
 - **Issuer**: HTTP 200 + JSON includes:
   - `status: "ok"`, `app: "issuer"`, `timestamp`
@@ -74,6 +79,7 @@ Expected baseline:
 - **Recruiter**: HTTP 200 + `{ status: "ok", app: "recruiter", blockchain: {...} }`
 
 Hard fail criteria:
+
 - Any service `/api/health` non-200
 - Issuer `/api/health/relayer` returns 503 in production cutover window
 - `blockchain.configured=false` when on-chain anchoring is required for go-live policy
@@ -83,6 +89,7 @@ Hard fail criteria:
 ## 3) Secrets posture checks (what to verify now)
 
 ## Required controls
+
 - Secrets must live in Vercel/Railway env managers only.
 - `NODE_ENV=production` everywhere.
 - Strong unique `JWT_SECRET` + `JWT_REFRESH_SECRET` in every service.
@@ -97,6 +104,7 @@ Hard fail criteria:
   - `REQUIRE_QUEUE=true` (issuer queue-backed paths)
 
 ## Quick command-level posture checks
+
 ```bash
 # local preflight using non-committed env file
 set -a; source .env.launch.local; set +a
@@ -104,6 +112,7 @@ node scripts/launch-gate-check.mjs
 ```
 
 ## Repo-detected secrets risks
+
 1. **Script/docs drift**: docs reference `npm run gate:launch:strict`, but root `package.json` currently has no such script. Use direct `node scripts/launch-gate-check.mjs` unless script is restored.
 2. **Dev fallback secrets exist in code paths** (`dev-only-secret-not-for-production`) but strict mode in production should fail fast. Ensure strict mode actually set (`NODE_ENV=production`, `REQUIRE_DATABASE=true`).
 3. Gateway strict auth/session mode requires `REDIS_URL` in production path (`credverse-gateway/server/routes/auth.ts`). Missing this will hard-fail startup in strict mode.
@@ -168,6 +177,7 @@ Platform/application rollback checklist:
 ## **Recommendation: NO-GO (until live checks pass and blockers closed)**
 
 ### Why NO-GO now
+
 - No verified live endpoint evidence provided in this audit session.
 - Known high-risk runtime states are possible and must be explicitly ruled out in prod:
   - `blockchain.configured=false`
@@ -176,6 +186,7 @@ Platform/application rollback checklist:
 - Launch-gate command mismatch (`npm run gate:launch:strict` missing) introduces process drift risk.
 
 ### Conditions to flip to GO
+
 1. Capture and attach successful outputs for all health commands above (including issuer relayer/queue).
 2. Confirm strict production env posture in platform UIs (JWT/DB/Redis/chain keys present; demo off).
 3. Execute rollback rehearsal checklist (Vercel + Railway + DB restore validation).

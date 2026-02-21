@@ -5,6 +5,7 @@ Repo: `/Users/raghav/Desktop/credity`
 Agent charter: incident-responder + healthcheck + planning-with-files + security-auditor
 
 ## Outcome Summary
+
 - **Preflight status upgraded to GO-ready** for infra controls and runbook completeness.
 - **Release window status remains conditional** until live environment smoke is run with real production/staging URLs and artifacts attached.
 
@@ -13,6 +14,7 @@ Agent charter: incident-responder + healthcheck + planning-with-files + security
 ## 1) Launch strict gate verification (production-like env contract)
 
 ### Evidence commands
+
 ```bash
 npm run gate:launch
 
@@ -27,6 +29,7 @@ node scripts/launch-gate-check.mjs
 ```
 
 ### Result
+
 - `gate:launch` ✅ PASS
 - strict gate with production-like contract ✅ PASS
 
@@ -35,13 +38,16 @@ node scripts/launch-gate-check.mjs
 ## 2) Smoke workflow execution + hardening
 
 ### Hardening applied
+
 Updated `scripts/infra-live-smoke.sh` to reduce false positives and improve operator diagnostics:
+
 - added dependency precheck for `curl` and `jq`
 - added curl resilience defaults (`--max-time`, retries, retry-all-errors)
 - added per-endpoint labeled checks with explicit failure payload logging
 - preserved fail-fast required env guards
 
 ### Evidence commands
+
 ```bash
 bash -n scripts/infra-live-smoke.sh
 bash scripts/infra-live-smoke.sh
@@ -49,6 +55,7 @@ npm run healthcheck:prod-workflow
 ```
 
 ### Result
+
 - syntax check ✅ PASS
 - guardrail check (without env) ✅ PASS (expected fail-fast: `GATEWAY_URL: missing`)
 - `healthcheck:prod-workflow` ✅ PASS
@@ -58,6 +65,7 @@ npm run healthcheck:prod-workflow
 ## 3) Rollback runbook completeness verification (rehearsal checklist mapping)
 
 ### Evidence commands
+
 ```bash
 rg -n "^## Preconditions|^## Procedure|^## Scenario-Specific Rollback Guidance|^### A\) Auth rollback|^### B\) Queue / deferred mode rollback|^### C\) Blockchain relayer rollback|^### D\) Gateway proxy rollback|^## Post-Rollback Validation Matrix|^## Completion" docs/runbooks/rollback.md
 
@@ -65,7 +73,9 @@ rg -n "Rollback Readiness|rollback" docs/gates/production-launch-gate.md
 ```
 
 ### Result
+
 Rollback runbook contains all required operator sections:
+
 - Preconditions ✅
 - Procedure ✅
 - Scenario-specific rollback (A-D) ✅
@@ -78,27 +88,29 @@ Launch gate requires and references rollback evidence explicitly ✅.
 
 ## 4) Pass/Fail Matrix
 
-| Gate | Evidence | Status |
-|---|---|---|
-| Launch gate docs/config baseline | `npm run gate:launch` | ✅ PASS |
-| Launch gate strict (prod-like env contract) | strict env command above | ✅ PASS |
-| Infra smoke script hardening + syntax | `bash -n scripts/infra-live-smoke.sh` | ✅ PASS |
-| Infra smoke fail-fast guardrail | `bash scripts/infra-live-smoke.sh` (no env) | ✅ PASS (expected guarded failure) |
-| Production workflow integrity | `npm run healthcheck:prod-workflow` | ✅ PASS |
-| Rollback runbook completeness | `rg` checklist probes | ✅ PASS |
-| Live target smoke (real URLs) | `GATEWAY_URL/ISSUER_URL/WALLET_URL/RECRUITER_URL` run | ⏳ PENDING |
+| Gate                                        | Evidence                                              | Status                             |
+| ------------------------------------------- | ----------------------------------------------------- | ---------------------------------- |
+| Launch gate docs/config baseline            | `npm run gate:launch`                                 | ✅ PASS                            |
+| Launch gate strict (prod-like env contract) | strict env command above                              | ✅ PASS                            |
+| Infra smoke script hardening + syntax       | `bash -n scripts/infra-live-smoke.sh`                 | ✅ PASS                            |
+| Infra smoke fail-fast guardrail             | `bash scripts/infra-live-smoke.sh` (no env)           | ✅ PASS (expected guarded failure) |
+| Production workflow integrity               | `npm run healthcheck:prod-workflow`                   | ✅ PASS                            |
+| Rollback runbook completeness               | `rg` checklist probes                                 | ✅ PASS                            |
+| Live target smoke (real URLs)               | `GATEWAY_URL/ISSUER_URL/WALLET_URL/RECRUITER_URL` run | ⏳ PENDING                         |
 
 ---
 
 ## 5) GO/NO-GO Delta Closure List
 
 ### Closed deltas
+
 - [x] strict launch gate validated with production-like env contract
 - [x] smoke workflow hardened for reliability + diagnosability
 - [x] workflow healthcheck confirms env template, smoke requirements, and rollback docs integrity
 - [x] rollback runbook structure verified against launch-gate rollback readiness expectations
 
 ### Remaining delta (operational evidence)
+
 - [ ] Execute live infra smoke with real target URLs and archive output + timestamps + operator
   - command:
     ```bash

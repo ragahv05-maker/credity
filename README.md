@@ -2,7 +2,7 @@
 
 **The Ultimate Blockchain-Powered Credentialing Infrastructure**
 
-Welcome to the **CredVerse** monorepo (formerly Credity). This repository houses a suite of cutting-edge, interconnected applications designed to revolutionize how digital credentials are issued, stored, and verified. 
+Welcome to the **CredVerse** monorepo (formerly Credity). This repository houses a suite of cutting-edge, interconnected applications designed to revolutionize how digital credentials are issued, stored, and verified.
 
 Built with scalability, security, and user experience at its core, CredVerse bridges the gap between traditional institutions and the decentralized web.
 
@@ -19,18 +19,22 @@ Built with scalability, security, and user experience at its core, CredVerse bri
 This monorepo is organized into four distinct, powerful pillars:
 
 ### 1. 🏛️ [CredVerse Issuer](./CredVerseIssuer%203)
-*The Institutional Command Center*
+
+_The Institutional Command Center_
+
 - **Role**: Enabling Universities and Institutions to issue tamper-proof Verifiable Credentials (VCs).
-- **Core Technology**: 
+- **Core Technology**:
   - **DIDs & VCs**: Standards-compliant credential issuance.
   - **Blockchain Anchoring**: Immutable proof of issuance on-chain.
-- **Key Features**: 
+- **Key Features**:
   - Student implementation & management.
   - Custom credential schema designer.
   - Analytics dashboard for issuance metrics.
 
 ### 2. 💼 [CredVerse Recruiter](./CredVerseRecruiter)
-*The Verification Intelligence Hub*
+
+_The Verification Intelligence Hub_
+
 - **Role**: Empowering employers to instantly verify candidate credentials with zero trust.
 - **Core Technology**:
   - **Zero-Knowledge Proofs (ZKP)**: Verify attributes without revealing sensitive data.
@@ -41,7 +45,9 @@ This monorepo is organized into four distinct, powerful pillars:
   - "Verified Talent" candidate sourcing.
 
 ### 3. 📱 [BlockWallet Digi](./BlockWalletDigi)
-*The User Sovereignty Engine*
+
+_The User Sovereignty Engine_
+
 - **Role**: A next-gen digital wallet for users to own, manage, and share their achievements.
 - **Core Technology**:
   - **Biometic Security**: Face detection and liveness checks for secure access.
@@ -52,7 +58,9 @@ This monorepo is organized into four distinct, powerful pillars:
   - Seamless integration with external identity providers.
 
 ### 4. 🌐 [CredVerse Gateway](./credverse-gateway)
-*The Public Portal*
+
+_The Public Portal_
+
 - **Role**: The unified entry point for the entire ecosystem.
 - **Key Features**:
   - Centralized landing page.
@@ -72,7 +80,8 @@ This monorepo is organized into four distinct, powerful pillars:
 ## 🛠️ Getting Started
 
 ### Prerequisites
-- **Node.js**: v18+ 
+
+- **Node.js**: v18+
 - **npm** or **pnpm**
 - **Git**
 
@@ -107,10 +116,10 @@ npm run ci:oss:readiness
 
 See `docs/devex/ci-quality-devex-lane.md` for lane details and developer workflow.
 
-| Service | Port |
-|---------|------|
-| **Issuer** | `3000` / `5001` |
-| **Wallet** | `5173` / `5002` |
+| Service       | Port            |
+| ------------- | --------------- |
+| **Issuer**    | `3000` / `5001` |
+| **Wallet**    | `5173` / `5002` |
 | **Recruiter** | `5174` / `5003` |
 
 ---
@@ -122,4 +131,5 @@ See `docs/devex/ci-quality-devex-lane.md` for lane details and developer workflo
 This software is **proprietary and confidential**. Unauthorized copying, distribution, modification, or use of this source code or any portion of it, via any medium, is strictly prohibited without the express written permission of the copyright holder.
 
 ---
-*Architected with ❤️ for the future of Identity.*
+
+_Architected with ❤️ for the future of Identity._

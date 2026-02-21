@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from "react";
 import {
   Alert,
   Modal,
@@ -8,19 +8,19 @@ import {
   StyleSheet,
   Text,
   View,
-} from 'react-native';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import Swipeable from 'react-native-gesture-handler/Swipeable';
-import * as Haptics from 'expo-haptics';
+} from "react-native";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Swipeable from "react-native-gesture-handler/Swipeable";
+import * as Haptics from "expo-haptics";
 import {
   approveConnection,
   denyConnection,
   disconnectConnection,
   getHolderConnections,
   getPendingConnections,
-} from '../lib/api-client';
-import { useTheme } from '../theme/ThemeContext';
-import type { ColorPalette } from '../theme/tokens';
+} from "../lib/api-client";
+import { useTheme } from "../theme/ThemeContext";
+import type { ColorPalette } from "../theme/tokens";
 
 interface ConnectionItem {
   id: string;
@@ -34,20 +34,27 @@ interface PendingRequestItem {
   requestedCredentials: string[];
 }
 
-const COMING_SOON_PLATFORMS = ['Uber', 'LinkedIn', 'Swiggy', 'Tinder'];
+const COMING_SOON_PLATFORMS = ["Uber", "LinkedIn", "Swiggy", "Tinder"];
 
 function formatDate(value: string | null): string {
-  if (!value) return 'Unknown';
+  if (!value) return "Unknown";
   const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return 'Unknown';
+  if (Number.isNaN(parsed.getTime())) return "Unknown";
   return parsed.toLocaleDateString();
 }
 
 function toConnectionItem(payload: unknown): ConnectionItem {
   const source = (payload || {}) as Record<string, unknown>;
   return {
-    id: String(source.id || source.connectionId || Math.random().toString(16).slice(2)),
-    platformName: String(source.platformName || source.platform || source.name || 'Unknown Platform'),
+    id: String(
+      source.id || source.connectionId || Math.random().toString(16).slice(2),
+    ),
+    platformName: String(
+      source.platformName ||
+        source.platform ||
+        source.name ||
+        "Unknown Platform",
+    ),
     connectedAt:
       (source.connectedAt as string | undefined) ||
       (source.createdAt as string | undefined) ||
@@ -59,11 +66,20 @@ function toConnectionItem(payload: unknown): ConnectionItem {
 function toPendingRequestItem(payload: unknown): PendingRequestItem {
   const source = (payload || {}) as Record<string, unknown>;
   return {
-    id: String(source.id || source.requestId || Math.random().toString(16).slice(2)),
-    platformName: String(source.platformName || source.platform || source.name || 'Unknown Platform'),
+    id: String(
+      source.id || source.requestId || Math.random().toString(16).slice(2),
+    ),
+    platformName: String(
+      source.platformName ||
+        source.platform ||
+        source.name ||
+        "Unknown Platform",
+    ),
     requestedCredentials: Array.isArray(source.requestedCredentials)
-      ? source.requestedCredentials
-          .filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0)
+      ? source.requestedCredentials.filter(
+          (entry): entry is string =>
+            typeof entry === "string" && entry.trim().length > 0,
+        )
       : [],
   };
 }
@@ -77,16 +93,18 @@ export function ConnectionsScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const connectionsQuery = useQuery({
-    queryKey: ['holder', 'connections'],
+    queryKey: ["holder", "connections"],
     queryFn: getHolderConnections,
   });
   const pendingQuery = useQuery({
-    queryKey: ['holder', 'connections', 'pending'],
+    queryKey: ["holder", "connections", "pending"],
     queryFn: getPendingConnections,
   });
 
   const connections = useMemo(() => {
-    const source = Array.isArray(connectionsQuery.data) ? connectionsQuery.data : [];
+    const source = Array.isArray(connectionsQuery.data)
+      ? connectionsQuery.data
+      : [];
     return source.map(toConnectionItem);
   }, [connectionsQuery.data]);
 
@@ -98,10 +116,15 @@ export function ConnectionsScreen() {
   const disconnectMutation = useMutation({
     mutationFn: (id: string) => disconnectConnection(id),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['holder', 'connections'] });
+      await queryClient.invalidateQueries({
+        queryKey: ["holder", "connections"],
+      });
     },
     onError: (error: any) => {
-      Alert.alert('Disconnect failed', error?.message || 'Unable to disconnect this platform.');
+      Alert.alert(
+        "Disconnect failed",
+        error?.message || "Unable to disconnect this platform.",
+      );
     },
   });
 
@@ -109,22 +132,32 @@ export function ConnectionsScreen() {
     mutationFn: (id: string) => approveConnection(id),
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['holder', 'connections'] }),
-        queryClient.invalidateQueries({ queryKey: ['holder', 'connections', 'pending'] }),
+        queryClient.invalidateQueries({ queryKey: ["holder", "connections"] }),
+        queryClient.invalidateQueries({
+          queryKey: ["holder", "connections", "pending"],
+        }),
       ]);
     },
     onError: (error: any) => {
-      Alert.alert('Approve failed', error?.message || 'Unable to approve this request.');
+      Alert.alert(
+        "Approve failed",
+        error?.message || "Unable to approve this request.",
+      );
     },
   });
 
   const denyMutation = useMutation({
     mutationFn: (id: string) => denyConnection(id),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['holder', 'connections', 'pending'] });
+      await queryClient.invalidateQueries({
+        queryKey: ["holder", "connections", "pending"],
+      });
     },
     onError: (error: any) => {
-      Alert.alert('Deny failed', error?.message || 'Unable to deny this request.');
+      Alert.alert(
+        "Deny failed",
+        error?.message || "Unable to deny this request.",
+      );
     },
   });
 
@@ -158,12 +191,19 @@ export function ConnectionsScreen() {
     <View style={styles.container}>
       <ScrollView
         contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void onRefresh()} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => void onRefresh()}
+          />
+        }
       >
         <View style={styles.header}>
           <Text style={styles.kicker}>Connections</Text>
           <Text style={styles.title}>Platform access controls</Text>
-          <Text style={styles.subtitle}>Approve requests and revoke active integrations anytime.</Text>
+          <Text style={styles.subtitle}>
+            Approve requests and revoke active integrations anytime.
+          </Text>
         </View>
 
         {loading ? (
@@ -174,7 +214,9 @@ export function ConnectionsScreen() {
 
         {hasError ? (
           <View style={styles.card}>
-            <Text style={styles.meta}>Could not load connections. Pull to refresh.</Text>
+            <Text style={styles.meta}>
+              Could not load connections. Pull to refresh.
+            </Text>
           </View>
         ) : null}
 
@@ -188,7 +230,9 @@ export function ConnectionsScreen() {
                 <Swipeable
                   key={connection.id}
                   overshootRight={false}
-                  renderRightActions={() => renderDisconnectAction(connection.id)}
+                  renderRightActions={() =>
+                    renderDisconnectAction(connection.id)
+                  }
                 >
                   <View style={styles.row}>
                     <View style={styles.avatar}>
@@ -198,15 +242,21 @@ export function ConnectionsScreen() {
                     </View>
 
                     <View style={styles.rowContent}>
-                      <Text style={styles.rowTitle}>{connection.platformName}</Text>
-                      <Text style={styles.rowMeta}>Connected since {formatDate(connection.connectedAt)}</Text>
+                      <Text style={styles.rowTitle}>
+                        {connection.platformName}
+                      </Text>
+                      <Text style={styles.rowMeta}>
+                        Connected since {formatDate(connection.connectedAt)}
+                      </Text>
                     </View>
 
                     <Pressable
                       style={styles.disconnectButton}
                       onPress={() => disconnectMutation.mutate(connection.id)}
                     >
-                      <Text style={styles.disconnectButtonText}>Disconnect</Text>
+                      <Text style={styles.disconnectButtonText}>
+                        Disconnect
+                      </Text>
                     </Pressable>
                   </View>
                 </Swipeable>
@@ -222,16 +272,22 @@ export function ConnectionsScreen() {
               <View key={request.id} style={styles.pendingRow}>
                 <Text style={styles.rowTitle}>{request.platformName}</Text>
                 <Text style={styles.rowMeta}>
-                  Asking for:{' '}
+                  Asking for:{" "}
                   {request.requestedCredentials.length
-                    ? request.requestedCredentials.join(', ')
-                    : 'credential access'}
+                    ? request.requestedCredentials.join(", ")
+                    : "credential access"}
                 </Text>
                 <View style={styles.pendingActions}>
-                  <Pressable style={styles.approveButton} onPress={() => approveMutation.mutate(request.id)}>
+                  <Pressable
+                    style={styles.approveButton}
+                    onPress={() => approveMutation.mutate(request.id)}
+                  >
                     <Text style={styles.approveButtonText}>Approve</Text>
                   </Pressable>
-                  <Pressable style={styles.denyButton} onPress={() => denyMutation.mutate(request.id)}>
+                  <Pressable
+                    style={styles.denyButton}
+                    onPress={() => denyMutation.mutate(request.id)}
+                  >
                     <Text style={styles.denyButtonText}>Deny</Text>
                   </Pressable>
                 </View>
@@ -270,7 +326,10 @@ export function ConnectionsScreen() {
                 </View>
               ))}
             </View>
-            <Pressable style={styles.closeButton} onPress={() => setShowConnectModal(false)}>
+            <Pressable
+              style={styles.closeButton}
+              onPress={() => setShowConnectModal(false)}
+            >
               <Text style={styles.closeButtonText}>Close</Text>
             </Pressable>
           </View>
@@ -288,13 +347,18 @@ function makeStyles(colors: ColorPalette) {
     kicker: {
       color: colors.muted,
       fontSize: 12,
-      fontWeight: '700' as const,
-      fontFamily: 'Inter_700Bold',
+      fontWeight: "700" as const,
+      fontFamily: "Inter_700Bold",
       letterSpacing: 0.6,
-      textTransform: 'uppercase' as const,
+      textTransform: "uppercase" as const,
     },
-    title: { color: colors.text, fontSize: 26, fontWeight: '800' as const, fontFamily: 'Inter_800ExtraBold' },
-    subtitle: { color: colors.muted, fontFamily: 'Inter_400Regular' },
+    title: {
+      color: colors.text,
+      fontSize: 26,
+      fontWeight: "800" as const,
+      fontFamily: "Inter_800ExtraBold",
+    },
+    subtitle: { color: colors.muted, fontFamily: "Inter_400Regular" },
     card: {
       backgroundColor: colors.card,
       borderWidth: 1,
@@ -307,11 +371,16 @@ function makeStyles(colors: ColorPalette) {
       shadowRadius: 8,
       shadowOffset: { width: 0, height: 4 },
     },
-    cardTitle: { color: colors.text, fontWeight: '700' as const, fontFamily: 'Inter_700Bold', fontSize: 16 },
-    meta: { color: colors.muted, fontSize: 13, fontFamily: 'Inter_400Regular' },
+    cardTitle: {
+      color: colors.text,
+      fontWeight: "700" as const,
+      fontFamily: "Inter_700Bold",
+      fontSize: 16,
+    },
+    meta: { color: colors.muted, fontSize: 13, fontFamily: "Inter_400Regular" },
     row: {
-      flexDirection: 'row' as const,
-      alignItems: 'center' as const,
+      flexDirection: "row" as const,
+      alignItems: "center" as const,
       gap: 10,
       borderRadius: 12,
       borderWidth: 1,
@@ -324,13 +393,26 @@ function makeStyles(colors: ColorPalette) {
       width: 34,
       borderRadius: 17,
       backgroundColor: colors.surfaceMuted,
-      alignItems: 'center' as const,
-      justifyContent: 'center' as const,
+      alignItems: "center" as const,
+      justifyContent: "center" as const,
     },
-    avatarText: { color: colors.text, fontWeight: '800' as const, fontFamily: 'Inter_800ExtraBold' },
+    avatarText: {
+      color: colors.text,
+      fontWeight: "800" as const,
+      fontFamily: "Inter_800ExtraBold",
+    },
     rowContent: { flex: 1, gap: 2 },
-    rowTitle: { color: colors.text, fontWeight: '700' as const, fontFamily: 'Inter_700Bold', fontSize: 14 },
-    rowMeta: { color: colors.muted, fontSize: 12, fontFamily: 'Inter_400Regular' },
+    rowTitle: {
+      color: colors.text,
+      fontWeight: "700" as const,
+      fontFamily: "Inter_700Bold",
+      fontSize: 14,
+    },
+    rowMeta: {
+      color: colors.muted,
+      fontSize: 12,
+      fontFamily: "Inter_400Regular",
+    },
     disconnectButton: {
       borderRadius: 10,
       borderWidth: 1,
@@ -339,16 +421,25 @@ function makeStyles(colors: ColorPalette) {
       paddingHorizontal: 10,
       paddingVertical: 6,
     },
-    disconnectButtonText: { color: colors.dangerOnSurface, fontSize: 12, fontWeight: '700' as const, fontFamily: 'Inter_700Bold' },
+    disconnectButtonText: {
+      color: colors.dangerOnSurface,
+      fontSize: 12,
+      fontWeight: "700" as const,
+      fontFamily: "Inter_700Bold",
+    },
     swipeAction: {
       marginVertical: 2,
       borderRadius: 12,
-      justifyContent: 'center' as const,
-      alignItems: 'center' as const,
+      justifyContent: "center" as const,
+      alignItems: "center" as const,
       paddingHorizontal: 14,
       backgroundColor: colors.danger,
     },
-    swipeActionText: { color: '#FFFFFF', fontWeight: '800' as const, fontFamily: 'Inter_800ExtraBold' },
+    swipeActionText: {
+      color: "#FFFFFF",
+      fontWeight: "800" as const,
+      fontFamily: "Inter_800ExtraBold",
+    },
     pendingRow: {
       borderRadius: 12,
       borderWidth: 1,
@@ -357,29 +448,39 @@ function makeStyles(colors: ColorPalette) {
       padding: 10,
       gap: 8,
     },
-    pendingActions: { flexDirection: 'row' as const, gap: 8 },
+    pendingActions: { flexDirection: "row" as const, gap: 8 },
     approveButton: {
       flex: 1,
       borderRadius: 10,
       backgroundColor: colors.successSurface,
       borderWidth: 1,
       borderColor: colors.success,
-      alignItems: 'center' as const,
+      alignItems: "center" as const,
       paddingVertical: 8,
     },
-    approveButtonText: { color: colors.successOnSurface, fontWeight: '800' as const, fontFamily: 'Inter_800ExtraBold', fontSize: 12 },
+    approveButtonText: {
+      color: colors.successOnSurface,
+      fontWeight: "800" as const,
+      fontFamily: "Inter_800ExtraBold",
+      fontSize: 12,
+    },
     denyButton: {
       flex: 1,
       borderRadius: 10,
       backgroundColor: colors.dangerSurface,
       borderWidth: 1,
       borderColor: colors.danger,
-      alignItems: 'center' as const,
+      alignItems: "center" as const,
       paddingVertical: 8,
     },
-    denyButtonText: { color: colors.dangerOnSurface, fontWeight: '800' as const, fontFamily: 'Inter_800ExtraBold', fontSize: 12 },
+    denyButtonText: {
+      color: colors.dangerOnSurface,
+      fontWeight: "800" as const,
+      fontFamily: "Inter_800ExtraBold",
+      fontSize: 12,
+    },
     fab: {
-      position: 'absolute' as const,
+      position: "absolute" as const,
       right: 16,
       bottom: 20,
       borderRadius: 999,
@@ -391,10 +492,15 @@ function makeStyles(colors: ColorPalette) {
       shadowRadius: 10,
       shadowOffset: { width: 0, height: 6 },
     },
-    fabText: { color: '#FFFFFF', fontWeight: '800' as const, fontFamily: 'Inter_800ExtraBold', fontSize: 13 },
+    fabText: {
+      color: "#FFFFFF",
+      fontWeight: "800" as const,
+      fontFamily: "Inter_800ExtraBold",
+      fontSize: 13,
+    },
     modalBackdrop: {
       flex: 1,
-      justifyContent: 'flex-end' as const,
+      justifyContent: "flex-end" as const,
       backgroundColor: colors.overlay,
     },
     modalCard: {
@@ -404,10 +510,19 @@ function makeStyles(colors: ColorPalette) {
       padding: 20,
       gap: 14,
     },
-    modalTitle: { color: colors.text, fontSize: 20, fontWeight: '800' as const, fontFamily: 'Inter_800ExtraBold' },
-    platformGrid: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 10 },
+    modalTitle: {
+      color: colors.text,
+      fontSize: 20,
+      fontWeight: "800" as const,
+      fontFamily: "Inter_800ExtraBold",
+    },
+    platformGrid: {
+      flexDirection: "row" as const,
+      flexWrap: "wrap" as const,
+      gap: 10,
+    },
     platformTile: {
-      width: '48%' as any,
+      width: "48%" as any,
       borderRadius: 12,
       borderWidth: 1,
       borderColor: colors.border,
@@ -416,23 +531,36 @@ function makeStyles(colors: ColorPalette) {
       gap: 8,
       opacity: 0.8,
     },
-    platformTileTitle: { color: colors.muted, fontWeight: '700' as const, fontFamily: 'Inter_700Bold' },
+    platformTileTitle: {
+      color: colors.muted,
+      fontWeight: "700" as const,
+      fontFamily: "Inter_700Bold",
+    },
     comingSoonBadge: {
-      alignSelf: 'flex-start' as const,
+      alignSelf: "flex-start" as const,
       borderRadius: 999,
       backgroundColor: colors.surfaceMuted,
       paddingHorizontal: 8,
       paddingVertical: 4,
     },
-    comingSoonText: { color: colors.muted, fontSize: 11, fontWeight: '700' as const, fontFamily: 'Inter_700Bold' },
+    comingSoonText: {
+      color: colors.muted,
+      fontSize: 11,
+      fontWeight: "700" as const,
+      fontFamily: "Inter_700Bold",
+    },
     closeButton: {
       borderRadius: 12,
       borderWidth: 1,
       borderColor: colors.border,
-      alignItems: 'center' as const,
+      alignItems: "center" as const,
       paddingVertical: 10,
       backgroundColor: colors.input,
     },
-    closeButtonText: { color: colors.text, fontWeight: '700' as const, fontFamily: 'Inter_700Bold' },
+    closeButtonText: {
+      color: colors.text,
+      fontWeight: "700" as const,
+      fontFamily: "Inter_700Bold",
+    },
   });
 }

@@ -6,6 +6,7 @@ Scope: production verifier wiring rigor + artifact workflow robustness + evidenc
 ## Changed implementation
 
 ### 1) Production verifier wiring rigor
+
 - `CredVerseIssuer 3/contracts/contracts/zk/ReputationVerifier.sol`
   - Replaced single verifier pointer with per-circuit verifier mapping:
     - circuit 1 → score_threshold
@@ -28,6 +29,7 @@ Scope: production verifier wiring rigor + artifact workflow robustness + evidenc
   - Expanded tests for routing-by-circuit, unsupported circuit guardrails, and public signal length mismatches.
 
 ### 2) Artifact workflow robustness
+
 - `zk/scripts/setup-groth16.mjs`
   - Added required-precondition checks (`ptau`, per-circuit `r1cs`).
   - Added artifact checksum manifest generation:
@@ -49,11 +51,13 @@ Scope: production verifier wiring rigor + artifact workflow robustness + evidenc
     - `export:verifier:all`
 
 ### 3) Evidence target coverage (PRD use cases)
+
 - score_threshold: enforced in circuitId mapping + expected public signal length = 3
 - age_verification: enforced in circuitId mapping + expected public signal length = 3
 - cross_vertical_aggregate: enforced in circuitId mapping + expected public signal length = 5
 
 ## 4) Execution evidence (targeted zk + contract checks)
+
 Executed on: 2026-02-17
 
 - `cd /Users/raghav/Desktop/credity/zk && npm test`

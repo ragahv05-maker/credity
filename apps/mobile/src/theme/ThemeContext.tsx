@@ -3,15 +3,15 @@ import React, {
   useContext,
   useMemo,
   type ReactNode,
-} from 'react';
-import { useColorScheme } from 'react-native';
+} from "react";
+import { useColorScheme } from "react-native";
 import {
   lightColors,
   darkColors,
   typography,
   type ColorPalette,
   type Typography,
-} from './tokens';
+} from "./tokens";
 
 interface ThemeContextValue {
   colors: ColorPalette;
@@ -27,7 +27,7 @@ const ThemeContext = createContext<ThemeContextValue>({
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const scheme = useColorScheme();
-  const isDark = scheme === 'dark';
+  const isDark = scheme === "dark";
 
   const value = useMemo<ThemeContextValue>(
     () => ({
@@ -39,9 +39,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <ThemeContext.Provider value={value}>
-      {children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
 }
 

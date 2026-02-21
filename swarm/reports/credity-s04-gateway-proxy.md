@@ -1,7 +1,9 @@
 # Credity Swarm S04 — credverse-gateway mobile proxy guardrails
 
 ## Scope completed
+
 Focused only on `credverse-gateway` mobile proxy guardrails for:
+
 - route allowlist hardening
 - claims payload/query validation
 - claims rate-limit verification
@@ -11,6 +13,7 @@ Focused only on `credverse-gateway` mobile proxy guardrails for:
 ## Changes made
 
 ### 1) Route allowlist hardening
+
 **File:** `credverse-gateway/server/routes/mobile-proxy.ts`
 
 - Tightened subpath validation in `isSubpathAllowed`:
@@ -19,6 +22,7 @@ Focused only on `credverse-gateway` mobile proxy guardrails for:
   - Existing checks retained (`.` / `..`, max length, prefix allowlist)
 
 ### 2) Claims payload/query validation hardening
+
 **File:** `credverse-gateway/server/routes/mobile-proxy.ts`
 
 - Added `isSafeClaimsQueryValue` and enforced query value types for claims routes.
@@ -34,6 +38,7 @@ Focused only on `credverse-gateway` mobile proxy guardrails for:
   - max top-level keys (100)
 
 ### 3) Error mapping improvement
+
 **File:** `credverse-gateway/server/routes/mobile-proxy.ts`
 
 - Extended proxy error mapping to inspect `err.cause?.code` in addition to `err.code`.
@@ -45,6 +50,7 @@ Focused only on `credverse-gateway` mobile proxy guardrails for:
   - network unavailable codes (`ENOTFOUND`, `ECONNREFUSED`, `EHOSTUNREACH`, `ECONNRESET`) → 502
 
 ## Test suite strengthened
+
 **File:** `credverse-gateway/server/routes/mobile-proxy.test.ts`
 
 - Extended helper to allow custom fetch mocking per test.
@@ -55,6 +61,7 @@ Focused only on `credverse-gateway` mobile proxy guardrails for:
   4. Upstream error mapping coverage (`ECONNREFUSED`, `AbortError`, `TypeError`)
 
 ## Validation run
+
 Executed:
 
 ```bash
@@ -63,9 +70,11 @@ npm run test:proxy
 ```
 
 Result:
+
 - **13/13 tests passing**
 - **0 failures**
 
 ## Notes
+
 - Claims rate-limit buckets are in-memory (current design); tests use an explicit client IP to avoid cross-test noise.
 - No unrelated modules/routes were modified.

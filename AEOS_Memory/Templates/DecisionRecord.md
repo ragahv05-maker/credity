@@ -1,4 +1,5 @@
 # DecisionRecord
+
 - QueryContext:
 - DepartmentsConsulted:
 - StrategicReasoning:

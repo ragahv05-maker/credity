@@ -1,5 +1,5 @@
-import { PostgresStateStore } from '@credverse/shared-auth';
-import type { ClaimVerifyRequest, ClaimVerifyResponse } from './claims-service';
+import { PostgresStateStore } from "@credverse/shared-auth";
+import type { ClaimVerifyRequest, ClaimVerifyResponse } from "./claims-service";
 
 interface PersistedStateStore<T> {
   load(): Promise<T | null>;
@@ -10,10 +10,10 @@ export interface StoredClaimRecord {
   id: string;
   claimantUserId: string;
   platformId: string | null;
-  claimType: ClaimVerifyRequest['claimType'];
+  claimType: ClaimVerifyRequest["claimType"];
   claimAmount: number | null;
   description: string;
-  timeline: ClaimVerifyRequest['timeline'];
+  timeline: ClaimVerifyRequest["timeline"];
   evidenceIds: string[];
   // Stored in API response shape (snake_case) for now.
   evidenceLinks?: Array<Record<string, unknown>>;
@@ -21,16 +21,16 @@ export interface StoredClaimRecord {
   integrityScore: number;
   authenticityScore: number;
   trustScore: number;
-  recommendation: ClaimVerifyResponse['recommendation'];
+  recommendation: ClaimVerifyResponse["recommendation"];
   /** Reviewer-set status that overrides the AI recommendation. */
-  status?: 'approved' | 'rejected' | 'needs_review';
+  status?: "approved" | "rejected" | "needs_review";
   reviewedBy?: string;
   reviewNote?: string;
   reviewedAt?: string;
   redFlags: string[];
-  reasonCodes?: ClaimVerifyResponse['reasonCodes'];
-  riskSignals?: ClaimVerifyResponse['riskSignals'];
-  aiAnalysis: ClaimVerifyResponse['aiAnalysis'];
+  reasonCodes?: ClaimVerifyResponse["reasonCodes"];
+  riskSignals?: ClaimVerifyResponse["riskSignals"];
+  aiAnalysis: ClaimVerifyResponse["aiAnalysis"];
   processingTimeMs: number;
   createdAt: string;
   processedAt: string;
@@ -40,7 +40,7 @@ export interface StoredEvidenceRecord {
   id: string;
   userId: string;
   claimId: string | null;
-  mediaType: 'image' | 'video' | 'document';
+  mediaType: "image" | "video" | "document";
   storageUrl: string;
   authenticityScore: number;
   isAiGenerated: boolean;
@@ -48,8 +48,17 @@ export interface StoredEvidenceRecord {
   metadata: Record<string, unknown>;
   blockchainHash: string;
   proofMetadataHash?: string;
-  revocationCheck?: { status: 'not_applicable' | 'checked'; revoked?: boolean; checkedAt?: string; provider?: string };
-  anchorTx?: { status: 'missing' | 'pending' | 'confirmed' | 'failed'; chain?: string; txHash?: string };
+  revocationCheck?: {
+    status: "not_applicable" | "checked";
+    revoked?: boolean;
+    checkedAt?: string;
+    provider?: string;
+  };
+  anchorTx?: {
+    status: "missing" | "pending" | "confirmed" | "failed";
+    chain?: string;
+    txHash?: string;
+  };
   analysisData: Record<string, unknown>;
   uploadedAt: string;
   analyzedAt: string;
@@ -68,7 +77,9 @@ export class ClaimsPersistence {
   private hydrationPromise: Promise<void> | null = null;
   private persistChain = Promise.resolve();
 
-  constructor(private readonly store?: PersistedStateStore<ClaimsPersistenceState>) {}
+  constructor(
+    private readonly store?: PersistedStateStore<ClaimsPersistenceState>,
+  ) {}
 
   private async ensureHydrated(): Promise<void> {
     if (!this.store || this.hydrated) return;
@@ -88,7 +99,7 @@ export class ClaimsPersistence {
     this.persistChain = this.persistChain
       .then(() => this.store!.save(this.state))
       .catch((error) => {
-        console.error('[ClaimsPersistence] Failed to save state:', error);
+        console.error("[ClaimsPersistence] Failed to save state:", error);
       });
     await this.persistChain;
   }
@@ -110,7 +121,10 @@ export class ClaimsPersistence {
     const filtered = platformId
       ? this.state.claims.filter((c) => c.platformId === platformId)
       : this.state.claims;
-    return [...filtered].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return [...filtered].sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
   }
 
   async saveEvidence(record: StoredEvidenceRecord): Promise<void> {
@@ -137,12 +151,15 @@ export class ClaimsPersistence {
     await this.ensureHydrated();
     return this.state.claims
       .filter((c) => c.claimantUserId === userId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
   }
 
   async updateClaimStatus(
     claimId: string,
-    status: 'approved' | 'rejected' | 'needs_review',
+    status: "approved" | "rejected" | "needs_review",
     reviewedBy?: string,
     reviewNote?: string,
   ): Promise<StoredClaimRecord | undefined> {
@@ -164,17 +181,23 @@ export class ClaimsPersistence {
   }
 }
 
-function createPersistedStateStore(dbUrl?: string): PersistedStateStore<ClaimsPersistenceState> | undefined {
+function createPersistedStateStore(
+  dbUrl?: string,
+): PersistedStateStore<ClaimsPersistenceState> | undefined {
   if (!dbUrl) return undefined;
   return new PostgresStateStore<ClaimsPersistenceState>({
     databaseUrl: dbUrl,
-    serviceKey: 'claims-persistence-v1',
+    serviceKey: "claims-persistence-v1",
   });
 }
 
-export function createClaimsPersistence(store?: PersistedStateStore<ClaimsPersistenceState>): ClaimsPersistence {
+export function createClaimsPersistence(
+  store?: PersistedStateStore<ClaimsPersistenceState>,
+): ClaimsPersistence {
   if (store) return new ClaimsPersistence(store);
-  return new ClaimsPersistence(createPersistedStateStore(process.env.DATABASE_URL));
+  return new ClaimsPersistence(
+    createPersistedStateStore(process.env.DATABASE_URL),
+  );
 }
 
 export const claimsPersistence = createClaimsPersistence();

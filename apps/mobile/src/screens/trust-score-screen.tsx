@@ -1,8 +1,15 @@
-import React, { useEffect, useMemo } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { useQuery } from '@tanstack/react-query';
-import Svg, { Circle } from 'react-native-svg';
+import React, { useEffect, useMemo } from "react";
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { useQuery } from "@tanstack/react-query";
+import Svg, { Circle } from "react-native-svg";
 import Animated, {
   Easing,
   cancelAnimation,
@@ -11,10 +18,13 @@ import Animated, {
   useSharedValue,
   withRepeat,
   withTiming,
-} from 'react-native-reanimated';
-import { getHolderReputationScore, getHolderTrustSuggestions } from '../lib/api-client';
-import { useTheme } from '../theme/ThemeContext';
-import type { ColorPalette } from '../theme/tokens';
+} from "react-native-reanimated";
+import {
+  getHolderReputationScore,
+  getHolderTrustSuggestions,
+} from "../lib/api-client";
+import { useTheme } from "../theme/ThemeContext";
+import type { ColorPalette } from "../theme/tokens";
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const AnimatedRing = Animated.createAnimatedComponent(View);
@@ -25,7 +35,7 @@ const RADIUS = (RING_SIZE - STROKE_WIDTH) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 interface ScoreBreakdownItem {
-  label: 'Identity' | 'Activity' | 'Reputation';
+  label: "Identity" | "Activity" | "Reputation";
   points: number;
   max: number;
 }
@@ -34,11 +44,14 @@ function clampPercent(value: number): number {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
-function readNumericValue(record: Record<string, unknown> | null | undefined, keys: string[]): number | null {
+function readNumericValue(
+  record: Record<string, unknown> | null | undefined,
+  keys: string[],
+): number | null {
   if (!record) return null;
   for (const key of keys) {
     const maybeValue = record[key];
-    if (typeof maybeValue === 'number' && Number.isFinite(maybeValue)) {
+    if (typeof maybeValue === "number" && Number.isFinite(maybeValue)) {
       return maybeValue;
     }
   }
@@ -47,7 +60,14 @@ function readNumericValue(record: Record<string, unknown> | null | undefined, ke
 
 function normalizeScore(payload: unknown): number {
   const source = (payload || {}) as Record<string, unknown>;
-  const raw = readNumericValue(source, ['score', 'trustScore', 'overall', 'overallScore', 'value']) ?? 0;
+  const raw =
+    readNumericValue(source, [
+      "score",
+      "trustScore",
+      "overall",
+      "overallScore",
+      "value",
+    ]) ?? 0;
 
   if (raw > 100 && raw <= 1000) {
     return clampPercent(raw / 10);
@@ -55,21 +75,26 @@ function normalizeScore(payload: unknown): number {
   return clampPercent(raw);
 }
 
-function toPoints(value: number | null, max: number, fallbackScore: number): number {
+function toPoints(
+  value: number | null,
+  max: number,
+  fallbackScore: number,
+): number {
   if (value === null) {
     return Math.round((fallbackScore / 100) * max);
   }
 
-  const normalized = value > max ? (value > 100 ? value / 10 : value / 100) * max : value;
+  const normalized =
+    value > max ? (value > 100 ? value / 10 : value / 100) * max : value;
   return Math.max(0, Math.min(max, Math.round(normalized)));
 }
 
 function scoreStatusLabel(score: number): string {
-  if (score >= 95) return 'Outstanding ⭐';
-  if (score >= 85) return 'Excellent ✦';
-  if (score >= 70) return 'Good ✓';
-  if (score >= 50) return 'Fair';
-  return 'Needs Work';
+  if (score >= 95) return "Outstanding ⭐";
+  if (score >= 85) return "Excellent ✦";
+  if (score >= 70) return "Good ✓";
+  if (score >= 50) return "Fair";
+  return "Needs Work";
 }
 
 function scoreColor(score: number, colors: ColorPalette): string {
@@ -80,24 +105,51 @@ function scoreColor(score: number, colors: ColorPalette): string {
 
 function scoreBreakdown(payload: unknown, score: number): ScoreBreakdownItem[] {
   const source = (payload || {}) as Record<string, unknown>;
-  const nested = (source.breakdown || source.components || {}) as Record<string, unknown>;
+  const nested = (source.breakdown || source.components || {}) as Record<
+    string,
+    unknown
+  >;
   const merged = { ...source, ...nested };
 
   return [
     {
-      label: 'Identity',
+      label: "Identity",
       max: 35,
-      points: toPoints(readNumericValue(merged, ['identity', 'identityScore', 'identity_points']), 35, score),
+      points: toPoints(
+        readNumericValue(merged, [
+          "identity",
+          "identityScore",
+          "identity_points",
+        ]),
+        35,
+        score,
+      ),
     },
     {
-      label: 'Activity',
+      label: "Activity",
       max: 35,
-      points: toPoints(readNumericValue(merged, ['activity', 'activityScore', 'activity_points']), 35, score),
+      points: toPoints(
+        readNumericValue(merged, [
+          "activity",
+          "activityScore",
+          "activity_points",
+        ]),
+        35,
+        score,
+      ),
     },
     {
-      label: 'Reputation',
+      label: "Reputation",
       max: 30,
-      points: toPoints(readNumericValue(merged, ['reputation', 'reputationScore', 'reputation_points']), 30, score),
+      points: toPoints(
+        readNumericValue(merged, [
+          "reputation",
+          "reputationScore",
+          "reputation_points",
+        ]),
+        30,
+        score,
+      ),
     },
   ];
 }
@@ -108,7 +160,11 @@ function LoadingRingPlaceholder() {
   const rotation = useSharedValue(0);
 
   useEffect(() => {
-    rotation.value = withRepeat(withTiming(360, { duration: 1200, easing: Easing.linear }), -1, false);
+    rotation.value = withRepeat(
+      withTiming(360, { duration: 1200, easing: Easing.linear }),
+      -1,
+      false,
+    );
     return () => cancelAnimation(rotation);
   }, [rotation]);
 
@@ -155,7 +211,10 @@ function ProgressRing({ score }: { score: number }) {
 
   useEffect(() => {
     progress.value = 0;
-    progress.value = withTiming(score, { duration: 900, easing: Easing.out(Easing.cubic) });
+    progress.value = withTiming(score, {
+      duration: 900,
+      easing: Easing.out(Easing.cubic),
+    });
   }, [progress, score]);
 
   const animatedProps = useAnimatedProps(() => {
@@ -210,7 +269,7 @@ export function TrustScoreScreen() {
     isFetching,
     refetch,
   } = useQuery({
-    queryKey: ['holder', 'reputation-score'],
+    queryKey: ["holder", "reputation-score"],
     queryFn: getHolderReputationScore,
   });
 
@@ -219,14 +278,17 @@ export function TrustScoreScreen() {
     refetch: refetchSuggestions,
     isFetching: isFetchingSuggestions,
   } = useQuery({
-    queryKey: ['holder', 'trust-suggestions'],
+    queryKey: ["holder", "trust-suggestions"],
     queryFn: getHolderTrustSuggestions,
     enabled: false,
   });
 
   const score = useMemo(() => normalizeScore(scorePayload), [scorePayload]);
   const label = useMemo(() => scoreStatusLabel(score), [score]);
-  const breakdown = useMemo(() => scoreBreakdown(scorePayload, score), [scorePayload, score]);
+  const breakdown = useMemo(
+    () => scoreBreakdown(scorePayload, score),
+    [scorePayload, score],
+  );
   const accentColor = scoreColor(score, colors);
 
   return (
@@ -235,7 +297,9 @@ export function TrustScoreScreen() {
         <View style={styles.header}>
           <Text style={styles.kicker}>Trust Score</Text>
           <Text style={styles.title}>Your reputation dashboard</Text>
-          <Text style={styles.subtitle}>Monitor your trust profile and improve weak signals.</Text>
+          <Text style={styles.subtitle}>
+            Monitor your trust profile and improve weak signals.
+          </Text>
         </View>
 
         <View style={styles.card}>
@@ -243,8 +307,13 @@ export function TrustScoreScreen() {
 
           {!isLoading && isError ? (
             <View style={styles.errorWrap}>
-              <Text style={styles.errorText}>Could not load score. Tap to retry.</Text>
-              <Pressable style={styles.retryButton} onPress={() => void refetch()}>
+              <Text style={styles.errorText}>
+                Could not load score. Tap to retry.
+              </Text>
+              <Pressable
+                style={styles.retryButton}
+                onPress={() => void refetch()}
+              >
                 <Text style={styles.retryButtonText}>Retry</Text>
               </Pressable>
             </View>
@@ -253,7 +322,9 @@ export function TrustScoreScreen() {
           {!isLoading && !isError ? (
             <>
               <ProgressRing score={score} />
-              <Text style={[styles.statusLabel, { color: accentColor }]}>{label}</Text>
+              <Text style={[styles.statusLabel, { color: accentColor }]}>
+                {label}
+              </Text>
 
               <View style={styles.breakdownWrap}>
                 {breakdown.map((item) => {
@@ -267,7 +338,12 @@ export function TrustScoreScreen() {
                         </Text>
                       </View>
                       <View style={styles.progressTrack}>
-                        <View style={[styles.progressFill, { width: `${Math.max(0, ratio * 100)}%` }]} />
+                        <View
+                          style={[
+                            styles.progressFill,
+                            { width: `${Math.max(0, ratio * 100)}%` },
+                          ]}
+                        />
                       </View>
                     </View>
                   );
@@ -282,27 +358,37 @@ export function TrustScoreScreen() {
         <Pressable
           style={styles.secondaryButton}
           onPress={() => {
-            (navigation as any).navigate('Liveness');
+            (navigation as any).navigate("Liveness");
           }}
         >
           <Text style={styles.secondaryButtonText}>Verify Identity</Text>
         </Pressable>
         <Pressable
-          style={[styles.primaryButton, (isFetching || isFetchingSuggestions) && styles.primaryButtonDisabled]}
+          style={[
+            styles.primaryButton,
+            (isFetching || isFetchingSuggestions) &&
+              styles.primaryButtonDisabled,
+          ]}
           disabled={isFetching || isFetchingSuggestions}
           onPress={async () => {
             const result = suggestions ?? (await refetchSuggestions()).data;
             const wins = result?.quickWins ?? [];
             if (wins.length > 0) {
-              const lines = wins.slice(0, 4).map((s) => `• ${s.action} (+${s.points} pts)`).join('\n');
-              Alert.alert('Quick wins', lines);
+              const lines = wins
+                .slice(0, 4)
+                .map((s) => `• ${s.action} (+${s.points} pts)`)
+                .join("\n");
+              Alert.alert("Quick wins", lines);
             } else {
-              Alert.alert('Looking good!', 'No quick improvements found right now. Keep verifying credentials.');
+              Alert.alert(
+                "Looking good!",
+                "No quick improvements found right now. Keep verifying credentials.",
+              );
             }
           }}
         >
           <Text style={styles.primaryButtonText}>
-            {isFetchingSuggestions ? 'Loading...' : 'Improve Score'}
+            {isFetchingSuggestions ? "Loading..." : "Improve Score"}
           </Text>
         </Pressable>
       </View>
@@ -318,13 +404,18 @@ function makeStyles(colors: ColorPalette) {
     kicker: {
       color: colors.muted,
       fontSize: 12,
-      fontWeight: '700',
-      fontFamily: 'Inter_700Bold',
+      fontWeight: "700",
+      fontFamily: "Inter_700Bold",
       letterSpacing: 0.6,
-      textTransform: 'uppercase',
+      textTransform: "uppercase",
     },
-    title: { color: colors.text, fontSize: 26, fontWeight: '800', fontFamily: 'Inter_800ExtraBold' },
-    subtitle: { color: colors.muted, fontFamily: 'Inter_400Regular' },
+    title: {
+      color: colors.text,
+      fontSize: 26,
+      fontWeight: "800",
+      fontFamily: "Inter_800ExtraBold",
+    },
+    subtitle: { color: colors.muted, fontFamily: "Inter_400Regular" },
     card: {
       backgroundColor: colors.card,
       borderWidth: 1,
@@ -332,45 +423,83 @@ function makeStyles(colors: ColorPalette) {
       borderRadius: 16,
       padding: 16,
       gap: 14,
-      alignItems: 'center',
+      alignItems: "center",
       shadowColor: colors.shadow,
       shadowOpacity: 0.04,
       shadowRadius: 8,
       shadowOffset: { width: 0, height: 4 },
     },
     ringContainer: {
-      alignItems: 'center',
-      justifyContent: 'center',
+      alignItems: "center",
+      justifyContent: "center",
       height: RING_SIZE,
       width: RING_SIZE,
     },
     ringCenter: {
-      position: 'absolute',
-      alignItems: 'center',
-      justifyContent: 'center',
+      position: "absolute",
+      alignItems: "center",
+      justifyContent: "center",
     },
-    scoreNumber: { color: colors.text, fontSize: 42, fontWeight: '800', fontFamily: 'Inter_800ExtraBold' },
-    scoreLabel: { color: colors.muted, fontSize: 13, fontWeight: '700', fontFamily: 'Inter_700Bold' },
-    statusLabel: { fontSize: 18, fontWeight: '800', fontFamily: 'Inter_800ExtraBold' },
-    breakdownWrap: { width: '100%', gap: 10 },
+    scoreNumber: {
+      color: colors.text,
+      fontSize: 42,
+      fontWeight: "800",
+      fontFamily: "Inter_800ExtraBold",
+    },
+    scoreLabel: {
+      color: colors.muted,
+      fontSize: 13,
+      fontWeight: "700",
+      fontFamily: "Inter_700Bold",
+    },
+    statusLabel: {
+      fontSize: 18,
+      fontWeight: "800",
+      fontFamily: "Inter_800ExtraBold",
+    },
+    breakdownWrap: { width: "100%", gap: 10 },
     breakdownRow: { gap: 6 },
-    breakdownHeader: { flexDirection: 'row', justifyContent: 'space-between' },
-    breakdownLabel: { color: colors.text, fontWeight: '700', fontFamily: 'Inter_700Bold' },
-    breakdownValue: { color: colors.muted, fontSize: 12, fontWeight: '700', fontFamily: 'Inter_700Bold' },
+    breakdownHeader: { flexDirection: "row", justifyContent: "space-between" },
+    breakdownLabel: {
+      color: colors.text,
+      fontWeight: "700",
+      fontFamily: "Inter_700Bold",
+    },
+    breakdownValue: {
+      color: colors.muted,
+      fontSize: 12,
+      fontWeight: "700",
+      fontFamily: "Inter_700Bold",
+    },
     progressTrack: {
       height: 8,
       borderRadius: 8,
       backgroundColor: colors.surfaceMuted,
-      overflow: 'hidden',
+      overflow: "hidden",
     },
     progressFill: {
-      height: '100%',
+      height: "100%",
       borderRadius: 8,
       backgroundColor: colors.primary,
     },
-    loadingText: { color: colors.muted, marginTop: 12, fontSize: 13, fontFamily: 'Inter_400Regular' },
-    errorWrap: { width: '100%', alignItems: 'center', gap: 10, paddingVertical: 14 },
-    errorText: { color: colors.text, fontWeight: '600', fontFamily: 'Inter_600SemiBold', textAlign: 'center' },
+    loadingText: {
+      color: colors.muted,
+      marginTop: 12,
+      fontSize: 13,
+      fontFamily: "Inter_400Regular",
+    },
+    errorWrap: {
+      width: "100%",
+      alignItems: "center",
+      gap: 10,
+      paddingVertical: 14,
+    },
+    errorText: {
+      color: colors.text,
+      fontWeight: "600",
+      fontFamily: "Inter_600SemiBold",
+      textAlign: "center",
+    },
     retryButton: {
       borderRadius: 12,
       borderWidth: 1,
@@ -378,9 +507,13 @@ function makeStyles(colors: ColorPalette) {
       paddingHorizontal: 16,
       paddingVertical: 8,
     },
-    retryButtonText: { color: colors.primary, fontWeight: '700', fontFamily: 'Inter_700Bold' },
+    retryButtonText: {
+      color: colors.primary,
+      fontWeight: "700",
+      fontFamily: "Inter_700Bold",
+    },
     footer: {
-      position: 'absolute',
+      position: "absolute",
       left: 16,
       right: 16,
       bottom: 20,
@@ -390,18 +523,26 @@ function makeStyles(colors: ColorPalette) {
       backgroundColor: colors.primary,
       borderRadius: 12,
       paddingVertical: 13,
-      alignItems: 'center',
+      alignItems: "center",
     },
     primaryButtonDisabled: { opacity: 0.65 },
-    primaryButtonText: { color: '#FFFFFF', fontWeight: '800', fontFamily: 'Inter_800ExtraBold' },
+    primaryButtonText: {
+      color: "#FFFFFF",
+      fontWeight: "800",
+      fontFamily: "Inter_800ExtraBold",
+    },
     secondaryButton: {
       borderWidth: 1,
       borderColor: colors.border,
       borderRadius: 12,
       paddingVertical: 12,
-      alignItems: 'center',
+      alignItems: "center",
       backgroundColor: colors.input,
     },
-    secondaryButtonText: { color: colors.text, fontWeight: '700', fontFamily: 'Inter_700Bold' },
+    secondaryButtonText: {
+      color: colors.text,
+      fontWeight: "700",
+      fontFamily: "Inter_700Bold",
+    },
   });
 }

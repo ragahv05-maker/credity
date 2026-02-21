@@ -7,7 +7,9 @@ Source of truth: `CredVerseRecruiter/client/src/pages/*` (UI calls) + `CredVerse
 ## ✅ Endpoints used by Recruiter UI
 
 ### 1) Health
+
 **GET** `/api/health`
+
 - **Auth:** none
 - **Response (200)**
   ```json
@@ -15,7 +17,7 @@ Source of truth: `CredVerseRecruiter/client/src/pages/*` (UI calls) + `CredVerse
     "status": "ok",
     "app": "recruiter",
     "timestamp": "2026-02-15T...Z",
-    "blockchain": { }
+    "blockchain": {}
   }
   ```
 - **Server:** `server/routes.ts`
@@ -23,7 +25,9 @@ Source of truth: `CredVerseRecruiter/client/src/pages/*` (UI calls) + `CredVerse
 ---
 
 ### 2) Verification stats (Dashboard cards)
+
 **GET** `/api/verifications/stats`
+
 - **Auth:** none (currently)
 - **Response (200)**
   ```json
@@ -48,7 +52,9 @@ Source of truth: `CredVerseRecruiter/client/src/pages/*` (UI calls) + `CredVerse
 ---
 
 ### 3) Recent verifications (Dashboard feed)
+
 **GET** `/api/verifications?limit=5`
+
 - **Auth:** none (currently)
 - **Query params:**
   - `limit` (number, default 50 server-side slice)
@@ -69,7 +75,7 @@ Source of truth: `CredVerseRecruiter/client/src/pages/*` (UI calls) + `CredVerse
         "riskScore": 12,
         "fraudScore": 7,
         "recommendation": "approve|accept|review|reject",
-        "timestamp": "2026-02-15T...Z" 
+        "timestamp": "2026-02-15T...Z"
       }
     ]
   }
@@ -82,17 +88,21 @@ Source of truth: `CredVerseRecruiter/client/src/pages/*` (UI calls) + `CredVerse
 ---
 
 ### 4) Instant verify (JWT / raw credential)
+
 **POST** `/api/verify/instant`
-- **Auth:** none (legacy verify routes are *deprecated*, but not auth-protected)
+
+- **Auth:** none (legacy verify routes are _deprecated_, but not auth-protected)
 - **Headers:** `Content-Type: application/json`
 - **Request body (UI sends):**
+
   ```json
   {
     "jwt": "<vc-jwt>",
-    "credential": { },
+    "credential": {},
     "verifiedBy": "Recruiter Portal User"
   }
   ```
+
   Notes:
   - Provide at least one of `jwt`, `qrData`, or `credential`.
   - UI only uses `jwt` currently.
@@ -104,7 +114,14 @@ Source of truth: `CredVerseRecruiter/client/src/pages/*` (UI calls) + `CredVerse
     "verification": {
       "status": "verified|failed|suspicious|pending",
       "confidence": 0,
-      "checks": [{"name":"...","status":"passed|failed|warning|skipped","message":"...","details":{}}],
+      "checks": [
+        {
+          "name": "...",
+          "status": "passed|failed|warning|skipped",
+          "message": "...",
+          "details": {}
+        }
+      ],
       "riskScore": 0,
       "riskFlags": ["..."],
       "timestamp": "2026-02-15T...Z",
@@ -116,13 +133,21 @@ Source of truth: `CredVerseRecruiter/client/src/pages/*` (UI calls) + `CredVerse
       "aiScore": 0,
       "flags": ["..."],
       "recommendation": "accept|approve|review|reject",
-      "details": [{"check":"...","status":"...","message":"...","result":"...","impact":0}],
+      "details": [
+        {
+          "check": "...",
+          "status": "...",
+          "message": "...",
+          "result": "...",
+          "impact": 0
+        }
+      ],
       "ai": {
         "provider": "...",
         "score": 0,
         "confidence": 0,
         "summary": "...",
-        "signals": [{"code":"...","severity":"...","message":"..."}]
+        "signals": [{ "code": "...", "severity": "...", "message": "..." }]
       }
     },
     "record": {
@@ -146,7 +171,9 @@ Source of truth: `CredVerseRecruiter/client/src/pages/*` (UI calls) + `CredVerse
 ---
 
 ### 5) Verify by link (fetch VC from URL)
+
 **POST** `/api/verify/link`
+
 - **Auth:** **required** (Bearer token). Implemented via `requireProofAccess`.
   - Accepts roles: `recruiter|admin|verifier`
 - **Headers:**
@@ -154,11 +181,13 @@ Source of truth: `CredVerseRecruiter/client/src/pages/*` (UI calls) + `CredVerse
   - `Authorization: Bearer <accessToken>`
 - **Request body (UI sends):**
   ```json
-  { "link": "https://issuer.example.com/api/v1/public/issuance/offer/consume?token=..." }
+  {
+    "link": "https://issuer.example.com/api/v1/public/issuance/offer/consume?token=..."
+  }
   ```
 - **Response (200)**
   ```json
-  { "success": true, "verification": { }, "fraud": { }, "record": { } }
+  { "success": true, "verification": {}, "fraud": {}, "record": {} }
   ```
   (same shapes as `/api/verify/instant` above)
 - **UI file:** `client/src/pages/InstantVerify.tsx`
@@ -167,18 +196,33 @@ Source of truth: `CredVerseRecruiter/client/src/pages/*` (UI calls) + `CredVerse
 ---
 
 ### 6) Bulk verify (CSV upload)
+
 **POST** `/api/verify/bulk`
+
 - **Auth:** none (legacy verify routes are deprecated, but not auth-protected)
 - **Headers:** `Content-Type: application/json`
 - **Request body (UI sends):**
+
   ```json
   {
     "credentials": [
       { "jwt": "..." },
-      { "credential": { "type": ["VerifiableCredential","AcademicCredential"], "issuer": "...", "credentialSubject": {"name":"...","degree":"...","id":"did:key:..."}, "proof": {} } }
+      {
+        "credential": {
+          "type": ["VerifiableCredential", "AcademicCredential"],
+          "issuer": "...",
+          "credentialSubject": {
+            "name": "...",
+            "degree": "...",
+            "id": "did:key:..."
+          },
+          "proof": {}
+        }
+      }
     ]
   }
   ```
+
   - Max 100 credentials per batch.
 
 - **Response (200)**
@@ -197,8 +241,14 @@ Source of truth: `CredVerseRecruiter/client/src/pages/*` (UI calls) + `CredVerse
           "verificationId": "...",
           "status": "verified|failed|suspicious|pending",
           "riskScore": 0,
-          "checks": [ {"name":"Credential Format","details": {"name":"..."}}, {"name":"Issuer Verification","details": {"issuerName":"..."}} ],
-          "credentialSubject": {"name": "..."},
+          "checks": [
+            { "name": "Credential Format", "details": { "name": "..." } },
+            {
+              "name": "Issuer Verification",
+              "details": { "issuerName": "..." }
+            }
+          ],
+          "credentialSubject": { "name": "..." },
           "issuer": "..."
         }
       ]
@@ -220,7 +270,9 @@ Source of truth: `CredVerseRecruiter/client/src/pages/*` (UI calls) + `CredVerse
 ## 🟢 UI calls that require proxying to another service
 
 ### Claims dashboard
+
 **GET** `/api/claims?period=today|week|month&limit=100`
+
 - **UI file:** `client/src/pages/ClaimsDashboard.tsx`
 - **Server:** Implemented as a thin proxy in `server/routes/claims-proxy.ts` (registered in `server/routes.ts`).
 - **Upstream:** Wallet service `GET /api/v1/claims?limit=...` (requires `ALLOW_DEMO_ROUTES=true` in local demo).
@@ -234,6 +286,6 @@ Source of truth: `CredVerseRecruiter/client/src/pages/*` (UI calls) + `CredVerse
   - `Deprecation: true`
   - `Sunset: <date>`
   - `Link: </api/v1/verifications>; rel="successor-version"`
-  (implemented in `server/routes/verification.ts`).
+    (implemented in `server/routes/verification.ts`).
 
 - Newer authenticated APIs exist under `/api/v1/...` (OID4VP, proofs, verifications), but **Recruiter UI pages currently call the legacy `/api/verify/*` and `/api/verifications*` routes**.

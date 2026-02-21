@@ -5,11 +5,13 @@
 **Scope:** `credverse-gateway` auth hardening, rate-limit/session robustness, auditability, fail-closed behavior.
 
 ## Summary
+
 Implemented a focused gateway security uplift aligned with the OSS-backed upgrade direction (Redis-backed controls + hardened auth flow). Changes are isolated to gateway runtime and preserve strict fail-closed semantics in production-like mode.
 
 ## What was changed
 
 ### 1) Auth/session hardening (`credverse-gateway/server/routes/auth.ts`)
+
 - Added **request fingerprint binding** for session integrity:
   - Session now stores `userAgentHash` + `ipHash`.
   - `/auth/me` rejects and invalidates session on fingerprint mismatch.
@@ -34,12 +36,14 @@ Implemented a focused gateway security uplift aligned with the OSS-backed upgrad
   - Includes timestamp, request metadata, requestId, and hashed identifiers where relevant.
 
 ### 2) Execution lane robustness (`credverse-gateway/server/app.ts`)
+
 - Enabled proxy awareness for correct client-IP behavior behind gateway/proxy edge:
   - `app.set('trust proxy', 1)`
 - Tightened JSON parser boundary:
   - `express.json({ limit: '64kb' })`
 
 ## Fail-closed guarantees retained
+
 - Existing strict-mode guards remain intact and unchanged:
   - Missing `JWT_SECRET`/`JWT_REFRESH_SECRET` in strict mode => startup error.
   - Missing `REDIS_URL` in strict mode => startup error.
@@ -47,27 +51,34 @@ Implemented a focused gateway security uplift aligned with the OSS-backed upgrad
 - Rate-limited paths return `429` with `Retry-After`.
 
 ## OSS-backed alignment
+
 This lane leverages and strengthens adopted OSS components already in use:
+
 - **ioredis** for distributed/session-backed state and rate-limit counters.
 - **shared-auth stack** (includes express-rate-limit/helmet/cors/hpp/xss layers) remains active; gateway-specific controls are added on top for auth-critical paths.
 
 ## Validation evidence
+
 Ran in `credverse-gateway`:
 
 ```bash
 npm test
 ```
+
 - Result: ✅ pass (`13/13` proxy tests)
 
 ```bash
 npm run build
 ```
+
 - Result: ✅ pass (frontend+server build successful)
 
 ## Files changed in this lane
+
 - `credverse-gateway/server/routes/auth.ts`
 - `credverse-gateway/server/app.ts`
 
 ## Notes / follow-ups
+
 - Current fingerprint policy is strict (`UA + IP`). If mobile carrier NAT/IP churn causes false positives in production, consider controlled policy relaxation (e.g., UA-only or IP prefix) behind a feature flag.
 - Add dedicated auth route tests (`/auth/google`, `/auth/me`, `/auth/verify-token`) in a follow-up to lock this behavior in CI.

@@ -13,6 +13,7 @@ This harness focuses on **Credity Issuer + Recruiter services** (excluding groom
 File: `CredVerseIssuer 3/tests/w3c-oid4vci-issuance-conformance.test.ts`
 
 Checks:
+
 - `GET /.well-known/openid-credential-issuer` exposes:
   - `credential_issuer`
   - `token_endpoint`
@@ -32,10 +33,12 @@ Checks:
 ## 2) Recruiter verification conformance tests
 
 Files:
+
 - `CredVerseRecruiter/tests/w3c-did-vc-conformance.test.ts`
 - `CredVerseRecruiter/tests/fixtures/w3c-did-vc-conformance-vectors.ts`
 
 Vector-driven checks:
+
 - Positive DID vectors (`did:key`, `did:web`) pass verification
 - Malformed DID input is rejected at schema layer (`PROOF_INPUT_INVALID`)
 - Issuer DID mismatch (`ISSUER_DID_MISMATCH`)

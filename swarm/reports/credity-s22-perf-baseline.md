@@ -1,7 +1,9 @@
 # Credity Swarm S22 — Lightweight Performance Baseline (Critical API Paths)
 
 ## Scope
+
 Created a lightweight, local-first baseline harness for critical API paths across:
+
 - `credverse-gateway`
 - `BlockWalletDigi` (wallet)
 - `CredVerseIssuer 3` (issuer)
@@ -34,19 +36,23 @@ No heavy infra assumptions (no k6/JMeter/containers required).
 ## Critical API scenarios included
 
 ### Gateway
+
 - `GET /api/health`
 - `GET /api/auth/status`
 - `POST /api/auth/verify-token` (no token path)
 
 ### Wallet
+
 - `GET /api/health`
 - `POST /api/v1/auth/login` (invalid credentials path)
 
 ### Issuer
+
 - `GET /api/health`
 - `POST /api/v1/auth/login` (invalid credentials path)
 
 ### Recruiter
+
 - `GET /api/health`
 - `POST /api/auth/login` (invalid credentials path)
 - `POST /api/v1/proofs/verify` (invalid input path)
@@ -91,18 +97,18 @@ PERF_OUTPUT=swarm/reports/data/my-baseline.json npm run perf:baseline
 
 > Fill this section after running the script in a stable local/staging environment.
 
-| Scenario | Success Rate | p50 (ms) | p95 (ms) | p99 (ms) | Avg (ms) | Notes |
-|---|---:|---:|---:|---:|---:|---|
-| gateway-health | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |  |
-| gateway-auth-status | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |  |
-| gateway-auth-verify-token-no-token | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |  |
-| wallet-health | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |  |
-| wallet-auth-login-invalid | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |  |
-| issuer-health | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |  |
-| issuer-auth-login-invalid | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |  |
-| recruiter-health | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |  |
-| recruiter-auth-login-invalid | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |  |
-| recruiter-proofs-verify-invalid-input | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |  |
+| Scenario                              | Success Rate |  p50 (ms) |  p95 (ms) |  p99 (ms) |  Avg (ms) | Notes |
+| ------------------------------------- | -----------: | --------: | --------: | --------: | --------: | ----- |
+| gateway-health                        |    _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |       |
+| gateway-auth-status                   |    _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |       |
+| gateway-auth-verify-token-no-token    |    _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |       |
+| wallet-health                         |    _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |       |
+| wallet-auth-login-invalid             |    _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |       |
+| issuer-health                         |    _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |       |
+| issuer-auth-login-invalid             |    _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |       |
+| recruiter-health                      |    _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |       |
+| recruiter-auth-login-invalid          |    _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |       |
+| recruiter-proofs-verify-invalid-input |    _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |       |
 
 ---
 

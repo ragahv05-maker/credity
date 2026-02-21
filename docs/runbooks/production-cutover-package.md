@@ -34,6 +34,7 @@ Result: **Launch gate checks passed**.
 Set in provider env UIs / secret managers only.
 
 ### Shared (all production services)
+
 - `NODE_ENV=production`
 - `JWT_SECRET`
 - `JWT_REFRESH_SECRET`
@@ -42,14 +43,17 @@ Set in provider env UIs / secret managers only.
 - `SENTRY_DSN` (or `GATEWAY_SENTRY_DSN` for gateway)
 
 ### Hardening flags (must be enforced)
+
 - `ALLOW_DEMO_ROUTES=false`
 - `REQUIRE_DATABASE=true`
 - `REQUIRE_QUEUE=true`
 
 ### API data persistence
+
 - `DATABASE_URL` (PostgreSQL)
 
 ### Issuer required
+
 - `ISSUER_KEY_ENCRYPTION`
 - `RELAYER_PRIVATE_KEY`
 - `REGISTRY_CONTRACT_ADDRESS`
@@ -57,11 +61,13 @@ Set in provider env UIs / secret managers only.
 - `SEPOLIA_RPC_URL`
 
 ### Gateway OAuth
+
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
 - `GOOGLE_REDIRECT_URI`
 
 Current approved Sepolia registry from `DEPLOYMENT.md`:
+
 - `0x6060250FC92538571adde5c66803F8Cbe77145a1`
 
 ---
@@ -91,11 +97,13 @@ npm run gate:contracts:security
 ### B1) Railway deploys
 
 Create/update 3 services with these root directories:
+
 - `CredVerseIssuer 3`
 - `BlockWalletDigi`
 - `CredVerseRecruiter`
 
 For each service in Railway:
+
 1. Confirm GitHub repo is linked to `raghavbadhwar/credity`.
 2. Confirm Root Directory matches service.
 3. Set environment variables.
@@ -105,9 +113,11 @@ For each service in Railway:
 ### B2) Vercel deploy (Gateway)
 
 Project root:
+
 - `credverse-gateway`
 
 In Vercel:
+
 1. Confirm Production env vars are set.
 2. Trigger production deploy for same commit/tag as Railway rollout.
 3. Confirm deployment marked Ready.
@@ -185,11 +195,13 @@ npm run gate:launch:strict
 ## 5) Rollback Plan (if any Sev-1/Sev-2)
 
 Trigger rollback if any of:
+
 - Health endpoint failing for any core service >5 minutes
 - Auth outage / token issuance failures
 - 5xx error rate exceeds threshold and sustained
 
 Rollback actions:
+
 1. Railway: rollback each affected service to last known good deployment.
 2. Vercel: promote previous stable deployment to production.
 3. Re-verify health endpoints and critical user journeys.

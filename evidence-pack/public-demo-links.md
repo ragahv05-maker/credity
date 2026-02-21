@@ -11,10 +11,12 @@ Timestamp: **2026-02-16 01:18 IST (GMT+5:30)**
 - **How it’s being served:** `CredVerseRecruiter` → `npm run dev:client` (Vite) exposed via `ssh -R ... nokey@localhost.run`
 
 **Notes / caveats**
+
 - This is a **tunneled dev server**. The URL will stop working if the SSH tunnel or the Vite dev process stops (laptop sleep, network change, process killed).
 - Not a “permanent production deploy”; it’s a **shareable preview link** for demos.
 
 ### How to keep it alive during a demo
+
 Run both commands in two terminals and keep them running:
 
 ```bash
@@ -39,6 +41,7 @@ If you need a **stable link that survives restarts**, use one of the options bel
 ### Option A (recommended): Vercel for `credverse-gateway` (stable HTTPS)
 
 **Owner actions (interactive login / possible OTP/2FA):**
+
 1. Create/login to Vercel account.
 2. Import Git repo.
 3. Set **Root Directory**: `credverse-gateway`.
@@ -46,12 +49,14 @@ If you need a **stable link that survives restarts**, use one of the options bel
 5. Deploy and share the resulting `*.vercel.app` URL.
 
 Potential OTP/2FA points:
+
 - Vercel login may require email verification / SSO.
 - If using Google OAuth, Google Cloud Console may require account verification.
 
 ### Option B: Railway for services (stable HTTPS)
 
 **Owner actions (interactive login / possible OTP/2FA):**
+
 1. Login to Railway.
 2. Deploy services with Root Directories:
    - Issuer: `CredVerseIssuer 3`
@@ -61,12 +66,14 @@ Potential OTP/2FA points:
 3. Set env vars per `DEPLOYMENT.md` / `RAILWAY.md`.
 
 Potential OTP/2FA points:
+
 - Railway login / GitHub OAuth.
 
 ### Option C: localhost.run “forever-free” subdomain (more stable than anonymous)
 
 The current tunnel uses an **anonymous** session URL.
 For a longer-lasting (semi-stable) URL, localhost.run offers a “forever-free” flow that requires:
+
 - creating an account
 - adding your SSH public key
 

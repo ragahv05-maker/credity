@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
-      - 'docs/gates/**'
-      - 'docs/runbooks/**'
-      - 'docs/compliance/**'
-      - 'scripts/launch-gate-check.mjs'
-      - '.github/workflows/launch-gate.yml'
+      - "docs/gates/**"
+      - "docs/runbooks/**"
+      - "docs/compliance/**"
+      - "scripts/launch-gate-check.mjs"
+      - ".github/workflows/launch-gate.yml"
 
 jobs:
   gate:
@@ -17,14 +17,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
       - name: Launch gate docs/config checks (strict with placeholder env)
         env:
-          LAUNCH_GATE_STRICT: '1'
+          LAUNCH_GATE_STRICT: "1"
           NODE_ENV: production
-          ALLOW_DEMO_ROUTES: 'false'
-          REQUIRE_DATABASE: 'true'
-          REQUIRE_QUEUE: 'true'
+          ALLOW_DEMO_ROUTES: "false"
+          REQUIRE_DATABASE: "true"
+          REQUIRE_QUEUE: "true"
           JWT_SECRET: placeholder-jwt-secret
           JWT_REFRESH_SECRET: placeholder-jwt-refresh-secret
           REDIS_URL: redis://placeholder

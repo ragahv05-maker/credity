@@ -1,56 +1,56 @@
 {
-    "name": "@credverse/shared-auth",
-    "version": "1.0.0",
-    "description": "Shared authentication utilities for CredVerse applications",
-    "type": "module",
-    "main": "dist/index.js",
-    "module": "dist/index.js",
-    "types": "dist/index.d.ts",
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.js",
-            "default": "./dist/index.js"
-        }
-    },
-    "scripts": {
-        "build": "tsc",
-        "dev": "tsc --watch",
-        "lint": "eslint .",
-        "lint:fix": "eslint . --fix",
-        "format": "prettier --write .",
-        "format:check": "prettier --check .",
-        "test": "vitest run"
-    },
-    "dependencies": {
-        "bcryptjs": "^3.0.3",
-        "cors": "^2.8.5",
-        "drizzle-orm": "^0.45.1",
-        "express-rate-limit": "^8.2.1",
-        "helmet": "^8.1.0",
-        "hpp": "^0.2.3",
-        "jsonwebtoken": "^9.0.3",
-        "pg": "^8.16.3",
-        "xss": "^1.0.15"
-    },
-    "devDependencies": {
-        "@eslint/js": "^9.39.2",
-        "@types/bcryptjs": "^2.4.6",
-        "@types/cors": "^2.8.19",
-        "@types/express": "4.17.21",
-        "@types/hpp": "^0.2.7",
-        "@types/jsonwebtoken": "^9.0.10",
-        "@types/node": "^20.0.0",
-        "@types/pg": "^8.16.0",
-        "eslint": "^9.39.2",
-        "eslint-config-prettier": "^10.1.8",
-        "globals": "^16.5.0",
-        "prettier": "^3.8.1",
-        "typescript": "^5.6.3",
-        "typescript-eslint": "^8.55.0",
-        "vitest": "^4.0.18"
-    },
-    "peerDependencies": {
-        "express": "^4.0.0"
+  "name": "@credverse/shared-auth",
+  "version": "1.0.0",
+  "description": "Shared authentication utilities for CredVerse applications",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "drizzle-orm": "^0.45.1",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
+    "hpp": "^0.2.3",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.16.3",
+    "xss": "^1.0.15"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/express": "4.17.21",
+    "@types/hpp": "^0.2.7",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^20.0.0",
+    "@types/pg": "^8.16.0",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^16.5.0",
+    "prettier": "^3.8.1",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.55.0",
+    "vitest": "^4.0.18"
+  },
+  "peerDependencies": {
+    "express": "^4.0.0"
+  }
 }

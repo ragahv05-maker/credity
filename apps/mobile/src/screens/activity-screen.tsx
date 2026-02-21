@@ -1,23 +1,26 @@
-import React, { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { useQuery } from '@tanstack/react-query';
-import * as Haptics from 'expo-haptics';
-import { getHolderActivity } from '../lib/api-client';
-import { useTheme } from '../theme/ThemeContext';
-import type { ColorPalette } from '../theme/tokens';
+import React, { useMemo } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { useQuery } from "@tanstack/react-query";
+import * as Haptics from "expo-haptics";
+import { getHolderActivity } from "../lib/api-client";
+import { useTheme } from "../theme/ThemeContext";
+import type { ColorPalette } from "../theme/tokens";
 
 interface ActivityItem {
   id: string;
   title: string;
   description: string;
-  status: 'verified' | 'pending' | 'revoked';
+  status: "verified" | "pending" | "revoked";
   timestamp: string;
 }
 
-function statusPillBg(status: 'verified' | 'pending' | 'revoked', colors: ColorPalette): string {
-  if (status === 'verified') return colors.successSurface;
-  if (status === 'pending') return colors.warningSurface;
+function statusPillBg(
+  status: "verified" | "pending" | "revoked",
+  colors: ColorPalette,
+): string {
+  if (status === "verified") return colors.successSurface;
+  if (status === "pending") return colors.warningSurface;
   return colors.dangerSurface;
 }
 
@@ -29,7 +32,7 @@ export function ActivityScreen() {
   const canGoBack = navigation.canGoBack();
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['holder', 'activity'],
+    queryKey: ["holder", "activity"],
     queryFn: getHolderActivity,
   });
 
@@ -42,7 +45,9 @@ export function ActivityScreen() {
           <View>
             <Text style={styles.kicker}>Activity</Text>
             <Text style={styles.title}>Audit timeline</Text>
-            <Text style={styles.subtitle}>Every share and verification is logged here.</Text>
+            <Text style={styles.subtitle}>
+              Every share and verification is logged here.
+            </Text>
           </View>
           {canGoBack ? (
             <Pressable
@@ -68,14 +73,22 @@ export function ActivityScreen() {
             <View style={styles.emptyState}>
               <Text style={styles.emptyTitle}>Could not load activity</Text>
               <Pressable onPress={() => void refetch()}>
-                <Text style={[styles.emptySubtitle, { color: colors.primary, marginTop: 4 }]}>Retry</Text>
+                <Text
+                  style={[
+                    styles.emptySubtitle,
+                    { color: colors.primary, marginTop: 4 },
+                  ]}
+                >
+                  Retry
+                </Text>
               </Pressable>
             </View>
           ) : !items.length ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyTitle}>No activity yet</Text>
               <Text style={styles.emptySubtitle}>
-                When you share credentials or connect platforms, they will appear here.
+                When you share credentials or connect platforms, they will
+                appear here.
               </Text>
             </View>
           ) : (
@@ -87,10 +100,19 @@ export function ActivityScreen() {
                 </View>
                 <View style={styles.timelineContent}>
                   <Text style={styles.timelineTitle}>{item.title}</Text>
-                  <Text style={styles.timelineSubtitle}>{item.description}</Text>
+                  <Text style={styles.timelineSubtitle}>
+                    {item.description}
+                  </Text>
                   <View style={styles.timelineMetaRow}>
-                    <View style={[styles.statusPill, { backgroundColor: statusPillBg(item.status, colors) }]}>
-                      <Text style={styles.statusText}>{item.status.toUpperCase()}</Text>
+                    <View
+                      style={[
+                        styles.statusPill,
+                        { backgroundColor: statusPillBg(item.status, colors) },
+                      ]}
+                    >
+                      <Text style={styles.statusText}>
+                        {item.status.toUpperCase()}
+                      </Text>
                     </View>
                     <Text style={styles.timelineTime}>{item.timestamp}</Text>
                   </View>
@@ -108,17 +130,31 @@ function makeStyles(colors: ColorPalette) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
     content: { padding: 16, gap: 14, paddingBottom: 40 },
-    headerRow: { flexDirection: 'row' as const, justifyContent: 'space-between' as const, gap: 12 },
+    headerRow: {
+      flexDirection: "row" as const,
+      justifyContent: "space-between" as const,
+      gap: 12,
+    },
     kicker: {
       color: colors.muted,
       fontSize: 12,
-      fontWeight: '700' as const,
-      fontFamily: 'Inter_700Bold',
+      fontWeight: "700" as const,
+      fontFamily: "Inter_700Bold",
       letterSpacing: 0.6,
-      textTransform: 'uppercase' as const,
+      textTransform: "uppercase" as const,
     },
-    title: { color: colors.text, fontSize: 26, fontWeight: '800' as const, fontFamily: 'Inter_800ExtraBold' },
-    subtitle: { color: colors.muted, marginTop: 4, maxWidth: 220, fontFamily: 'Inter_400Regular' },
+    title: {
+      color: colors.text,
+      fontSize: 26,
+      fontWeight: "800" as const,
+      fontFamily: "Inter_800ExtraBold",
+    },
+    subtitle: {
+      color: colors.muted,
+      marginTop: 4,
+      maxWidth: 220,
+      fontFamily: "Inter_400Regular",
+    },
     backButton: {
       borderRadius: 12,
       borderWidth: 1,
@@ -126,7 +162,11 @@ function makeStyles(colors: ColorPalette) {
       paddingHorizontal: 14,
       paddingVertical: 8,
     },
-    backText: { color: colors.primary, fontWeight: '700' as const, fontFamily: 'Inter_700Bold' },
+    backText: {
+      color: colors.primary,
+      fontWeight: "700" as const,
+      fontFamily: "Inter_700Bold",
+    },
     card: {
       backgroundColor: colors.card,
       borderWidth: 1,
@@ -139,7 +179,12 @@ function makeStyles(colors: ColorPalette) {
       shadowRadius: 8,
       shadowOffset: { width: 0, height: 4 },
     },
-    cardTitle: { color: colors.text, fontWeight: '700' as const, fontFamily: 'Inter_700Bold', fontSize: 16 },
+    cardTitle: {
+      color: colors.text,
+      fontWeight: "700" as const,
+      fontFamily: "Inter_700Bold",
+      fontSize: 16,
+    },
     emptyState: {
       borderRadius: 14,
       borderWidth: 1,
@@ -148,10 +193,19 @@ function makeStyles(colors: ColorPalette) {
       gap: 6,
       backgroundColor: colors.input,
     },
-    emptyTitle: { color: colors.text, fontSize: 15, fontWeight: '700' as const, fontFamily: 'Inter_700Bold' },
-    emptySubtitle: { color: colors.muted, fontSize: 13, fontFamily: 'Inter_400Regular' },
-    timelineRow: { flexDirection: 'row' as const, gap: 12, paddingVertical: 8 },
-    timelineIndicator: { alignItems: 'center' as const, width: 12 },
+    emptyTitle: {
+      color: colors.text,
+      fontSize: 15,
+      fontWeight: "700" as const,
+      fontFamily: "Inter_700Bold",
+    },
+    emptySubtitle: {
+      color: colors.muted,
+      fontSize: 13,
+      fontFamily: "Inter_400Regular",
+    },
+    timelineRow: { flexDirection: "row" as const, gap: 12, paddingVertical: 8 },
+    timelineIndicator: { alignItems: "center" as const, width: 12 },
     timelineDot: {
       width: 8,
       height: 8,
@@ -165,15 +219,37 @@ function makeStyles(colors: ColorPalette) {
       marginTop: 4,
     },
     timelineContent: { flex: 1, gap: 4 },
-    timelineTitle: { color: colors.text, fontSize: 14, fontWeight: '700' as const, fontFamily: 'Inter_700Bold' },
-    timelineSubtitle: { color: colors.muted, fontSize: 12, fontFamily: 'Inter_400Regular' },
-    timelineMetaRow: { flexDirection: 'row' as const, justifyContent: 'space-between' as const, alignItems: 'center' as const },
+    timelineTitle: {
+      color: colors.text,
+      fontSize: 14,
+      fontWeight: "700" as const,
+      fontFamily: "Inter_700Bold",
+    },
+    timelineSubtitle: {
+      color: colors.muted,
+      fontSize: 12,
+      fontFamily: "Inter_400Regular",
+    },
+    timelineMetaRow: {
+      flexDirection: "row" as const,
+      justifyContent: "space-between" as const,
+      alignItems: "center" as const,
+    },
     statusPill: {
       borderRadius: 999,
       paddingHorizontal: 10,
       paddingVertical: 4,
     },
-    statusText: { color: colors.text, fontSize: 10, fontWeight: '700' as const, fontFamily: 'Inter_700Bold' },
-    timelineTime: { color: colors.muted, fontSize: 11, fontFamily: 'Inter_400Regular' },
+    statusText: {
+      color: colors.text,
+      fontSize: 10,
+      fontWeight: "700" as const,
+      fontFamily: "Inter_700Bold",
+    },
+    timelineTime: {
+      color: colors.muted,
+      fontSize: 11,
+      fontFamily: "Inter_400Regular",
+    },
   });
 }

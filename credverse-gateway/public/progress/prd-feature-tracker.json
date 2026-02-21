@@ -83,9 +83,7 @@
       "featureNumber": 9,
       "feature": "TenantScore (Rental Housing Verification)",
       "status": "NOT_STARTED",
-      "evidence": [
-        "swarm/reports/prd-gap-matrix-credity12.md"
-      ],
+      "evidence": ["swarm/reports/prd-gap-matrix-credity12.md"],
       "evidenceNote": "Hard blocker: vertical not implemented (no tenantscore namespace/routes/services/tests)."
     },
     {
@@ -93,9 +91,7 @@
       "featureNumber": 10,
       "feature": "HealthScore (Healthcare/Telemedicine Trust)",
       "status": "NOT_STARTED",
-      "evidence": [
-        "swarm/reports/prd-gap-matrix-credity12.md"
-      ],
+      "evidence": ["swarm/reports/prd-gap-matrix-credity12.md"],
       "evidenceNote": "Hard blocker: vertical not implemented (no healthscore namespace/routes/services/tests)."
     },
     {
@@ -103,9 +99,7 @@
       "featureNumber": 11,
       "feature": "TutorScore (Education Marketplace Verification)",
       "status": "NOT_STARTED",
-      "evidence": [
-        "swarm/reports/prd-gap-matrix-credity12.md"
-      ],
+      "evidence": ["swarm/reports/prd-gap-matrix-credity12.md"],
       "evidenceNote": "Hard blocker: vertical not implemented (no tutorscore namespace/routes/services/tests)."
     },
     {
@@ -113,9 +107,7 @@
       "featureNumber": 12,
       "feature": "HomeWorkerScore (Domestic Services Verification)",
       "status": "NOT_STARTED",
-      "evidence": [
-        "swarm/reports/prd-gap-matrix-credity12.md"
-      ],
+      "evidence": ["swarm/reports/prd-gap-matrix-credity12.md"],
       "evidenceNote": "Hard blocker: vertical not implemented (no homeworkerscore namespace/routes/services/tests)."
     },
     {
@@ -123,9 +115,7 @@
       "featureNumber": 13,
       "feature": "TrustScore for Lending (Alternative Credit)",
       "status": "NOT_STARTED",
-      "evidence": [
-        "swarm/reports/prd-gap-matrix-credity12.md"
-      ],
+      "evidence": ["swarm/reports/prd-gap-matrix-credity12.md"],
       "evidenceNote": "Hard blocker: vertical not implemented (no lending trustscore namespace/routes/services/tests)."
     },
     {

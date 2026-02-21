@@ -4,7 +4,9 @@ Date: 2026-02-21
 Repo: `/Users/raghav/Desktop/credity`
 
 ## Scope completed
+
 Focused runtime server-path mock/stub removal for:
+
 1. `BlockWalletDigi/server/services/wallet-service.ts` simulateAnchor path
 2. DigiLocker demo-mode production hard-fail behavior
 3. `CredVerseIssuer 3/server/services/ipfs.ts` mock JWT/CID fallback
@@ -15,6 +17,7 @@ Focused runtime server-path mock/stub removal for:
 ## Changes made
 
 ### 1) BlockWalletDigi wallet anchoring: removed async simulate path from runtime store flow
+
 **File:** `BlockWalletDigi/server/services/wallet-service.ts`
 
 - Removed delayed `setTimeout(...simulateAnchor...)` behavior from `storeCredential` runtime path.
@@ -26,6 +29,7 @@ Focused runtime server-path mock/stub removal for:
 - Non-production retains deterministic simulated anchoring only as dev fallback.
 
 ### 2) DigiLocker: hard-fail in production when not configured
+
 **File:** `BlockWalletDigi/server/services/digilocker-service.ts`
 
 - Constructor now throws in production when DigiLocker credentials are absent:
@@ -34,6 +38,7 @@ Focused runtime server-path mock/stub removal for:
 - All demo branches (`exchangeCodeForTokens`, `getUserInfo`, `listDocuments`, `pullDocument`) call this guard and throw if production.
 
 ### 3) CredVerseIssuer IPFS: removed mock JWT/CID fallbacks
+
 **File:** `CredVerseIssuer 3/server/services/ipfs.ts`
 
 - Removed `mock_jwt` default and fake CID return values (`Qm_mock_*`).
@@ -43,7 +48,9 @@ Focused runtime server-path mock/stub removal for:
 - Preserved general upload failure wrapping while allowing config error to bubble clearly.
 
 ### 4) CredVerseRecruiter SafeDate/WorkScore: removed stub evidence summaries
+
 **Files:**
+
 - `CredVerseRecruiter/server/services/safedate.ts`
 - `CredVerseRecruiter/server/services/workscore.ts`
 
@@ -60,6 +67,7 @@ Focused runtime server-path mock/stub removal for:
 ## Tests added/updated
 
 ### Added
+
 - `BlockWalletDigi/tests/wallet-service-anchoring-policy.test.ts`
   - Verifies production fails closed when anchor service URL is missing.
 - `BlockWalletDigi/tests/digilocker-production-policy.test.ts`
@@ -70,15 +78,18 @@ Focused runtime server-path mock/stub removal for:
   - Verifies SafeDate and WorkScore enforce evidence summary in production.
 
 ### Executed test commands
+
 - `cd BlockWalletDigi && npm test -- tests/wallet-service-anchoring-policy.test.ts tests/digilocker-production-policy.test.ts`
 - `cd "CredVerseIssuer 3" && npm test -- tests/ipfs-production-policy.test.ts`
 - `cd CredVerseRecruiter && npm test -- tests/evidence-summary-production-policy.test.ts tests/safedate.test.ts tests/workscore.test.ts`
 
 ### Results
+
 - All above targeted tests passed.
 
 ---
 
 ## Notes
+
 - This pass intentionally targets production runtime fail-closed behavior for critical mock/stub paths.
 - Non-production compatibility remains where useful for local development, but production now blocks unsafe mock execution on these prioritized surfaces.

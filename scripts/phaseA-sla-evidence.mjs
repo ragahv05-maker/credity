@@ -1,8 +1,11 @@
-import { performance } from 'node:perf_hooks';
+import { performance } from "node:perf_hooks";
 
 function percentile(sorted, p) {
   if (!sorted.length) return 0;
-  const idx = Math.min(sorted.length - 1, Math.max(0, Math.ceil((p / 100) * sorted.length) - 1));
+  const idx = Math.min(
+    sorted.length - 1,
+    Math.max(0, Math.ceil((p / 100) * sorted.length) - 1),
+  );
   return sorted[idx];
 }
 
@@ -19,19 +22,24 @@ function summarize(values) {
 }
 
 function calculateTrustScore(input) {
-  const identity = (input.livenessVerified ? 15 : 0)
-    + (input.documentVerified ? 10 : 0)
-    + (input.biometricsSetup ? 10 : 0)
-    + (input.digilockerConnected ? 5 : 0);
-  const activity = Math.min(input.totalCredentials * 2, 10)
-    + Math.min(input.totalVerifications * 2, 10)
-    + Math.min(input.platformConnectionCount * 2, 10);
+  const identity =
+    (input.livenessVerified ? 15 : 0) +
+    (input.documentVerified ? 10 : 0) +
+    (input.biometricsSetup ? 10 : 0) +
+    (input.digilockerConnected ? 5 : 0);
+  const activity =
+    Math.min(input.totalCredentials * 2, 10) +
+    Math.min(input.totalVerifications * 2, 10) +
+    Math.min(input.platformConnectionCount * 2, 10);
   const flagPenalty = input.suspiciousActivityFlags * 10;
   const endorsementPoints = Math.min(input.endorsementCount * 3, 15);
   const positiveFeedback = Math.min(input.positiveFeedbackCount * 2, 10);
   const negativeFeedback = input.negativeFeedbackCount * 5;
   const feedbackPoints = Math.max(0, positiveFeedback - negativeFeedback);
-  const reputation = Math.max(0, Math.min(30, (30 - flagPenalty) + endorsementPoints + feedbackPoints - 15));
+  const reputation = Math.max(
+    0,
+    Math.min(30, 30 - flagPenalty + endorsementPoints + feedbackPoints - 15),
+  );
   return identity + activity + reputation;
 }
 
@@ -59,14 +67,22 @@ function computeReputationScore(events) {
 }
 
 function evaluateWorkScore(payload) {
-  const w = { identity: 250, education: 150, employment: 200, reputation: 200, skills: 100, crossTrust: 100 };
+  const w = {
+    identity: 250,
+    education: 150,
+    employment: 200,
+    reputation: 200,
+    skills: 100,
+    crossTrust: 100,
+  };
   const c = payload.components;
-  const score = Math.round(w.identity * c.identity)
-    + Math.round(w.education * c.education)
-    + Math.round(w.employment * c.employment)
-    + Math.round(w.reputation * c.reputation)
-    + Math.round(w.skills * c.skills)
-    + Math.round(w.crossTrust * c.crossTrust);
+  const score =
+    Math.round(w.identity * c.identity) +
+    Math.round(w.education * c.education) +
+    Math.round(w.employment * c.employment) +
+    Math.round(w.reputation * c.reputation) +
+    Math.round(w.skills * c.skills) +
+    Math.round(w.crossTrust * c.crossTrust);
   return score;
 }
 
@@ -78,7 +94,7 @@ async function measureAsyncReputationUpdate(samples = 40) {
 
     setImmediate(() => {
       // Simulate async recalc after event ingest
-      computeReputationScore([{ category: 'employment', score: 92 }]);
+      computeReputationScore([{ category: "employment", score: 92 }]);
       state.scoreReady = true;
     });
 
@@ -112,7 +128,7 @@ export async function runHarness() {
   }
 
   const repEvents = Array.from({ length: 300 }, (_, i) => ({
-    category: i % 2 === 0 ? 'employment' : 'identity',
+    category: i % 2 === 0 ? "employment" : "identity",
     score: 70 + (i % 30),
   }));
   const repTimes = [];

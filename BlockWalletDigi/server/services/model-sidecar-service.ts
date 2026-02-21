@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 const sidecarTimeoutMs = Number(process.env.MODEL_SIDECAR_TIMEOUT_MS || 5000);
 
@@ -17,7 +17,7 @@ function requireSidecarConfig(): { url: string; apiKey: string } {
   const url = process.env.MODEL_SIDECAR_URL;
   const apiKey = process.env.MODEL_SIDECAR_API_KEY;
   if (!url || !apiKey) {
-    throw new Error('model_sidecar_not_configured');
+    throw new Error("model_sidecar_not_configured");
   }
   return { url, apiKey };
 }
@@ -28,9 +28,9 @@ async function postSidecar(path: string, payload: unknown): Promise<unknown> {
   const timeout = setTimeout(() => controller.abort(), sidecarTimeoutMs);
   try {
     const res = await fetch(`${url}${path}`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify(payload),
@@ -52,16 +52,16 @@ export async function inferLivenessAndEmbedding(input: {
   sessionId: string;
   userId: string;
 }): Promise<z.infer<typeof livenessInferenceSchema>> {
-  const payload = await postSidecar('/v1/biometrics/liveness-infer', input);
+  const payload = await postSidecar("/v1/biometrics/liveness-infer", input);
   return livenessInferenceSchema.parse(payload);
 }
 
 export async function extractEmbedding(input: {
   frameData: string;
-  source: 'enrollment' | 'verification';
+  source: "enrollment" | "verification";
   sessionId?: string;
   userId: string;
 }): Promise<number[]> {
-  const payload = await postSidecar('/v1/biometrics/embedding-extract', input);
+  const payload = await postSidecar("/v1/biometrics/embedding-extract", input);
   return embeddingSchema.parse((payload as any)?.embedding);
 }

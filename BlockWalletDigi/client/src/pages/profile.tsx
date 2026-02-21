@@ -1,6 +1,12 @@
 import { Sidebar } from "@/components/sidebar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "wouter";
@@ -12,7 +18,7 @@ import {
   Copy,
   CheckCircle2,
   ShieldCheck,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -40,11 +46,11 @@ export default function ProfilePage() {
 
   // Initialize wallet
   const { data: walletData, isLoading: walletLoading } = useQuery({
-    queryKey: ['wallet-init'],
+    queryKey: ["wallet-init"],
     queryFn: async () => {
-      const res = await fetch('/api/wallet/init', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/wallet/init", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: 1 }),
       });
       return res.json();
@@ -53,9 +59,9 @@ export default function ProfilePage() {
 
   // Get credentials
   const { data: credentialsData, isLoading: credentialsLoading } = useQuery({
-    queryKey: ['wallet-credentials'],
+    queryKey: ["wallet-credentials"],
     queryFn: async () => {
-      const res = await fetch('/api/wallet/credentials?userId=1');
+      const res = await fetch("/api/wallet/credentials?userId=1");
       return res.json();
     },
     enabled: !!walletData?.success,
@@ -87,14 +93,16 @@ export default function ProfilePage() {
   const isLoading = walletLoading || credentialsLoading;
 
   // Calculate trust score based on credentials
-  const trustScore = Math.min(100, 70 + credentials.length * 5 + (stats.totalVerifications || 0) * 2);
+  const trustScore = Math.min(
+    100,
+    70 + credentials.length * 5 + (stats.totalVerifications || 0) * 2,
+  );
 
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar />
       <div className="flex-1 md:ml-64 p-6 overflow-y-auto h-screen">
         <div className="max-w-4xl mx-auto space-y-8">
-
           {/* Header / Identity */}
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
             <div className="flex gap-6 items-center">
@@ -105,14 +113,29 @@ export default function ProfilePage() {
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">John Doe</h1>
                 <p className="text-muted-foreground mb-2">
-                  {credentials.length} Credentials • {stats.totalVerifications || 0} Verifications
+                  {credentials.length} Credentials •{" "}
+                  {stats.totalVerifications || 0} Verifications
                 </p>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <Badge variant="outline" className="font-mono text-xs py-1 max-w-[280px] truncate">
-                    {did.length > 30 ? `${did.slice(0, 20)}...${did.slice(-8)}` : did}
+                  <Badge
+                    variant="outline"
+                    className="font-mono text-xs py-1 max-w-[280px] truncate"
+                  >
+                    {did.length > 30
+                      ? `${did.slice(0, 20)}...${did.slice(-8)}`
+                      : did}
                   </Badge>
-                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={copyDid}>
-                    {copied ? <CheckCircle2 className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={copyDid}
+                  >
+                    {copied ? (
+                      <CheckCircle2 className="w-3 h-3 text-green-500" />
+                    ) : (
+                      <Copy className="w-3 h-3" />
+                    )}
                   </Button>
                 </div>
               </div>
@@ -130,7 +153,6 @@ export default function ProfilePage() {
           {/* Content Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2 space-y-6">
-
               {/* Verified Credentials */}
               <Card>
                 <CardHeader>
@@ -138,7 +160,9 @@ export default function ProfilePage() {
                     <ShieldCheck className="w-5 h-5" />
                     Verified Credentials
                   </CardTitle>
-                  <CardDescription>On-chain verified credentials from trusted issuers.</CardDescription>
+                  <CardDescription>
+                    On-chain verified credentials from trusted issuers.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {isLoading ? (
@@ -154,14 +178,26 @@ export default function ProfilePage() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <h3 className="font-semibold truncate">{cred.data?.name || cred.type[1] || 'Credential'}</h3>
-                              <Badge variant="secondary" className={`text-xs ${cred.anchorStatus === 'anchored' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
-                                {cred.anchorStatus === 'anchored' ? '⛓ Verified' : '⏳ Pending'}
+                              <h3 className="font-semibold truncate">
+                                {cred.data?.name ||
+                                  cred.type[1] ||
+                                  "Credential"}
+                              </h3>
+                              <Badge
+                                variant="secondary"
+                                className={`text-xs ${cred.anchorStatus === "anchored" ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"}`}
+                              >
+                                {cred.anchorStatus === "anchored"
+                                  ? "⛓ Verified"
+                                  : "⏳ Pending"}
                               </Badge>
                             </div>
-                            <p className="text-sm text-muted-foreground">{cred.issuer}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {cred.issuer}
+                            </p>
                             <p className="text-xs text-muted-foreground mt-1">
-                              Issued: {new Date(cred.issuanceDate).toLocaleDateString()}
+                              Issued:{" "}
+                              {new Date(cred.issuanceDate).toLocaleDateString()}
                             </p>
                           </div>
                         </div>
@@ -169,7 +205,9 @@ export default function ProfilePage() {
                     ))
                   ) : (
                     <div className="text-center py-8 space-y-4">
-                      <p className="text-muted-foreground text-sm">No verified credentials yet.</p>
+                      <p className="text-muted-foreground text-sm">
+                        No verified credentials yet.
+                      </p>
                       <Link href="/receive">
                         <Button className="bg-gradient-to-r from-blue-600 to-indigo-600">
                           Add Credential
@@ -190,13 +228,24 @@ export default function ProfilePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
-                    {credentials.filter(c => c.category === 'skill').map(cred => (
-                      <Badge key={cred.id} className="px-3 py-1 bg-green-100 text-green-800 hover:bg-green-200">
-                        ✓ {cred.data?.name || 'Skill'}
+                    {credentials
+                      .filter((c) => c.category === "skill")
+                      .map((cred) => (
+                        <Badge
+                          key={cred.id}
+                          className="px-3 py-1 bg-green-100 text-green-800 hover:bg-green-200"
+                        >
+                          ✓ {cred.data?.name || "Skill"}
+                        </Badge>
+                      ))}
+                    {["React", "TypeScript", "Node.js", "Web3"].map((skill) => (
+                      <Badge
+                        key={skill}
+                        variant="secondary"
+                        className="px-3 py-1"
+                      >
+                        {skill}
                       </Badge>
-                    ))}
-                    {["React", "TypeScript", "Node.js", "Web3"].map(skill => (
-                      <Badge key={skill} variant="secondary" className="px-3 py-1">{skill}</Badge>
                     ))}
                   </div>
                 </CardContent>
@@ -213,15 +262,21 @@ export default function ProfilePage() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {Object.entries(stats.byCategory).map(([category, count]) => (
-                        <Link key={category} href={`/?category=${category}`}>
-                          <div className="p-4 border rounded-lg hover:border-primary/50 cursor-pointer transition-colors text-center">
-                            <div className="text-2xl mb-2">{getCategoryIcon(category)}</div>
-                            <p className="font-bold text-xl">{count}</p>
-                            <p className="text-xs text-muted-foreground capitalize">{category}</p>
-                          </div>
-                        </Link>
-                      ))}
+                      {Object.entries(stats.byCategory).map(
+                        ([category, count]) => (
+                          <Link key={category} href={`/?category=${category}`}>
+                            <div className="p-4 border rounded-lg hover:border-primary/50 cursor-pointer transition-colors text-center">
+                              <div className="text-2xl mb-2">
+                                {getCategoryIcon(category)}
+                              </div>
+                              <p className="font-bold text-xl">{count}</p>
+                              <p className="text-xs text-muted-foreground capitalize">
+                                {category}
+                              </p>
+                            </div>
+                          </Link>
+                        ),
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -237,14 +292,17 @@ export default function ProfilePage() {
                 <CardContent>
                   <div className="text-5xl font-bold mb-2">{trustScore}</div>
                   <p className="text-sm opacity-80">
-                    Based on {credentials.length} verified credentials and {stats.totalVerifications || 0} verifications.
+                    Based on {credentials.length} verified credentials and{" "}
+                    {stats.totalVerifications || 0} verifications.
                   </p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm font-medium uppercase text-muted-foreground">Wallet Stats</CardTitle>
+                  <CardTitle className="text-sm font-medium uppercase text-muted-foreground">
+                    Wallet Stats
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex justify-between items-center p-2 bg-secondary/30 rounded">
@@ -257,14 +315,18 @@ export default function ProfilePage() {
                   </div>
                   <div className="flex justify-between items-center p-2 bg-secondary/30 rounded">
                     <span className="text-sm">Verifications</span>
-                    <Badge variant="outline">{stats.totalVerifications || 0}</Badge>
+                    <Badge variant="outline">
+                      {stats.totalVerifications || 0}
+                    </Badge>
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm font-medium uppercase text-muted-foreground">Quick Actions</CardTitle>
+                  <CardTitle className="text-sm font-medium uppercase text-muted-foreground">
+                    Quick Actions
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <Link href="/settings">
@@ -286,7 +348,6 @@ export default function ProfilePage() {
               </Card>
             </div>
           </div>
-
         </div>
       </div>
     </div>

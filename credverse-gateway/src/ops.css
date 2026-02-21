@@ -4,9 +4,21 @@
   min-height: 100vh;
   padding: 28px 18px 52px;
   background:
-    radial-gradient(1200px 600px at 10% 10%, rgba(37, 99, 235, 0.22), transparent 60%),
-    radial-gradient(900px 540px at 90% 20%, rgba(16, 185, 129, 0.16), transparent 55%),
-    radial-gradient(1200px 680px at 40% 110%, rgba(245, 158, 11, 0.12), transparent 55%),
+    radial-gradient(
+      1200px 600px at 10% 10%,
+      rgba(37, 99, 235, 0.22),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 540px at 90% 20%,
+      rgba(16, 185, 129, 0.16),
+      transparent 55%
+    ),
+    radial-gradient(
+      1200px 680px at 40% 110%,
+      rgba(245, 158, 11, 0.12),
+      transparent 55%
+    ),
     #05070d;
   color: #eaf0ff;
 }
@@ -202,7 +214,9 @@
 }
 
 .mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
 }
 
 .pill {

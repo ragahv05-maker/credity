@@ -7,6 +7,7 @@ Scope lock: ZK-native Option A only (circom + snarkjs + Groth16 verifier path fo
 ## 1) Implemented in this batch (repo edits completed)
 
 ### A. New Circom circuits
+
 - `zk/circuits/lib/comparators.circom`
   - Local comparator primitives (`Num2Bits`, `LessThan`, `GreaterEq`, `LessEq`) to remove external dependency for first pass.
 - `zk/circuits/score_threshold.circom`
@@ -23,6 +24,7 @@ Scope lock: ZK-native Option A only (circom + snarkjs + Groth16 verifier path fo
   - Private inputs: `scores[5]`, `include[5]`, `salt`
 
 ### B. snarkjs integration scripts
+
 - `zk/package.json`
   - Added scripts for circuit build, Groth16 setup, proof generation/verification, solidity verifier export.
 - `zk/scripts/setup-groth16.mjs`
@@ -35,6 +37,7 @@ Scope lock: ZK-native Option A only (circom + snarkjs + Groth16 verifier path fo
   - Exports verifier Solidity contract into issuer contracts tree.
 
 ### C. Polygon zkEVM compatible verifier integration (Solidity)
+
 - `CredVerseIssuer 3/contracts/contracts/zk/IGroth16Verifier.sol`
   - Interface compatible with Groth16 `verifyProof` tuple format.
 - `CredVerseIssuer 3/contracts/contracts/zk/ReputationVerifier.sol`
@@ -44,6 +47,7 @@ Scope lock: ZK-native Option A only (circom + snarkjs + Groth16 verifier path fo
   - Test double for deterministic contract tests.
 
 ### D. Tests / quality gates
+
 - `zk/tests/circuit-spec.test.mjs`
   - Structural tests asserting non-negotiable constraints are encoded in each circuit.
 - `CredVerseIssuer 3/contracts/test/ReputationVerifier.test.js`
@@ -56,12 +60,14 @@ Scope lock: ZK-native Option A only (circom + snarkjs + Groth16 verifier path fo
 ## 2) Tests planned/executable for this batch
 
 ### A. Execute now (no new dependencies)
+
 1. `cd /Users/raghav/Desktop/credity/zk && npm test`
    - Verifies circuit files + critical constraint snippets exist.
 2. `cd "/Users/raghav/Desktop/credity/CredVerseIssuer 3/contracts" && npm test -- test/ReputationVerifier.test.js`
    - Verifies on-chain proof lifecycle contract behavior.
 
 ### B. Execute after toolchain availability (`circom`, `snarkjs`, ptau)
+
 1. `cd /Users/raghav/Desktop/credity/zk && npm run build:circuits`
 2. Place `powersOfTau28_hez_final_12.ptau` at:
    - `zk/artifacts/powersOfTau28_hez_final_12.ptau`

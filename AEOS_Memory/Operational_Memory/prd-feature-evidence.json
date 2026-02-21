@@ -55,33 +55,23 @@
     },
     "TenantScore (Rental Housing Verification)": {
       "note": "Hard blocker: vertical not implemented (no tenantscore namespace/routes/services/tests).",
-      "evidence": [
-        "swarm/reports/prd-gap-matrix-credity12.md"
-      ]
+      "evidence": ["swarm/reports/prd-gap-matrix-credity12.md"]
     },
     "HealthScore (Healthcare/Telemedicine Trust)": {
       "note": "Hard blocker: vertical not implemented (no healthscore namespace/routes/services/tests).",
-      "evidence": [
-        "swarm/reports/prd-gap-matrix-credity12.md"
-      ]
+      "evidence": ["swarm/reports/prd-gap-matrix-credity12.md"]
     },
     "TutorScore (Education Marketplace Verification)": {
       "note": "Hard blocker: vertical not implemented (no tutorscore namespace/routes/services/tests).",
-      "evidence": [
-        "swarm/reports/prd-gap-matrix-credity12.md"
-      ]
+      "evidence": ["swarm/reports/prd-gap-matrix-credity12.md"]
     },
     "HomeWorkerScore (Domestic Services Verification)": {
       "note": "Hard blocker: vertical not implemented (no homeworkerscore namespace/routes/services/tests).",
-      "evidence": [
-        "swarm/reports/prd-gap-matrix-credity12.md"
-      ]
+      "evidence": ["swarm/reports/prd-gap-matrix-credity12.md"]
     },
     "TrustScore for Lending (Alternative Credit)": {
       "note": "Hard blocker: vertical not implemented (no lending trustscore namespace/routes/services/tests).",
-      "evidence": [
-        "swarm/reports/prd-gap-matrix-credity12.md"
-      ]
+      "evidence": ["swarm/reports/prd-gap-matrix-credity12.md"]
     },
     "Trust Score Calculation": {
       "note": "Trust score API surface exists; explicit <1s and <5 min update SLA evidence remains missing.",

@@ -42,19 +42,26 @@ function getWalletBaseUrl(): string {
 router.get("/claims", async (req, res) => {
   try {
     const period = parsePeriod(req.query.period);
-    const limit = Math.min(Math.max(parseInt(String(req.query.limit ?? "100"), 10) || 100, 1), 500);
+    const limit = Math.min(
+      Math.max(parseInt(String(req.query.limit ?? "100"), 10) || 100, 1),
+      500,
+    );
 
     const walletUrl = `${getWalletBaseUrl()}/api/v1/claims?limit=${encodeURIComponent(String(limit))}&offset=0`;
     const upstream = await fetch(walletUrl, {
       headers: {
         "content-type": "application/json",
-        ...(req.headers["x-request-id"] ? { "x-request-id": String(req.headers["x-request-id"]) } : {}),
+        ...(req.headers["x-request-id"]
+          ? { "x-request-id": String(req.headers["x-request-id"]) }
+          : {}),
       },
     });
 
     if (!upstream.ok) {
       const text = await upstream.text();
-      return res.status(upstream.status).send(text || "Upstream claims service unavailable");
+      return res
+        .status(upstream.status)
+        .send(text || "Upstream claims service unavailable");
     }
 
     const body = (await upstream.json()) as any;
@@ -62,7 +69,8 @@ router.get("/claims", async (req, res) => {
 
     const cutoff = periodCutoff(period);
     const filtered = claims.filter((c) => {
-      const createdAt = typeof c?.created_at === "string" ? Date.parse(c.created_at) : NaN;
+      const createdAt =
+        typeof c?.created_at === "string" ? Date.parse(c.created_at) : NaN;
       if (!Number.isFinite(createdAt)) return true;
       return createdAt >= cutoff;
     });
@@ -71,13 +79,18 @@ router.get("/claims", async (req, res) => {
       total: filtered.length,
       approved: filtered.filter((c) => c?.recommendation === "approve").length,
       review: filtered.filter((c) => c?.recommendation === "review").length,
-      investigate: filtered.filter((c) => c?.recommendation === "investigate").length,
+      investigate: filtered.filter((c) => c?.recommendation === "investigate")
+        .length,
       rejected: filtered.filter((c) => c?.recommendation === "reject").length,
       avgTrustScore:
         filtered.length > 0
           ? Math.round(
-              filtered.reduce((sum, c) => sum + (typeof c?.trust_score === "number" ? c.trust_score : 0), 0) /
-                filtered.length
+              filtered.reduce(
+                (sum, c) =>
+                  sum +
+                  (typeof c?.trust_score === "number" ? c.trust_score : 0),
+                0,
+              ) / filtered.length,
             )
           : 0,
     };

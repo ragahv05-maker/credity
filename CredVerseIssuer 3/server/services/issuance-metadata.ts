@@ -18,9 +18,9 @@ export type IssuanceEvidenceMetadata = {
 export function normalizeCredentialType(input: string): string {
   return String(input)
     .trim()
-    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
-    .replace(/[^a-zA-Z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '')
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .replace(/[^a-zA-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
     .toLowerCase();
 }
 
@@ -32,13 +32,20 @@ export function buildIssuanceEvidenceMetadata(
     : new Date();
   const issuedAt = issuedAtDate.toISOString();
 
-  const rawTypes = [params.credentialType, ...(params.additionalCredentialTypes ?? [])]
-    .map((type) => String(type || '').trim())
+  const rawTypes = [
+    params.credentialType,
+    ...(params.additionalCredentialTypes ?? []),
+  ]
+    .map((type) => String(type || "").trim())
     .filter((type) => type.length > 0);
 
   const credentialTypes = Array.from(new Set(rawTypes));
   const credentialTypesNormalized = Array.from(
-    new Set(credentialTypes.map((type) => normalizeCredentialType(type)).filter((type) => type.length > 0)),
+    new Set(
+      credentialTypes
+        .map((type) => normalizeCredentialType(type))
+        .filter((type) => type.length > 0),
+    ),
   );
 
   return {

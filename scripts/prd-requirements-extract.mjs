@@ -14,25 +14,30 @@
  * - credverse-gateway/public/progress/prd-requirements.json (computed %)
  */
 
-import fs from 'node:fs';
-import path from 'node:path';
+import fs from "node:fs";
+import path from "node:path";
 
 const ROOT = path.resolve(process.cwd());
-const prdPath = path.join(ROOT, 'information__critical ', 'PRD.md');
-const statusPath = path.join(ROOT, 'AEOS_Memory', 'Operational_Memory', 'prd-requirements-status.json');
-const outDir = path.join(ROOT, 'credverse-gateway', 'public', 'progress');
-const outPath = path.join(outDir, 'prd-requirements.json');
+const prdPath = path.join(ROOT, "information__critical ", "PRD.md");
+const statusPath = path.join(
+  ROOT,
+  "AEOS_Memory",
+  "Operational_Memory",
+  "prd-requirements-status.json",
+);
+const outDir = path.join(ROOT, "credverse-gateway", "public", "progress");
+const outPath = path.join(outDir, "prd-requirements.json");
 
-const prd = fs.readFileSync(prdPath, 'utf8');
+const prd = fs.readFileSync(prdPath, "utf8");
 
 const featureRe = /^#### Feature\s+(\d+)\s*:\s*(.+?)\s*$/gm;
 
 function slug(s) {
   return s
     .toLowerCase()
-    .replace(/🆕/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')
+    .replace(/🆕/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
     .slice(0, 80);
 }
 
@@ -61,8 +66,8 @@ function extractRequirements(block) {
   for (const line of section.split(/\r?\n/)) {
     const t = line.trim();
     // bullets like "- something" or numbered list "1. thing"
-    if (t.startsWith('- ')) reqs.push(t.slice(2).trim());
-    else if (/^\d+\.\s+/.test(t)) reqs.push(t.replace(/^\d+\.\s+/, '').trim());
+    if (t.startsWith("- ")) reqs.push(t.slice(2).trim());
+    else if (/^\d+\.\s+/.test(t)) reqs.push(t.replace(/^\d+\.\s+/, "").trim());
   }
 
   // Deduplicate and drop too-short noise.
@@ -82,7 +87,7 @@ const extracted = [];
 for (const f of features) {
   const reqs = extractRequirements(f.block);
   for (let i = 0; i < reqs.length; i++) {
-    const rid = `F${f.num}-${String(i + 1).padStart(3, '0')}`;
+    const rid = `F${f.num}-${String(i + 1).padStart(3, "0")}`;
     extracted.push({
       id: rid,
       feature: f.name,
@@ -93,13 +98,17 @@ for (const f of features) {
 }
 
 // Load or initialize status store
-let status = { generatedAt: new Date().toISOString(), scale: { DONE: 1, PARTIAL: 0.5, NOT_STARTED: 0 }, items: {} };
+let status = {
+  generatedAt: new Date().toISOString(),
+  scale: { DONE: 1, PARTIAL: 0.5, NOT_STARTED: 0 },
+  items: {},
+};
 if (fs.existsSync(statusPath)) {
-  status = JSON.parse(fs.readFileSync(statusPath, 'utf8'));
+  status = JSON.parse(fs.readFileSync(statusPath, "utf8"));
 }
 
 for (const it of extracted) {
-  if (!status.items[it.key]) status.items[it.key] = 'NOT_STARTED';
+  if (!status.items[it.key]) status.items[it.key] = "NOT_STARTED";
 }
 
 // Compute completion
@@ -108,14 +117,15 @@ let total = 0;
 let achieved = 0;
 for (const it of extracted) {
   total += 1;
-  const st = status.items[it.key] || 'NOT_STARTED';
+  const st = status.items[it.key] || "NOT_STARTED";
   achieved += scoreMap[st] ?? 0;
 }
 const pct = total ? Math.round((achieved / total) * 1000) / 10 : 0;
 
 const out = {
   generatedAt: new Date().toISOString(),
-  method: 'requirement-level (heuristic extraction from PRD Feature Requirements)',
+  method:
+    "requirement-level (heuristic extraction from PRD Feature Requirements)",
   totalRequirements: total,
   achievedScore: achieved,
   prdRequirementsCompletionPct: pct,
@@ -123,7 +133,7 @@ const out = {
     id: it.id,
     feature: it.feature,
     requirement: it.text,
-    status: status.items[it.key] || 'NOT_STARTED',
+    status: status.items[it.key] || "NOT_STARTED",
   })),
 };
 
@@ -132,4 +142,6 @@ fs.writeFileSync(statusPath, JSON.stringify(status, null, 2));
 fs.mkdirSync(outDir, { recursive: true });
 fs.writeFileSync(outPath, JSON.stringify(out, null, 2));
 
-console.log(`Extracted ${total} requirements. Completion=${pct}%. Wrote:\n- ${path.relative(ROOT, statusPath)}\n- ${path.relative(ROOT, outPath)}`);
+console.log(
+  `Extracted ${total} requirements. Completion=${pct}%. Wrote:\n- ${path.relative(ROOT, statusPath)}\n- ${path.relative(ROOT, outPath)}`,
+);

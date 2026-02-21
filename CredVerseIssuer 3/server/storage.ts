@@ -1,4 +1,17 @@
-import { type User, type InsertUser, type Tenant, type InsertTenant, type ApiKey, type InsertApiKey, type Issuer, type InsertIssuer, type Template, type InsertTemplate, type Credential, type InsertCredential } from "@shared/schema";
+import {
+  type User,
+  type InsertUser,
+  type Tenant,
+  type InsertTenant,
+  type ApiKey,
+  type InsertApiKey,
+  type Issuer,
+  type InsertIssuer,
+  type Template,
+  type InsertTemplate,
+  type Credential,
+  type InsertCredential,
+} from "@shared/schema";
 import { randomUUID } from "crypto";
 import { PostgresStateStore } from "@credverse/shared-auth";
 
@@ -162,8 +175,11 @@ export class MemStorage implements IStorage {
     });
 
     // Seed API key only for explicit bootstrap/test use.
-    const isTestEnv = process.env.NODE_ENV === "test" || process.env.VITEST === "true";
-    const bootstrapApiKey = process.env.ISSUER_BOOTSTRAP_API_KEY || (isTestEnv ? "test-api-key" : null);
+    const isTestEnv =
+      process.env.NODE_ENV === "test" || process.env.VITEST === "true";
+    const bootstrapApiKey =
+      process.env.ISSUER_BOOTSTRAP_API_KEY ||
+      (isTestEnv ? "test-api-key" : null);
     if (bootstrapApiKey) {
       this.apiKeys.set("key-1", {
         id: "key-1",
@@ -171,17 +187,57 @@ export class MemStorage implements IStorage {
         keyHash: bootstrapApiKey,
         permissions: ["all"],
         expiresAt: null,
-        createdAt: new Date()
+        createdAt: new Date(),
       });
     }
 
     // Seed Students
     const sampleStudents: Omit<Student, "id" | "createdAt">[] = [
-      { tenantId, name: "Aditi Sharma", email: "aditi.sharma@email.com", studentId: "STU-001", program: "B.Tech Computer Science", enrollmentYear: "2021", status: "Active" },
-      { tenantId, name: "Rahul Gupta", email: "rahul.g@email.com", studentId: "STU-002", program: "MBA Finance", enrollmentYear: "2022", status: "Active" },
-      { tenantId, name: "Priya Singh", email: "priya.s@email.com", studentId: "STU-003", program: "B.Tech Electronics", enrollmentYear: "2020", status: "Alumni" },
-      { tenantId, name: "Vikram Patel", email: "vikram.p@email.com", studentId: "STU-004", program: "M.Tech AI/ML", enrollmentYear: "2023", status: "Active" },
-      { tenantId, name: "Sneha Reddy", email: "sneha.r@email.com", studentId: "STU-005", program: "B.Com Honors", enrollmentYear: "2021", status: "Active" },
+      {
+        tenantId,
+        name: "Aditi Sharma",
+        email: "aditi.sharma@email.com",
+        studentId: "STU-001",
+        program: "B.Tech Computer Science",
+        enrollmentYear: "2021",
+        status: "Active",
+      },
+      {
+        tenantId,
+        name: "Rahul Gupta",
+        email: "rahul.g@email.com",
+        studentId: "STU-002",
+        program: "MBA Finance",
+        enrollmentYear: "2022",
+        status: "Active",
+      },
+      {
+        tenantId,
+        name: "Priya Singh",
+        email: "priya.s@email.com",
+        studentId: "STU-003",
+        program: "B.Tech Electronics",
+        enrollmentYear: "2020",
+        status: "Alumni",
+      },
+      {
+        tenantId,
+        name: "Vikram Patel",
+        email: "vikram.p@email.com",
+        studentId: "STU-004",
+        program: "M.Tech AI/ML",
+        enrollmentYear: "2023",
+        status: "Active",
+      },
+      {
+        tenantId,
+        name: "Sneha Reddy",
+        email: "sneha.r@email.com",
+        studentId: "STU-005",
+        program: "B.Com Honors",
+        enrollmentYear: "2021",
+        status: "Active",
+      },
     ];
     sampleStudents.forEach((s, i) => {
       const id = `student-${i + 1}`;
@@ -190,14 +246,43 @@ export class MemStorage implements IStorage {
 
     // Seed Team Members
     const sampleTeam: Omit<TeamMember, "id" | "invitedAt" | "joinedAt">[] = [
-      { tenantId, name: "Admin User", email: "admin@university.edu", role: "Admin", status: "Active" },
-      { tenantId, name: "Sarah Jenkins", email: "sarah.j@university.edu", role: "Issuer", status: "Active" },
-      { tenantId, name: "Dr. K. Mehta", email: "dean.academics@university.edu", role: "Issuer", status: "Active" },
-      { tenantId, name: "Registrar Office", email: "registrar@university.edu", role: "Viewer", status: "Active" },
+      {
+        tenantId,
+        name: "Admin User",
+        email: "admin@university.edu",
+        role: "Admin",
+        status: "Active",
+      },
+      {
+        tenantId,
+        name: "Sarah Jenkins",
+        email: "sarah.j@university.edu",
+        role: "Issuer",
+        status: "Active",
+      },
+      {
+        tenantId,
+        name: "Dr. K. Mehta",
+        email: "dean.academics@university.edu",
+        role: "Issuer",
+        status: "Active",
+      },
+      {
+        tenantId,
+        name: "Registrar Office",
+        email: "registrar@university.edu",
+        role: "Viewer",
+        status: "Active",
+      },
     ];
     sampleTeam.forEach((t, i) => {
       const id = `team-${i + 1}`;
-      this.teamMembers.set(id, { ...t, id, invitedAt: new Date(), joinedAt: new Date() });
+      this.teamMembers.set(id, {
+        ...t,
+        id,
+        invitedAt: new Date(),
+        joinedAt: new Date(),
+      });
     });
 
     // Seed Default Issuer (Demo University)
@@ -207,24 +292,95 @@ export class MemStorage implements IStorage {
       name: "Demo University",
       domain: "university.edu",
       trustStatus: "trusted",
-      meta: { logo: "https://via.placeholder.com/50", description: "Official Demo University Issuer" },
+      meta: {
+        logo: "https://via.placeholder.com/50",
+        description: "Official Demo University Issuer",
+      },
       tenantId: tenantId,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
     this.issuers.set(demoIssuer.id, demoIssuer);
 
     // Seed Template Designs
-    const sampleTemplates: Omit<TemplateDesign, "id" | "createdAt" | "updatedAt">[] = [
-      { tenantId, name: "Degree Certificate 2025", category: "Education", type: "A4 Landscape", status: "Active", fields: [], backgroundColor: "#ffffff", width: 842, height: 595 },
-      { tenantId, name: "Semester Grade Card", category: "Education", type: "A4 Portrait", status: "Active", fields: [], backgroundColor: "#ffffff", width: 595, height: 842 },
-      { tenantId, name: "Course Completion", category: "Education", type: "Letter Landscape", status: "Draft", fields: [], backgroundColor: "#ffffff", width: 792, height: 612 },
-      { tenantId, name: "Medical Lab Report", category: "Healthcare", type: "A4 Portrait", status: "Active", fields: [], backgroundColor: "#ffffff", width: 595, height: 842 },
-      { tenantId, name: "ISO 9001 Compliance", category: "Manufacturing", type: "Certificate", status: "Active", fields: [], backgroundColor: "#ffffff", width: 842, height: 595 },
-      { tenantId, name: "Employee ID Card", category: "Corporate", type: "ID Card", status: "Active", fields: [], backgroundColor: "#ffffff", width: 324, height: 204 },
+    const sampleTemplates: Omit<
+      TemplateDesign,
+      "id" | "createdAt" | "updatedAt"
+    >[] = [
+      {
+        tenantId,
+        name: "Degree Certificate 2025",
+        category: "Education",
+        type: "A4 Landscape",
+        status: "Active",
+        fields: [],
+        backgroundColor: "#ffffff",
+        width: 842,
+        height: 595,
+      },
+      {
+        tenantId,
+        name: "Semester Grade Card",
+        category: "Education",
+        type: "A4 Portrait",
+        status: "Active",
+        fields: [],
+        backgroundColor: "#ffffff",
+        width: 595,
+        height: 842,
+      },
+      {
+        tenantId,
+        name: "Course Completion",
+        category: "Education",
+        type: "Letter Landscape",
+        status: "Draft",
+        fields: [],
+        backgroundColor: "#ffffff",
+        width: 792,
+        height: 612,
+      },
+      {
+        tenantId,
+        name: "Medical Lab Report",
+        category: "Healthcare",
+        type: "A4 Portrait",
+        status: "Active",
+        fields: [],
+        backgroundColor: "#ffffff",
+        width: 595,
+        height: 842,
+      },
+      {
+        tenantId,
+        name: "ISO 9001 Compliance",
+        category: "Manufacturing",
+        type: "Certificate",
+        status: "Active",
+        fields: [],
+        backgroundColor: "#ffffff",
+        width: 842,
+        height: 595,
+      },
+      {
+        tenantId,
+        name: "Employee ID Card",
+        category: "Corporate",
+        type: "ID Card",
+        status: "Active",
+        fields: [],
+        backgroundColor: "#ffffff",
+        width: 324,
+        height: 204,
+      },
     ];
     sampleTemplates.forEach((t, i) => {
       const id = `template-design-${i + 1}`;
-      this.templateDesigns.set(id, { ...t, id, createdAt: new Date(), updatedAt: new Date() });
+      this.templateDesigns.set(id, {
+        ...t,
+        id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
     });
 
     // Verification logs - no seed data, only real verifications will appear
@@ -240,11 +396,10 @@ export class MemStorage implements IStorage {
         createdAt: new Date(),
         version: "1.0.0",
         schema: "credential-schema-v1",
-        disclosure: {}
+        disclosure: {},
       } as any);
     });
   }
-
 
   // User
   async getUser(id: string): Promise<User | undefined> {
@@ -259,7 +414,13 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
-    const user: User = { ...insertUser, id, role: insertUser.role || "user", tenantId: insertUser.tenantId || null, createdAt: new Date() };
+    const user: User = {
+      ...insertUser,
+      id,
+      role: insertUser.role || "user",
+      tenantId: insertUser.tenantId || null,
+      createdAt: new Date(),
+    };
     this.users.set(id, user);
     return user;
   }
@@ -271,7 +432,12 @@ export class MemStorage implements IStorage {
 
   async createTenant(insertTenant: InsertTenant): Promise<Tenant> {
     const id = randomUUID();
-    const tenant: Tenant = { ...insertTenant, id, createdAt: new Date(), plan: "free" };
+    const tenant: Tenant = {
+      ...insertTenant,
+      id,
+      createdAt: new Date(),
+      plan: "free",
+    };
     this.tenants.set(id, tenant);
     return tenant;
   }
@@ -279,7 +445,7 @@ export class MemStorage implements IStorage {
   // API Key
   async getApiKey(keyHash: string): Promise<ApiKey | undefined> {
     return Array.from(this.apiKeys.values()).find(
-      (key) => key.keyHash === keyHash
+      (key) => key.keyHash === keyHash,
     );
   }
 
@@ -290,7 +456,7 @@ export class MemStorage implements IStorage {
       id,
       createdAt: new Date(),
       permissions: insertApiKey.permissions ?? [],
-      expiresAt: insertApiKey.expiresAt ?? null
+      expiresAt: insertApiKey.expiresAt ?? null,
     };
     this.apiKeys.set(id, apiKey);
     return apiKey;
@@ -302,7 +468,7 @@ export class MemStorage implements IStorage {
   }
 
   async getIssuerByDid(did: string): Promise<Issuer | undefined> {
-    return Array.from(this.issuers.values()).find(i => i.did === did);
+    return Array.from(this.issuers.values()).find((i) => i.did === did);
   }
 
   async createIssuer(insertIssuer: InsertIssuer): Promise<Issuer> {
@@ -315,7 +481,7 @@ export class MemStorage implements IStorage {
       did: insertIssuer.did ?? null,
       trustStatus: "pending",
       meta: insertIssuer.meta ?? null,
-      createdAt: new Date()
+      createdAt: new Date(),
     };
     this.issuers.set(id, issuer);
     return issuer;
@@ -323,7 +489,7 @@ export class MemStorage implements IStorage {
 
   async listIssuers(tenantId: string): Promise<Issuer[]> {
     return Array.from(this.issuers.values()).filter(
-      (issuer) => issuer.tenantId === tenantId
+      (issuer) => issuer.tenantId === tenantId,
     );
   }
 
@@ -339,7 +505,7 @@ export class MemStorage implements IStorage {
       id,
       createdAt: new Date(),
       version: insertTemplate.version ?? "1.0.0",
-      disclosure: insertTemplate.disclosure ?? {}
+      disclosure: insertTemplate.disclosure ?? {},
     };
     this.templates.set(id, template);
     return template;
@@ -347,7 +513,7 @@ export class MemStorage implements IStorage {
 
   async listTemplates(tenantId: string): Promise<Template[]> {
     return Array.from(this.templates.values()).filter(
-      (template) => template.tenantId === tenantId
+      (template) => template.tenantId === tenantId,
     );
   }
 
@@ -357,10 +523,14 @@ export class MemStorage implements IStorage {
   }
 
   async getCredentialByVcJwt(vcJwt: string): Promise<Credential | undefined> {
-    return Array.from(this.credentials.values()).find((credential) => credential.vcJwt === vcJwt);
+    return Array.from(this.credentials.values()).find(
+      (credential) => credential.vcJwt === vcJwt,
+    );
   }
 
-  async createCredential(insertCredential: InsertCredential): Promise<Credential> {
+  async createCredential(
+    insertCredential: InsertCredential,
+  ): Promise<Credential> {
     const id = randomUUID();
     const credential: Credential = {
       ...insertCredential,
@@ -381,7 +551,7 @@ export class MemStorage implements IStorage {
       revoked: false,
       txHash: null,
       blockNumber: null,
-      credentialHash: null
+      credentialHash: null,
     };
     this.credentials.set(id, credential);
     return credential;
@@ -389,7 +559,7 @@ export class MemStorage implements IStorage {
 
   async listCredentials(tenantId: string): Promise<Credential[]> {
     return Array.from(this.credentials.values()).filter(
-      (credential) => credential.tenantId === tenantId
+      (credential) => credential.tenantId === tenantId,
     );
   }
 
@@ -401,7 +571,10 @@ export class MemStorage implements IStorage {
     }
   }
 
-  async updateCredentialBlockchain(id: string, data: { txHash?: string; blockNumber?: number; credentialHash?: string }): Promise<void> {
+  async updateCredentialBlockchain(
+    id: string,
+    data: { txHash?: string; blockNumber?: number; credentialHash?: string },
+  ): Promise<void> {
     const credential = this.credentials.get(id);
     if (credential) {
       (credential as any).txHash = data.txHash;
@@ -411,7 +584,13 @@ export class MemStorage implements IStorage {
     }
   }
 
-  async createActivityLog(data: { tenantId: string; type: string; title: string; description: string; metadata?: any }): Promise<void> {
+  async createActivityLog(data: {
+    tenantId: string;
+    type: string;
+    title: string;
+    description: string;
+    metadata?: any;
+  }): Promise<void> {
     const id = randomUUID();
     const log = {
       id,
@@ -423,21 +602,28 @@ export class MemStorage implements IStorage {
 
   // ==================== STUDENTS ====================
   async listStudents(tenantId: string): Promise<Student[]> {
-    return Array.from(this.students.values()).filter(s => s.tenantId === tenantId);
+    return Array.from(this.students.values()).filter(
+      (s) => s.tenantId === tenantId,
+    );
   }
 
   async getStudent(id: string): Promise<Student | undefined> {
     return this.students.get(id);
   }
 
-  async createStudent(data: Omit<Student, "id" | "createdAt">): Promise<Student> {
+  async createStudent(
+    data: Omit<Student, "id" | "createdAt">,
+  ): Promise<Student> {
     const id = randomUUID();
     const student: Student = { ...data, id, createdAt: new Date() };
     this.students.set(id, student);
     return student;
   }
 
-  async updateStudent(id: string, data: Partial<Student>): Promise<Student | undefined> {
+  async updateStudent(
+    id: string,
+    data: Partial<Student>,
+  ): Promise<Student | undefined> {
     const student = this.students.get(id);
     if (!student) return undefined;
     const updated = { ...student, ...data };
@@ -449,27 +635,42 @@ export class MemStorage implements IStorage {
     return this.students.delete(id);
   }
 
-  async bulkCreateStudents(students: Omit<Student, "id" | "createdAt">[]): Promise<Student[]> {
-    return Promise.all(students.map(s => this.createStudent(s)));
+  async bulkCreateStudents(
+    students: Omit<Student, "id" | "createdAt">[],
+  ): Promise<Student[]> {
+    return Promise.all(students.map((s) => this.createStudent(s)));
   }
 
   // ==================== TEAM MEMBERS ====================
   async listTeamMembers(tenantId: string): Promise<TeamMember[]> {
-    return Array.from(this.teamMembers.values()).filter(t => t.tenantId === tenantId);
+    return Array.from(this.teamMembers.values()).filter(
+      (t) => t.tenantId === tenantId,
+    );
   }
 
   async getTeamMember(id: string): Promise<TeamMember | undefined> {
     return this.teamMembers.get(id);
   }
 
-  async createTeamMember(data: Omit<TeamMember, "id" | "invitedAt" | "joinedAt">): Promise<TeamMember> {
+  async createTeamMember(
+    data: Omit<TeamMember, "id" | "invitedAt" | "joinedAt">,
+  ): Promise<TeamMember> {
     const id = randomUUID();
-    const member: TeamMember = { ...data, id, invitedAt: new Date(), joinedAt: null, status: "Pending" };
+    const member: TeamMember = {
+      ...data,
+      id,
+      invitedAt: new Date(),
+      joinedAt: null,
+      status: "Pending",
+    };
     this.teamMembers.set(id, member);
     return member;
   }
 
-  async updateTeamMember(id: string, data: Partial<TeamMember>): Promise<TeamMember | undefined> {
+  async updateTeamMember(
+    id: string,
+    data: Partial<TeamMember>,
+  ): Promise<TeamMember | undefined> {
     const member = this.teamMembers.get(id);
     if (!member) return undefined;
     const updated = { ...member, ...data };
@@ -484,7 +685,7 @@ export class MemStorage implements IStorage {
   // ==================== VERIFICATION LOGS ====================
   async listVerificationLogs(tenantId: string): Promise<VerificationLog[]> {
     return Array.from(this.verificationLogs.values())
-      .filter(l => l.tenantId === tenantId)
+      .filter((l) => l.tenantId === tenantId)
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   }
 
@@ -512,36 +713,49 @@ export class MemStorage implements IStorage {
     return log;
   }
 
-
-  async getVerificationStats(tenantId: string): Promise<{ total: number; today: number; suspicious: number }> {
+  async getVerificationStats(
+    tenantId: string,
+  ): Promise<{ total: number; today: number; suspicious: number }> {
     const logs = await this.listVerificationLogs(tenantId);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return {
       total: logs.length,
-      today: logs.filter(l => l.timestamp >= today).length,
-      suspicious: logs.filter(l => l.status === "suspicious").length
+      today: logs.filter((l) => l.timestamp >= today).length,
+      suspicious: logs.filter((l) => l.status === "suspicious").length,
     };
   }
 
   // ==================== TEMPLATE DESIGNS ====================
   async listTemplateDesigns(tenantId: string): Promise<TemplateDesign[]> {
-    return Array.from(this.templateDesigns.values()).filter(t => t.tenantId === tenantId);
+    return Array.from(this.templateDesigns.values()).filter(
+      (t) => t.tenantId === tenantId,
+    );
   }
 
   async getTemplateDesign(id: string): Promise<TemplateDesign | undefined> {
     return this.templateDesigns.get(id);
   }
 
-  async createTemplateDesign(data: Omit<TemplateDesign, "id" | "createdAt" | "updatedAt">): Promise<TemplateDesign> {
+  async createTemplateDesign(
+    data: Omit<TemplateDesign, "id" | "createdAt" | "updatedAt">,
+  ): Promise<TemplateDesign> {
     const id = randomUUID();
     const now = new Date();
-    const template: TemplateDesign = { ...data, id, createdAt: now, updatedAt: now };
+    const template: TemplateDesign = {
+      ...data,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
     this.templateDesigns.set(id, template);
     return template;
   }
 
-  async updateTemplateDesign(id: string, data: Partial<TemplateDesign>): Promise<TemplateDesign | undefined> {
+  async updateTemplateDesign(
+    id: string,
+    data: Partial<TemplateDesign>,
+  ): Promise<TemplateDesign | undefined> {
     const template = this.templateDesigns.get(id);
     if (!template) return undefined;
     const updated = { ...template, ...data, updatedAt: new Date() };
@@ -553,7 +767,9 @@ export class MemStorage implements IStorage {
     return this.templateDesigns.delete(id);
   }
 
-  async duplicateTemplateDesign(id: string): Promise<TemplateDesign | undefined> {
+  async duplicateTemplateDesign(
+    id: string,
+  ): Promise<TemplateDesign | undefined> {
     const original = this.templateDesigns.get(id);
     if (!original) return undefined;
     const newId = randomUUID();
@@ -564,7 +780,7 @@ export class MemStorage implements IStorage {
       name: `${original.name} (Copy)`,
       status: "Draft",
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
     };
     this.templateDesigns.set(newId, duplicate);
     return duplicate;
@@ -587,63 +803,125 @@ export class MemStorage implements IStorage {
   }
 
   importState(state: IssuerStorageState): void {
-    this.users = new Map((state.users || []).map(([key, value]) => [key, {
-      ...value,
-      createdAt: parseDate((value as any).createdAt),
-    }]));
-    this.tenants = new Map((state.tenants || []).map(([key, value]) => [key, {
-      ...value,
-      createdAt: parseDate((value as any).createdAt),
-    }]));
-    this.apiKeys = new Map((state.apiKeys || []).map(([key, value]) => [key, {
-      ...value,
-      createdAt: parseDate((value as any).createdAt),
-      expiresAt: (value as any).expiresAt ? parseDate((value as any).expiresAt) : null,
-    }]));
-    this.issuers = new Map((state.issuers || []).map(([key, value]) => [key, {
-      ...value,
-      createdAt: parseDate((value as any).createdAt),
-    }]));
-    this.templates = new Map((state.templates || []).map(([key, value]) => [key, {
-      ...value,
-      createdAt: parseDate((value as any).createdAt),
-    }]));
-    this.credentials = new Map((state.credentials || []).map(([key, value]) => [key, {
-      ...value,
-      createdAt: parseDate((value as any).createdAt),
-    }]));
-    this.students = new Map((state.students || []).map(([key, value]) => [key, {
-      ...value,
-      createdAt: parseDate((value as any).createdAt),
-    }]));
-    this.teamMembers = new Map((state.teamMembers || []).map(([key, value]) => [key, {
-      ...value,
-      invitedAt: parseDate((value as any).invitedAt),
-      joinedAt: (value as any).joinedAt ? parseDate((value as any).joinedAt) : null,
-    }]));
-    this.verificationLogs = new Map((state.verificationLogs || []).map(([key, value]) => [key, {
-      ...value,
-      timestamp: parseDate((value as any).timestamp),
-    }]));
-    this.templateDesigns = new Map((state.templateDesigns || []).map(([key, value]) => [key, {
-      ...value,
-      createdAt: parseDate((value as any).createdAt),
-      updatedAt: parseDate((value as any).updatedAt),
-    }]));
-    this.activityLogs = new Map((state.activityLogs || []).map(([key, value]) => [key, {
-      ...value,
-      timestamp: (value as any)?.timestamp ? parseDate((value as any).timestamp) : parseDate(undefined),
-    }]));
+    this.users = new Map(
+      (state.users || []).map(([key, value]) => [
+        key,
+        {
+          ...value,
+          createdAt: parseDate((value as any).createdAt),
+        },
+      ]),
+    );
+    this.tenants = new Map(
+      (state.tenants || []).map(([key, value]) => [
+        key,
+        {
+          ...value,
+          createdAt: parseDate((value as any).createdAt),
+        },
+      ]),
+    );
+    this.apiKeys = new Map(
+      (state.apiKeys || []).map(([key, value]) => [
+        key,
+        {
+          ...value,
+          createdAt: parseDate((value as any).createdAt),
+          expiresAt: (value as any).expiresAt
+            ? parseDate((value as any).expiresAt)
+            : null,
+        },
+      ]),
+    );
+    this.issuers = new Map(
+      (state.issuers || []).map(([key, value]) => [
+        key,
+        {
+          ...value,
+          createdAt: parseDate((value as any).createdAt),
+        },
+      ]),
+    );
+    this.templates = new Map(
+      (state.templates || []).map(([key, value]) => [
+        key,
+        {
+          ...value,
+          createdAt: parseDate((value as any).createdAt),
+        },
+      ]),
+    );
+    this.credentials = new Map(
+      (state.credentials || []).map(([key, value]) => [
+        key,
+        {
+          ...value,
+          createdAt: parseDate((value as any).createdAt),
+        },
+      ]),
+    );
+    this.students = new Map(
+      (state.students || []).map(([key, value]) => [
+        key,
+        {
+          ...value,
+          createdAt: parseDate((value as any).createdAt),
+        },
+      ]),
+    );
+    this.teamMembers = new Map(
+      (state.teamMembers || []).map(([key, value]) => [
+        key,
+        {
+          ...value,
+          invitedAt: parseDate((value as any).invitedAt),
+          joinedAt: (value as any).joinedAt
+            ? parseDate((value as any).joinedAt)
+            : null,
+        },
+      ]),
+    );
+    this.verificationLogs = new Map(
+      (state.verificationLogs || []).map(([key, value]) => [
+        key,
+        {
+          ...value,
+          timestamp: parseDate((value as any).timestamp),
+        },
+      ]),
+    );
+    this.templateDesigns = new Map(
+      (state.templateDesigns || []).map(([key, value]) => [
+        key,
+        {
+          ...value,
+          createdAt: parseDate((value as any).createdAt),
+          updatedAt: parseDate((value as any).updatedAt),
+        },
+      ]),
+    );
+    this.activityLogs = new Map(
+      (state.activityLogs || []).map(([key, value]) => [
+        key,
+        {
+          ...value,
+          timestamp: (value as any)?.timestamp
+            ? parseDate((value as any).timestamp)
+            : parseDate(undefined),
+        },
+      ]),
+    );
   }
 }
 
 const requirePersistentStorage =
-  process.env.NODE_ENV === "production" || process.env.REQUIRE_DATABASE === "true";
+  process.env.NODE_ENV === "production" ||
+  process.env.REQUIRE_DATABASE === "true";
 const databaseUrl = process.env.DATABASE_URL;
 
 if (requirePersistentStorage && !databaseUrl) {
   throw new Error(
-    "[Storage] REQUIRE_DATABASE policy is enabled but DATABASE_URL is missing."
+    "[Storage] REQUIRE_DATABASE policy is enabled but DATABASE_URL is missing.",
   );
 }
 
@@ -661,7 +939,14 @@ function createPersistedStorage(base: MemStorage, dbUrl?: string): MemStorage {
   let hydrationPromise: Promise<void> | null = null;
   let persistChain = Promise.resolve();
 
-  const mutatingPrefixes = ["create", "update", "delete", "revoke", "bulk", "duplicate"];
+  const mutatingPrefixes = [
+    "create",
+    "update",
+    "delete",
+    "revoke",
+    "bulk",
+    "duplicate",
+  ];
 
   const ensureHydrated = async () => {
     if (hydrated) return;

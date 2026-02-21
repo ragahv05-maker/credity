@@ -1,11 +1,13 @@
 # Credity S17 — Schema Validation Boundaries + Metadata Sanitization
 
 ## Scope completed
+
 Strengthened credential/proof payload validation boundaries and sanitized unsafe metadata fields, with negative tests added.
 
 ## Changes made
 
 ### 1) Tightened proof payload schema validation in sharing routes
+
 **File:** `BlockWalletDigi/server/routes/sharing.ts`
 
 - Added Zod schemas:
@@ -23,7 +25,9 @@ Strengthened credential/proof payload validation boundaries and sanitized unsafe
   - returns structured validation details on bad input.
 
 ### 2) Sanitized unsafe metadata from claimed offer proof payloads
+
 **Files:**
+
 - `BlockWalletDigi/server/utils/metadata-sanitizer.ts` (new)
 - `BlockWalletDigi/server/routes/credentials.ts`
 
@@ -40,6 +44,7 @@ Strengthened credential/proof payload validation boundaries and sanitized unsafe
 ## Negative tests added
 
 ### A) Proof verification boundary rejection
+
 **File:** `BlockWalletDigi/tests/proof-lifecycle.test.ts`
 
 - Added test: rejects malformed proof verify payloads:
@@ -48,6 +53,7 @@ Strengthened credential/proof payload validation boundaries and sanitized unsafe
 - Asserts `400` + `PROOF_VERIFY_INPUT_INVALID` + validation details present.
 
 ### B) Metadata sanitization on credential offer claim
+
 **File:** `BlockWalletDigi/tests/credentials-proof-schema-validation.test.ts` (new)
 
 - Spins up a mock issuer endpoint returning proof metadata containing unsafe keys.
@@ -55,6 +61,7 @@ Strengthened credential/proof payload validation boundaries and sanitized unsafe
 - Asserts response/proof persisted payload omits unsafe `constructor` key in nested metadata.
 
 ## Validation run
+
 Executed:
 
 ```bash

@@ -1,6 +1,6 @@
-declare module 'react-native-qrcode-svg' {
-  import { Component } from 'react';
-  import { ViewStyle } from 'react-native';
+declare module "react-native-qrcode-svg" {
+  import { Component } from "react";
+  import { ViewStyle } from "react-native";
 
   interface QRCodeProps {
     value: string;
@@ -12,7 +12,7 @@ declare module 'react-native-qrcode-svg' {
     logoBorderRadius?: number;
     logoBackgroundColor?: string;
     logoMargin?: number;
-    ecl?: 'L' | 'M' | 'Q' | 'H';
+    ecl?: "L" | "M" | "Q" | "H";
     enableLinearGradient?: boolean;
     linearGradient?: string[];
     gradientDirection?: string[];

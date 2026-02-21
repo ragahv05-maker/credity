@@ -1,14 +1,14 @@
-import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { ConnectionsScreen } from '../screens/connections-screen';
-import { CredentialsScreen } from '../screens/credentials-screen';
-import { LivenessScreen } from '../screens/liveness-screen';
-import { SettingsScreen } from '../screens/settings-screen';
-import { TrustScoreScreen } from '../screens/trust-score-screen';
-import { useTheme } from '../theme/ThemeContext';
-import { createBottomTabOptions } from './tab-style';
+import React from "react";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { ConnectionsScreen } from "../screens/connections-screen";
+import { CredentialsScreen } from "../screens/credentials-screen";
+import { LivenessScreen } from "../screens/liveness-screen";
+import { SettingsScreen } from "../screens/settings-screen";
+import { TrustScoreScreen } from "../screens/trust-score-screen";
+import { useTheme } from "../theme/ThemeContext";
+import { createBottomTabOptions } from "./tab-style";
 
 interface Props {
   onSwitchRole: () => void;
@@ -30,11 +30,13 @@ type HolderStackParamList = {
 const Tab = createBottomTabNavigator<HolderTabParamList>();
 const Stack = createNativeStackNavigator<HolderStackParamList>();
 
-function tabIcon(routeName: keyof HolderTabParamList): keyof typeof Ionicons.glyphMap {
-  if (routeName === 'TrustScore') return 'shield-checkmark';
-  if (routeName === 'Credentials') return 'wallet';
-  if (routeName === 'Settings') return 'settings';
-  return 'link';
+function tabIcon(
+  routeName: keyof HolderTabParamList,
+): keyof typeof Ionicons.glyphMap {
+  if (routeName === "TrustScore") return "shield-checkmark";
+  if (routeName === "Credentials") return "wallet";
+  if (routeName === "Settings") return "settings";
+  return "link";
 }
 
 function HolderTabNavigator() {
@@ -44,29 +46,33 @@ function HolderTabNavigator() {
       screenOptions={({ route }) => ({
         ...createBottomTabOptions(colors.holder, colors),
         tabBarIcon: ({ color, size }) => (
-          <Ionicons name={tabIcon(route.name as keyof HolderTabParamList)} color={color} size={size} />
+          <Ionicons
+            name={tabIcon(route.name as keyof HolderTabParamList)}
+            color={color}
+            size={size}
+          />
         ),
       })}
     >
       <Tab.Screen
         name="TrustScore"
         component={TrustScoreScreen}
-        options={{ title: 'Home' }}
+        options={{ title: "Home" }}
       />
       <Tab.Screen
         name="Credentials"
         component={CredentialsScreen}
-        options={{ title: 'Credentials' }}
+        options={{ title: "Credentials" }}
       />
       <Tab.Screen
         name="Connections"
         component={ConnectionsScreen}
-        options={{ title: 'Connections' }}
+        options={{ title: "Connections" }}
       />
       <Tab.Screen
         name="Settings"
         component={SettingsScreen}
-        options={{ title: 'Settings' }}
+        options={{ title: "Settings" }}
       />
     </Tab.Navigator>
   );
@@ -86,7 +92,7 @@ export function HolderTabs({ onSwitchRole, onLogout }: Props) {
       <Stack.Screen
         name="Liveness"
         component={LivenessScreen}
-        options={{ title: 'Verify Identity' }}
+        options={{ title: "Verify Identity" }}
       />
     </Stack.Navigator>
   );

@@ -8,8 +8,21 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
@@ -30,7 +43,7 @@ import {
   Bell,
   Lock,
   Activity as ActivityIcon,
-  Calendar
+  Calendar,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -72,20 +85,23 @@ export default function SettingsPage() {
   const [activityOpen, setActivityOpen] = useState(false);
 
   // Backup/Restore State
-  const [backupData, setBackupData] = useState<{ data: string; key: string } | null>(null);
+  const [backupData, setBackupData] = useState<{
+    data: string;
+    key: string;
+  } | null>(null);
   const [restoreKey, setRestoreKey] = useState("");
   const [restoreData, setRestoreData] = useState("");
   const [copied, setCopied] = useState(false);
 
   // Preferences State (Persisted in LocalStorage)
-  const [notificationsEnabled, setNotificationsEnabled] = useState(() =>
-    localStorage.getItem("pref_notifications") !== "false"
+  const [notificationsEnabled, setNotificationsEnabled] = useState(
+    () => localStorage.getItem("pref_notifications") !== "false",
   );
-  const [shareAlertsEnabled, setShareAlertsEnabled] = useState(() =>
-    localStorage.getItem("pref_share_alerts") !== "false"
+  const [shareAlertsEnabled, setShareAlertsEnabled] = useState(
+    () => localStorage.getItem("pref_share_alerts") !== "false",
   );
-  const [biometricEnabled, setBiometricEnabled] = useState(() =>
-    localStorage.getItem("pref_biometric") !== "false"
+  const [biometricEnabled, setBiometricEnabled] = useState(
+    () => localStorage.getItem("pref_biometric") !== "false",
   );
 
   // Persist preferences
@@ -97,64 +113,74 @@ export default function SettingsPage() {
 
   // Get wallet status
   const { data: walletStatus } = useQuery<WalletStatusData>({
-    queryKey: ['/api/wallet/status'],
+    queryKey: ["/api/wallet/status"],
     refetchInterval: 30000,
   });
 
   // Get notifications count
   const { data: notifData } = useQuery<NotifData>({
-    queryKey: ['/api/wallet/notifications'],
+    queryKey: ["/api/wallet/notifications"],
   });
 
   // Get User Activity
   const { data: activities = [] } = useQuery<ActivityItem[]>({
-    queryKey: ['/api/activity'],
+    queryKey: ["/api/activity"],
     enabled: activityOpen, // Only fetch when sheet is open
   });
 
   // Create backup mutation
   const backupMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch('/api/wallet/backup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/wallet/backup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: 1 }),
       });
-      if (!response.ok) throw new Error('Backup failed');
+      if (!response.ok) throw new Error("Backup failed");
       return response.json();
     },
     onSuccess: (data) => {
       setBackupData({ data: data.backupData, key: data.backupKey });
-      toast({ title: 'Backup Created', description: 'Save your backup key securely!' });
+      toast({
+        title: "Backup Created",
+        description: "Save your backup key securely!",
+      });
     },
     onError: () => {
-      toast({ title: 'Backup Failed', variant: 'destructive' });
+      toast({ title: "Backup Failed", variant: "destructive" });
     },
   });
 
   // Restore backup mutation
   const restoreMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch('/api/wallet/restore', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ backupData: restoreData, backupKey: restoreKey }),
+      const response = await fetch("/api/wallet/restore", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          backupData: restoreData,
+          backupKey: restoreKey,
+        }),
       });
-      if (!response.ok) throw new Error('Restore failed');
+      if (!response.ok) throw new Error("Restore failed");
       return response.json();
     },
     onSuccess: (data) => {
       setRestoreDialogOpen(false);
       queryClient.invalidateQueries();
       toast({
-        title: 'Wallet Restored',
-        description: `${data.credentialsRestored} credentials recovered`
+        title: "Wallet Restored",
+        description: `${data.credentialsRestored} credentials recovered`,
       });
       setRestoreData("");
       setRestoreKey("");
     },
     onError: () => {
-      toast({ title: 'Restore Failed', description: 'Check your backup key', variant: 'destructive' });
+      toast({
+        title: "Restore Failed",
+        description: "Check your backup key",
+        variant: "destructive",
+      });
     },
   });
 
@@ -168,9 +194,9 @@ export default function SettingsPage() {
 
   const downloadBackup = () => {
     if (!backupData) return;
-    const blob = new Blob([backupData.data], { type: 'text/plain' });
+    const blob = new Blob([backupData.data], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `credverse-backup-${new Date().toISOString().slice(0, 10)}.txt`;
     a.click();
@@ -181,7 +207,10 @@ export default function SettingsPage() {
     // Clear any local session data if used
     localStorage.removeItem("wallet_session");
     localStorage.removeItem("did");
-    toast({ title: "Signed Out", description: "You have been logged out securely." });
+    toast({
+      title: "Signed Out",
+      description: "You have been logged out securely.",
+    });
     // Redirect to login (assuming /login exists, or just home)
     setLocation("/");
   };
@@ -196,7 +225,9 @@ export default function SettingsPage() {
         <div className="max-w-2xl mx-auto space-y-8">
           <div className="space-y-2">
             <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-            <p className="text-muted-foreground">Manage your wallet security, backup, and preferences.</p>
+            <p className="text-muted-foreground">
+              Manage your wallet security, backup, and preferences.
+            </p>
           </div>
 
           {/* Wallet Status Card */}
@@ -210,15 +241,21 @@ export default function SettingsPage() {
             <CardContent>
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
-                  <p className="text-2xl font-bold">{stats?.totalCredentials || 0}</p>
+                  <p className="text-2xl font-bold">
+                    {stats?.totalCredentials || 0}
+                  </p>
                   <p className="text-xs text-muted-foreground">Credentials</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{stats?.activeShares || 0}</p>
+                  <p className="text-2xl font-bold">
+                    {stats?.activeShares || 0}
+                  </p>
                   <p className="text-xs text-muted-foreground">Active Shares</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{stats?.totalVerifications || 0}</p>
+                  <p className="text-2xl font-bold">
+                    {stats?.totalVerifications || 0}
+                  </p>
                   <p className="text-xs text-muted-foreground">Verifications</p>
                 </div>
               </div>
@@ -241,7 +278,9 @@ export default function SettingsPage() {
                   <Label className="text-base flex items-center gap-2">
                     <Fingerprint className="w-4 h-4" /> Biometric Authentication
                   </Label>
-                  <p className="text-sm text-muted-foreground">Use FaceID/TouchID to unlock wallet</p>
+                  <p className="text-sm text-muted-foreground">
+                    Use FaceID/TouchID to unlock wallet
+                  </p>
                 </div>
                 <Switch
                   checked={biometricEnabled}
@@ -252,7 +291,9 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="space-y-0.5">
                   <Label className="text-base">Local Encryption</Label>
-                  <p className="text-sm text-muted-foreground">AES-256-GCM encryption for all data</p>
+                  <p className="text-sm text-muted-foreground">
+                    AES-256-GCM encryption for all data
+                  </p>
                 </div>
                 <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
                   <CheckCircle2 className="w-3 h-3 mr-1" /> Active
@@ -285,7 +326,9 @@ export default function SettingsPage() {
                     <Download className="w-5 h-5" />
                   )}
                   <span className="font-medium">Create Backup</span>
-                  <span className="text-xs text-muted-foreground">Download encrypted vault</span>
+                  <span className="text-xs text-muted-foreground">
+                    Download encrypted vault
+                  </span>
                 </Button>
 
                 <Button
@@ -295,7 +338,9 @@ export default function SettingsPage() {
                 >
                   <Upload className="w-5 h-5" />
                   <span className="font-medium">Restore Backup</span>
-                  <span className="text-xs text-muted-foreground">Using backup key</span>
+                  <span className="text-xs text-muted-foreground">
+                    Using backup key
+                  </span>
                 </Button>
               </div>
             </div>
@@ -308,14 +353,18 @@ export default function SettingsPage() {
             <h3 className="text-lg font-medium flex items-center gap-2">
               <Bell className="w-5 h-5" /> Notifications
               {unreadNotifications > 0 && (
-                <Badge variant="destructive" className="text-xs">{unreadNotifications}</Badge>
+                <Badge variant="destructive" className="text-xs">
+                  {unreadNotifications}
+                </Badge>
               )}
             </h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="space-y-0.5">
                   <Label className="text-base">Share Access Alerts</Label>
-                  <p className="text-sm text-muted-foreground">Notify when credentials are verified</p>
+                  <p className="text-sm text-muted-foreground">
+                    Notify when credentials are verified
+                  </p>
                 </div>
                 <Switch
                   checked={shareAlertsEnabled}
@@ -325,7 +374,9 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="space-y-0.5">
                   <Label className="text-base">New Credential Alerts</Label>
-                  <p className="text-sm text-muted-foreground">Notify when new credentials are received</p>
+                  <p className="text-sm text-muted-foreground">
+                    Notify when new credentials are received
+                  </p>
                 </div>
                 <Switch
                   checked={notificationsEnabled}
@@ -343,11 +394,29 @@ export default function SettingsPage() {
               <Globe className="w-5 h-5" /> Preferences
             </h3>
             <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="justify-between" onClick={() => toast({ title: "Language", description: "Only English is supported in this version." })}>
+              <Button
+                variant="outline"
+                className="justify-between"
+                onClick={() =>
+                  toast({
+                    title: "Language",
+                    description: "Only English is supported in this version.",
+                  })
+                }
+              >
                 Language: English
                 <Globe className="w-4 h-4 ml-2 text-muted-foreground" />
               </Button>
-              <Button variant="outline" className="justify-between" onClick={() => toast({ title: "Theme", description: "System theme is currently active." })}>
+              <Button
+                variant="outline"
+                className="justify-between"
+                onClick={() =>
+                  toast({
+                    title: "Theme",
+                    description: "System theme is currently active.",
+                  })
+                }
+              >
                 Theme: System
                 <Moon className="w-4 h-4 ml-2 text-muted-foreground" />
               </Button>
@@ -357,10 +426,18 @@ export default function SettingsPage() {
           <Separator />
 
           <div className="pt-4 flex gap-4">
-            <Button variant="outline" className="flex-1" onClick={() => setActivityOpen(true)}>
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setActivityOpen(true)}
+            >
               <History className="w-4 h-4 mr-2" /> View Activity Log
             </Button>
-            <Button variant="destructive" className="flex-1" onClick={handleSignOut}>
+            <Button
+              variant="destructive"
+              className="flex-1"
+              onClick={handleSignOut}
+            >
               <LogOut className="w-4 h-4 mr-2" /> Sign Out
             </Button>
           </div>
@@ -375,7 +452,8 @@ export default function SettingsPage() {
               <Key className="w-5 h-5" /> Wallet Backup Created
             </DialogTitle>
             <DialogDescription>
-              Save your backup key securely. You'll need it to restore your wallet.
+              Save your backup key securely. You'll need it to restore your
+              wallet.
             </DialogDescription>
           </DialogHeader>
 
@@ -384,7 +462,8 @@ export default function SettingsPage() {
               <Alert variant="destructive">
                 <AlertTriangle className="w-4 h-4" />
                 <AlertDescription>
-                  <strong>Save this key now!</strong> It cannot be recovered later.
+                  <strong>Save this key now!</strong> It cannot be recovered
+                  later.
                 </AlertDescription>
               </Alert>
 
@@ -397,7 +476,11 @@ export default function SettingsPage() {
                     className="font-mono text-xs"
                   />
                   <Button size="icon" variant="outline" onClick={handleCopyKey}>
-                    {copied ? <CheckCircle2 className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                    {copied ? (
+                      <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
                   </Button>
                 </div>
               </div>
@@ -449,10 +532,17 @@ export default function SettingsPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRestoreDialogOpen(false)}>Cancel</Button>
+            <Button
+              variant="outline"
+              onClick={() => setRestoreDialogOpen(false)}
+            >
+              Cancel
+            </Button>
             <Button
               onClick={() => restoreMutation.mutate()}
-              disabled={!restoreData || !restoreKey || restoreMutation.isPending}
+              disabled={
+                !restoreData || !restoreKey || restoreMutation.isPending
+              }
             >
               {restoreMutation.isPending ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -468,7 +558,9 @@ export default function SettingsPage() {
         <SheetContent className="w-[400px] sm:w-[540px]">
           <SheetHeader>
             <SheetTitle>Activity Log</SheetTitle>
-            <SheetDescription>Recent actions and events in your wallet.</SheetDescription>
+            <SheetDescription>
+              Recent actions and events in your wallet.
+            </SheetDescription>
           </SheetHeader>
           <div className="mt-6 h-full pb-10">
             <ScrollArea className="h-[calc(100vh-120px)] pr-4">
@@ -479,16 +571,25 @@ export default function SettingsPage() {
               ) : (
                 <div className="space-y-4">
                   {activities.map((activity) => (
-                    <div key={activity.id} className="flex gap-4 pb-4 border-b last:border-0 relative">
+                    <div
+                      key={activity.id}
+                      className="flex gap-4 pb-4 border-b last:border-0 relative"
+                    >
                       <div className="w-2 h-2 mt-2 rounded-full bg-blue-500 shrink-0" />
                       <div className="flex-1 space-y-1">
-                        <p className="text-sm font-medium leading-none">{activity.description}</p>
+                        <p className="text-sm font-medium leading-none">
+                          {activity.description}
+                        </p>
                         <div className="flex items-center text-xs text-muted-foreground gap-2">
                           <ActivityIcon className="w-3 h-3" />
-                          <span className="capitalize">{activity.type.replace(/_/g, " ")}</span>
+                          <span className="capitalize">
+                            {activity.type.replace(/_/g, " ")}
+                          </span>
                           <span>•</span>
                           <Calendar className="w-3 h-3" />
-                          <span>{new Date(activity.timestamp).toLocaleString()}</span>
+                          <span>
+                            {new Date(activity.timestamp).toLocaleString()}
+                          </span>
                         </div>
                       </div>
                     </div>

@@ -19,7 +19,14 @@ import publicRoutes from "./routes/public";
 import twoFactorRoutes from "./routes/two-factor";
 import reputationRoutes from "./routes/reputation";
 import complianceRoutes from "./routes/compliance";
-import { initQueueService, startIssuanceWorker, getQueueStats, getDeadLetterJobs, getQueueReliabilityConfig, isQueueAvailable } from "./services/queue-service";
+import {
+  initQueueService,
+  startIssuanceWorker,
+  getQueueStats,
+  getDeadLetterJobs,
+  getQueueReliabilityConfig,
+  isQueueAvailable,
+} from "./services/queue-service";
 import { issuanceService } from "./services/issuance";
 import { blockchainService } from "./services/blockchain-service";
 
@@ -27,7 +34,7 @@ import { setupSecurity } from "@credverse/shared-auth";
 
 export async function registerRoutes(
   httpServer: Server,
-  app: Express
+  app: Express,
 ): Promise<Server> {
   // Apply shared security middleware (Helmet, CORS, Rate Limit, WAF)
   setupSecurity(app);
@@ -36,9 +43,17 @@ export async function registerRoutes(
   const queueAvailable = await initQueueService();
   if (queueAvailable) {
     // Start the worker to process bulk issuance jobs
-    startIssuanceWorker(async (tenantId, templateId, issuerId, recipient, data) => {
-      await issuanceService.issueCredential(tenantId, templateId, issuerId, recipient, data);
-    });
+    startIssuanceWorker(
+      async (tenantId, templateId, issuerId, recipient, data) => {
+        await issuanceService.issueCredential(
+          tenantId,
+          templateId,
+          issuerId,
+          recipient,
+          data,
+        );
+      },
+    );
   }
 
   // Health check endpoint for Railway
@@ -73,7 +88,7 @@ export async function registerRoutes(
     } catch (err: any) {
       res.status(503).json({
         available: false,
-        error: err?.message || 'Queue health check failed',
+        error: err?.message || "Queue health check failed",
         timestamp: new Date().toISOString(),
       });
     }
@@ -81,15 +96,16 @@ export async function registerRoutes(
 
   // Relayer / blockchain config validation endpoint (L-3)
   app.get("/api/health/relayer", (_req, res) => {
-    const rpcUrl = process.env.BLOCKCHAIN_RPC_URL || process.env.POLYGON_RPC_URL || '';
-    const privateKey = process.env.RELAYER_PRIVATE_KEY || '';
-    const contractAddress = process.env.REGISTRY_CONTRACT_ADDRESS || '';
+    const rpcUrl =
+      process.env.BLOCKCHAIN_RPC_URL || process.env.POLYGON_RPC_URL || "";
+    const privateKey = process.env.RELAYER_PRIVATE_KEY || "";
+    const contractAddress = process.env.REGISTRY_CONTRACT_ADDRESS || "";
     const runtimeStatus = blockchainService.getRuntimeStatus();
 
     const missingVars: string[] = [];
-    if (!rpcUrl) missingVars.push('BLOCKCHAIN_RPC_URL');
-    if (!privateKey) missingVars.push('RELAYER_PRIVATE_KEY');
-    if (!contractAddress) missingVars.push('REGISTRY_CONTRACT_ADDRESS');
+    if (!rpcUrl) missingVars.push("BLOCKCHAIN_RPC_URL");
+    if (!privateKey) missingVars.push("RELAYER_PRIVATE_KEY");
+    if (!contractAddress) missingVars.push("REGISTRY_CONTRACT_ADDRESS");
 
     const ok = runtimeStatus.configured && missingVars.length === 0;
     res.status(ok ? 200 : 503).json({
@@ -125,7 +141,6 @@ export async function registerRoutes(
   app.use("/api/v1", digilockerRoutes);
   app.use("/api/v1", reputationRoutes);
   app.use("/api/v1", complianceRoutes);
-
 
   return httpServer;
 }

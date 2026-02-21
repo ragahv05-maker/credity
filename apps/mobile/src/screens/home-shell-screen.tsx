@@ -1,11 +1,11 @@
-import React from 'react';
-import { Alert } from 'react-native';
-import { logoutRole } from '../lib/api-client';
-import { useSessionStore } from '../store/session-store';
-import type { AppRole } from '../types';
-import { HolderTabs } from '../navigation/holder-tabs';
-import { IssuerTabs } from '../navigation/issuer-tabs';
-import { RecruiterTabs } from '../navigation/recruiter-tabs';
+import React from "react";
+import { Alert } from "react-native";
+import { logoutRole } from "../lib/api-client";
+import { useSessionStore } from "../store/session-store";
+import type { AppRole } from "../types";
+import { HolderTabs } from "../navigation/holder-tabs";
+import { IssuerTabs } from "../navigation/issuer-tabs";
+import { RecruiterTabs } from "../navigation/recruiter-tabs";
 
 export function HomeShellScreen() {
   const activeRole = useSessionStore((s) => s.activeRole);
@@ -20,7 +20,10 @@ export function HomeShellScreen() {
     try {
       await logoutRole(role);
     } catch (error: any) {
-      Alert.alert('Logout warning', error?.message || 'Session was cleared locally.');
+      Alert.alert(
+        "Logout warning",
+        error?.message || "Session was cleared locally.",
+      );
     }
   }
 
@@ -29,10 +32,10 @@ export function HomeShellScreen() {
     onLogout,
   };
 
-  if (role === 'holder') {
+  if (role === "holder") {
     return <HolderTabs {...commonProps} />;
   }
-  if (role === 'issuer') {
+  if (role === "issuer") {
     return <IssuerTabs {...commonProps} />;
   }
 

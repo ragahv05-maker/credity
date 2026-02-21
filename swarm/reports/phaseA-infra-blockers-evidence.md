@@ -74,6 +74,7 @@ rg -n "SENTRY_DSN|GATEWAY_SENTRY_DSN" credverse-gateway/server/services/sentry.t
 ```
 
 Observed:
+
 - `package.json` now contains `gate:launch`, `gate:launch:strict`, `smoke:infra:live`.
 - `sentry.ts` now supports fallback env var.
 - `env.example.yaml` now includes Sentry secret mappings.

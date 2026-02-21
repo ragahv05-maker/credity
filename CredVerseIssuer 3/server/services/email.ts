@@ -78,7 +78,9 @@ class EmailService {
     await this.send(params.to, subject, html);
   }
 
-  async sendCredentialNotification(params: CredentialNotificationParams): Promise<void> {
+  async sendCredentialNotification(
+    params: CredentialNotificationParams,
+  ): Promise<void> {
     const subject = `Your new credential from ${params.issuerName}`;
     const html = `
       <!DOCTYPE html>
@@ -131,25 +133,31 @@ class EmailService {
           from: process.env.EMAIL_FROM || "CredVerse <noreply@credverse.app>",
           to,
           subject,
-          html
+          html,
         });
 
         if (error) {
-          logger.error({ err: error }, '[Email] Resend API error');
+          logger.error({ err: error }, "[Email] Resend API error");
           return;
         }
 
-        logger.info({ emailId: data?.id, recipient: to }, '[Email] Sent successfully via Resend');
+        logger.info(
+          { emailId: data?.id, recipient: to },
+          "[Email] Sent successfully via Resend",
+        );
       } else {
         // Logger fallback for development
-        logger.info({
-          type: 'email_mock',
-          to,
-          subject,
-          preview: 'Check console for HTML content'
-        }, '[Email] Mock sent (Console Mode)');
+        logger.info(
+          {
+            type: "email_mock",
+            to,
+            subject,
+            preview: "Check console for HTML content",
+          },
+          "[Email] Mock sent (Console Mode)",
+        );
 
-        if (process.env.NODE_ENV === 'development') {
+        if (process.env.NODE_ENV === "development") {
           console.log("=".repeat(60));
           console.log("📧 EMAIL PREVIEW");
           console.log(`To: ${to}`);
@@ -158,11 +166,17 @@ class EmailService {
         }
       }
     } catch (error) {
-      logger.error({ err: error }, '[Email] Failed to send email');
+      logger.error({ err: error }, "[Email] Failed to send email");
     }
   }
 
-  async sendBulkIssuanceReport(to: string, jobId: string, total: number, success: number, failed: number): Promise<void> {
+  async sendBulkIssuanceReport(
+    to: string,
+    jobId: string,
+    total: number,
+    success: number,
+    failed: number,
+  ): Promise<void> {
     const subject = `Bulk Issuance Completed: ${success}/${total} Success`;
     const html = `
             <div style="font-family: sans-serif;">
@@ -183,5 +197,5 @@ class EmailService {
 // Initialize email service
 export const emailService = new EmailService({
   provider: process.env.RESEND_API_KEY ? "resend" : "console",
-  apiKey: process.env.RESEND_API_KEY
+  apiKey: process.env.RESEND_API_KEY,
 });

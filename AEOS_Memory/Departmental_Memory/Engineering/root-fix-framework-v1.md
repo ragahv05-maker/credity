@@ -1,9 +1,11 @@
 # Root-Fix Framework v1 (Engineering)
 
 ## Objective
+
 When something breaks, fix it at the **root cause** and prevent repeat failures.
 
 ## Non-Negotiables
+
 1. **Reproduce first** (never patch blindly).
 2. **Policy locks stay intact** (e.g., `INVALID_SIGNATURE => FAIL`, unsigned/scanned => `REVIEW`).
 3. **No speculative code** (no fake success paths, no unverified assumptions).
@@ -11,6 +13,7 @@ When something breaks, fix it at the **root cause** and prevent repeat failures.
 5. **Evidence-only done** (tests/checks/artifacts must pass before closure).
 
 ## Required Flow (every bug/fix)
+
 1. **Capture failure**
    - endpoint/module
    - failing input
@@ -34,22 +37,28 @@ When something breaks, fix it at the **root cause** and prevent repeat failures.
    - pass/fail outcomes
 
 ## Anti-Redundancy Rules
+
 - If mapping/decision logic appears in multiple places, centralize to helper/service and reference it.
 - Prefer extending existing contracts/types over creating parallel ad-hoc shapes.
 - Remove dead branches introduced by prior temporary fixes.
 
 ## Anti-Hallucination Rules (code + delivery)
+
 - Never claim a fix without a passing command result.
 - Never claim an integration path works if fallback path was actually taken.
 - If a command fails, report it directly and continue with corrected rerun.
 
 ## Enforcement
+
 Run: `npm run gate:root-fix`
+
 - Fails if code changed without corresponding test updates.
 - Fails on explicit temporary-hack markers in changed service/source files.
 
 ## Definition of Done (Root-Fix)
+
 A fix is done only when:
+
 - root cause is corrected,
 - regression + policy/contract tests pass,
 - typecheck passes,

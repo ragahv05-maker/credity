@@ -1,11 +1,13 @@
 # Mobile Apple Auth Real Flow — Implementation Report
 
 ## Scope
+
 Implemented real Apple Sign-In on mobile by replacing the placeholder TODO in `apps/mobile/src/screens/auth-screen.tsx`, wiring it to the backend Apple auth endpoint already present, and validating behavior with tests.
 
 ## Changes made
 
 ### 1) Real Apple auth flow in Auth screen
+
 **File:** `apps/mobile/src/screens/auth-screen.tsx`
 
 - Added `expo-apple-authentication` integration.
@@ -23,6 +25,7 @@ Implemented real Apple Sign-In on mobile by replacing the placeholder TODO in `a
   - Opens backend Apple auth page in browser: `${BACKEND_URL}/api/v1/auth/apple`.
 
 ### 2) API client endpoint wiring for Apple token exchange
+
 **File:** `apps/mobile/src/lib/api-client.ts`
 
 - Added `loginWithAppleIdentityToken(identityToken: string, state?: string)`:
@@ -34,6 +37,7 @@ Implemented real Apple Sign-In on mobile by replacing the placeholder TODO in `a
 - Keeps token handling consistent with existing login/register flows.
 
 ### 3) Dependency addition
+
 **File:** `apps/mobile/package.json`
 
 - Added:
@@ -42,6 +46,7 @@ Implemented real Apple Sign-In on mobile by replacing the placeholder TODO in `a
   - `apps/mobile/package-lock.json`
 
 ### 4) Tests added (feasible unit coverage)
+
 **File:** `apps/mobile/src/lib/api-client.test.ts`
 
 - Added test for Apple exchange path:
@@ -50,6 +55,7 @@ Implemented real Apple Sign-In on mobile by replacing the placeholder TODO in `a
   - Verifies holder session receives access/refresh tokens after exchange.
 
 ## Validation run
+
 Executed in `apps/mobile`:
 
 1. `npm test -- src/lib/api-client.test.ts` ✅
@@ -58,6 +64,7 @@ Executed in `apps/mobile`:
    - TypeScript compile clean.
 
 ## Notes / behavior details
+
 - Apple auth button remains iOS-only in UI.
 - For non-holder roles, user gets a clear message that Apple auth is holder-only currently.
 - Native auth unavailability falls back to browser-based backend initiation.

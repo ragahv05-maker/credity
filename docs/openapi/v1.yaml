@@ -177,14 +177,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ProofGenerationRequestContract'
+              $ref: "#/components/schemas/ProofGenerationRequestContract"
       responses:
         "202":
           description: Proof generation accepted
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProofGenerationResultContract'
+                $ref: "#/components/schemas/ProofGenerationResultContract"
 
   /v1/proofs/verify:
     post:
@@ -203,14 +203,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ProofVerificationRequestContract'
+              $ref: "#/components/schemas/ProofVerificationRequestContract"
       responses:
         "200":
           description: Proof verification result
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProofVerificationResultContract'
+                $ref: "#/components/schemas/ProofVerificationResultContract"
 
   /v1/proofs/revocation-witness/{credentialId}:
     get:
@@ -228,7 +228,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RevocationWitnessContract'
+                $ref: "#/components/schemas/RevocationWitnessContract"
 
   /v1/verifications/instant:
     post:
@@ -246,7 +246,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VerificationResultContract'
+                $ref: "#/components/schemas/VerificationResultContract"
 
   /v1/verifications/bulk:
     post:
@@ -482,7 +482,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConsentGrantContract'
+              $ref: "#/components/schemas/ConsentGrantContract"
       responses:
         "201":
           description: Consent grant created
@@ -597,7 +597,16 @@ paths:
           required: false
           schema:
             type: string
-            enum: [transport, accommodation, delivery, employment, finance, social, identity]
+            enum:
+              [
+                transport,
+                accommodation,
+                delivery,
+                employment,
+                finance,
+                social,
+                identity,
+              ]
         - name: limit
           in: query
           required: false
@@ -620,7 +629,7 @@ paths:
                   events:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ReputationEventContract'
+                      $ref: "#/components/schemas/ReputationEventContract"
     post:
       tags: [reputation]
       summary: Ingest a platform-signed reputation event
@@ -642,7 +651,16 @@ paths:
                   type: string
                 category:
                   type: string
-                  enum: [transport, accommodation, delivery, employment, finance, social, identity]
+                  enum:
+                    [
+                      transport,
+                      accommodation,
+                      delivery,
+                      employment,
+                      finance,
+                      social,
+                      identity,
+                    ]
                 signal_type:
                   type: string
                 score:
@@ -687,7 +705,7 @@ paths:
                   success:
                     type: boolean
                   reputation:
-                    $ref: '#/components/schemas/ReputationScoreContract'
+                    $ref: "#/components/schemas/ReputationScoreContract"
 
   /v1/reputation/safedate:
     get:
@@ -715,7 +733,7 @@ paths:
                   success:
                     type: boolean
                   safe_date:
-                    $ref: '#/components/schemas/SafeDateScoreContract'
+                    $ref: "#/components/schemas/SafeDateScoreContract"
 
   /v1/reputation/events/{id}:
     get:
@@ -738,7 +756,7 @@ paths:
                   success:
                     type: boolean
                   event:
-                    $ref: '#/components/schemas/ReputationEventContract'
+                    $ref: "#/components/schemas/ReputationEventContract"
         "404":
           description: Event not found
 
@@ -763,7 +781,7 @@ paths:
                   success:
                     type: boolean
                   profile:
-                    $ref: '#/components/schemas/ReputationProfileContract'
+                    $ref: "#/components/schemas/ReputationProfileContract"
 
   /v1/reputation/scores/{subjectDid}:
     get:
@@ -788,7 +806,7 @@ paths:
                   scores:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ReputationScoreContract'
+                      $ref: "#/components/schemas/ReputationScoreContract"
 
   /v1/reputation/share-grants:
     post:
@@ -895,16 +913,16 @@ components:
         subject_did:
           type: string
         status_list_id:
-          type: [string, 'null']
+          type: [string, "null"]
         status_list_index:
-          type: [integer, 'null']
+          type: [integer, "null"]
         anchor_batch_id:
-          type: [string, 'null']
+          type: [string, "null"]
         anchor_proof:
-          type: [object, 'null']
+          type: [object, "null"]
           additionalProperties: true
         holder_binding:
-          type: [object, 'null']
+          type: [object, "null"]
           additionalProperties: true
         issuance_flow:
           type: string
@@ -954,12 +972,12 @@ components:
             - type: string
             - type: object
               additionalProperties: true
-            - type: 'null'
+            - type: "null"
         public_signals:
-          type: [object, 'null']
+          type: [object, "null"]
           additionalProperties: true
         credential_id:
-          type: [string, 'null']
+          type: [string, "null"]
         created_at:
           type: string
           format: date-time
@@ -975,7 +993,7 @@ components:
         revoked:
           type: boolean
         status_list:
-          type: [object, 'null']
+          type: [object, "null"]
           properties:
             list_id:
               type: string
@@ -987,7 +1005,7 @@ components:
               type: string
               format: date-time
         anchor_proof:
-          type: [object, 'null']
+          type: [object, "null"]
           properties:
             batch_id:
               type: string
@@ -1022,7 +1040,7 @@ components:
           type: object
           additionalProperties: true
         revocation_witness:
-          $ref: '#/components/schemas/RevocationWitnessContract'
+          $ref: "#/components/schemas/RevocationWitnessContract"
 
     ProofVerificationResultContract:
       type: object
@@ -1117,7 +1135,7 @@ components:
           type: object
           additionalProperties: true
         decay_applied_at:
-          type: [string, 'null']
+          type: [string, "null"]
         created_at:
           type: string
 
@@ -1147,7 +1165,7 @@ components:
         expiry:
           type: string
         revocation_ts:
-          type: [string, 'null']
+          type: [string, "null"]
         consent_proof:
           type: object
           additionalProperties: true
@@ -1175,7 +1193,16 @@ components:
           type: string
         category:
           type: string
-          enum: [transport, accommodation, delivery, employment, finance, social, identity]
+          enum:
+            [
+              transport,
+              accommodation,
+              delivery,
+              employment,
+              finance,
+              social,
+              identity,
+            ]
         signal_type:
           type: string
         score:
@@ -1203,7 +1230,16 @@ components:
       properties:
         category:
           type: string
-          enum: [transport, accommodation, delivery, employment, finance, social, identity]
+          enum:
+            [
+              transport,
+              accommodation,
+              delivery,
+              employment,
+              finance,
+              social,
+              identity,
+            ]
         weight:
           type: integer
         score:
@@ -1233,7 +1269,7 @@ components:
         category_breakdown:
           type: array
           items:
-            $ref: '#/components/schemas/ReputationCategoryBreakdownContract'
+            $ref: "#/components/schemas/ReputationCategoryBreakdownContract"
         computed_at:
           type: string
           format: date-time
@@ -1294,7 +1330,7 @@ components:
         scores:
           type: array
           items:
-            $ref: '#/components/schemas/ReputationScoreContract'
+            $ref: "#/components/schemas/ReputationScoreContract"
         signals:
           type: object
           additionalProperties: true
@@ -1320,11 +1356,11 @@ components:
         platform_id:
           type: string
         tenant_id:
-          type: [string, 'null']
+          type: [string, "null"]
         name:
           type: string
         domain:
-          type: [string, 'null']
+          type: [string, "null"]
         status:
           type: string
           enum: [pending, active, suspended]

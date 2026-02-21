@@ -1,6 +1,8 @@
-import * as LocalAuthentication from 'expo-local-authentication';
+import * as LocalAuthentication from "expo-local-authentication";
 
-export async function requireProtectedAction(promptMessage: string): Promise<boolean> {
+export async function requireProtectedAction(
+  promptMessage: string,
+): Promise<boolean> {
   try {
     const hasHardware = await LocalAuthentication.hasHardwareAsync();
     const isEnrolled = await LocalAuthentication.isEnrolledAsync();
@@ -11,7 +13,7 @@ export async function requireProtectedAction(promptMessage: string): Promise<boo
 
     const result = await LocalAuthentication.authenticateAsync({
       promptMessage,
-      fallbackLabel: 'Use device passcode',
+      fallbackLabel: "Use device passcode",
     });
 
     return result.success;

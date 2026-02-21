@@ -1,5 +1,5 @@
-import { Badge } from '@/components/ui/badge';
-import type { SafeDateBadge } from '@/types/reputation-contracts';
+import { Badge } from "@/components/ui/badge";
+import type { SafeDateBadge } from "@/types/reputation-contracts";
 
 interface SafeDateBadgeCardProps {
   badge: SafeDateBadge;
@@ -21,7 +21,9 @@ export function SafeDateBadgeCard({ badge }: SafeDateBadgeCardProps) {
         <span>Identity: {badge.breakdown.identity_verified_points}</span>
         <span>Liveness: {badge.breakdown.liveness_points}</span>
         <span>Background: {badge.breakdown.background_clean_points}</span>
-        <span>Reputation: {badge.breakdown.cross_platform_reputation_points}</span>
+        <span>
+          Reputation: {badge.breakdown.cross_platform_reputation_points}
+        </span>
         <span>Social: {badge.breakdown.social_validation_points}</span>
         <span>Safety: {badge.breakdown.harassment_free_points}</span>
       </div>

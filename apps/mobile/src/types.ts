@@ -1,4 +1,4 @@
-export type AppRole = 'holder' | 'issuer' | 'recruiter';
+export type AppRole = "holder" | "issuer" | "recruiter";
 
 export interface RoleSession {
   accessToken: string | null;

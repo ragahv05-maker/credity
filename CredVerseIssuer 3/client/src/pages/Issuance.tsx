@@ -1,12 +1,33 @@
 import { Layout } from "@/components/layout/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload, FileSpreadsheet, FileCheck, AlertCircle, Loader2, ShieldCheck, Building2 } from "lucide-react";
+import {
+  Upload,
+  FileSpreadsheet,
+  FileCheck,
+  AlertCircle,
+  Loader2,
+  ShieldCheck,
+  Building2,
+} from "lucide-react";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -27,28 +48,44 @@ export default function Issuance() {
     studentId: "",
     credentialType: "template-1",
     credentialName: "Bachelor of Technology",
-    major: ""
+    major: "",
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-    setFormData(prev => ({ ...prev, [id]: value }));
+    setFormData((prev) => ({ ...prev, [id]: value }));
   };
 
   const handleSelectChange = (val: string) => {
     let credName = "Bachelor of Technology";
-    if (val === 'template-2') credName = "Semester Grade Card";
-    if (val === 'template-3') credName = "Certificate of Completion";
-    if (val === 'template-4') credName = "Medical Lab Report";
-    if (val === 'template-5') credName = "ISO 9001:2015 Certificate";
-    if (val === 'template-6') credName = "Employee Work Authorization";
+    if (val === "template-2") credName = "Semester Grade Card";
+    if (val === "template-3") credName = "Certificate of Completion";
+    if (val === "template-4") credName = "Medical Lab Report";
+    if (val === "template-5") credName = "ISO 9001:2015 Certificate";
+    if (val === "template-6") credName = "Employee Work Authorization";
 
-    setFormData(prev => ({ ...prev, credentialType: val, credentialName: credName }));
+    setFormData((prev) => ({
+      ...prev,
+      credentialType: val,
+      credentialName: credName,
+    }));
   };
 
   const handleSectorChange = (val: string) => {
-    const defaultTemplate = val === 'education' ? 'template-1' : val === 'healthcare' ? 'template-4' : val === 'corporate' ? 'template-6' : 'template-5';
-    setFormData(prev => ({ ...prev, sector: val, credentialType: defaultTemplate, credentialName: 'Select Template' }));
+    const defaultTemplate =
+      val === "education"
+        ? "template-1"
+        : val === "healthcare"
+          ? "template-4"
+          : val === "corporate"
+            ? "template-6"
+            : "template-5";
+    setFormData((prev) => ({
+      ...prev,
+      sector: val,
+      credentialType: defaultTemplate,
+      credentialName: "Select Template",
+    }));
   };
 
   const issueMutation = useMutation({
@@ -57,7 +94,7 @@ export default function Issuance() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": (import.meta as any).env?.VITE_API_KEY || ""
+          "x-api-key": (import.meta as any).env?.VITE_API_KEY || "",
         },
         body: JSON.stringify({
           templateId: formData.credentialType,
@@ -65,14 +102,14 @@ export default function Issuance() {
           recipient: {
             name: formData.name,
             email: formData.email,
-            id: formData.studentId
+            id: formData.studentId,
           },
           credentialData: {
             credentialName: formData.credentialName,
             major: formData.major,
-            sector: formData.sector
-          }
-        })
+            sector: formData.sector,
+          },
+        }),
       });
       const body = await res.json().catch(() => null);
       if (!res.ok) {
@@ -89,51 +126,93 @@ export default function Issuance() {
         id: formData.studentId,
         credentialId: data.id, // Store the actual credential UUID
         name: formData.name,
-        credential: formData.credentialName + (formData.major ? ` in ${formData.major}` : ""),
+        credential:
+          formData.credentialName +
+          (formData.major ? ` in ${formData.major}` : ""),
         date: format(new Date(), "MMM dd, yyyy"),
         status: "Issued" as const,
         issuer: "Admin User",
-        department: formData.sector === "education" ? "Engineering" : formData.sector === "healthcare" ? "Pathology" : "HR",
-        txHash: data.txHash || ("0x" + Math.random().toString(16).slice(2, 10) + "..." + Math.random().toString(16).slice(2, 6))
+        department:
+          formData.sector === "education"
+            ? "Engineering"
+            : formData.sector === "healthcare"
+              ? "Pathology"
+              : "HR",
+        txHash:
+          data.txHash ||
+          "0x" +
+            Math.random().toString(16).slice(2, 10) +
+            "..." +
+            Math.random().toString(16).slice(2, 6),
       };
       addRecord(newRecord);
 
       // Auto-create offer for easy wallet import
       try {
         const offerRes = await fetch(`/api/v1/credentials/${data.id}/offer`, {
-          method: 'POST',
-          headers: { 'x-api-key': (import.meta as any).env?.VITE_API_KEY || '' },
+          method: "POST",
+          headers: {
+            "x-api-key": (import.meta as any).env?.VITE_API_KEY || "",
+          },
         });
         if (offerRes.ok) {
           const offerData = await offerRes.json();
           await navigator.clipboard.writeText(offerData.offerUrl);
 
-          const anchorStatus = data?.anchor?.status || (data?.txHash ? 'anchored' : 'pending');
+          const anchorStatus =
+            data?.anchor?.status || (data?.txHash ? "anchored" : "pending");
           const tx = data?.anchor?.txHash || data?.txHash;
           toast({
-            title: anchorStatus === 'anchored' ? "Credential Issued & Anchored" : "Credential Issued (Anchoring Pending)",
+            title:
+              anchorStatus === "anchored"
+                ? "Credential Issued & Anchored"
+                : "Credential Issued (Anchoring Pending)",
             description: (
               <div className="flex flex-col gap-2">
-                <span className="text-xs text-muted-foreground">Trust/Audit: issuance is recorded; anchoring may complete asynchronously.</span>
-                <span>TX: <code className="text-xs">{tx ? `${String(tx).slice(0, 12)}...` : 'pending'}</code></span>
+                <span className="text-xs text-muted-foreground">
+                  Trust/Audit: issuance is recorded; anchoring may complete
+                  asynchronously.
+                </span>
+                <span>
+                  TX:{" "}
+                  <code className="text-xs">
+                    {tx ? `${String(tx).slice(0, 12)}...` : "pending"}
+                  </code>
+                </span>
                 <div className="bg-muted p-2 rounded mt-1">
-                  <p className="text-xs font-semibold mb-1">Wallet URL (copied!):</p>
-                  <code className="text-xs break-all">{offerData.offerUrl}</code>
+                  <p className="text-xs font-semibold mb-1">
+                    Wallet URL (copied!):
+                  </p>
+                  <code className="text-xs break-all">
+                    {offerData.offerUrl}
+                  </code>
                 </div>
-                <span className="text-xs text-muted-foreground">Paste this in Wallet → Receive</span>
+                <span className="text-xs text-muted-foreground">
+                  Paste this in Wallet → Receive
+                </span>
               </div>
             ),
             duration: 20000,
           });
         }
       } catch (e) {
-        const anchorStatus = data?.anchor?.status || (data?.txHash ? 'anchored' : 'pending');
+        const anchorStatus =
+          data?.anchor?.status || (data?.txHash ? "anchored" : "pending");
         toast({
-          title: anchorStatus === 'anchored' ? "Credential Issued & Anchored" : "Credential Issued",
+          title:
+            anchorStatus === "anchored"
+              ? "Credential Issued & Anchored"
+              : "Credential Issued",
           description: (
             <div className="flex flex-col gap-1">
-              <span className="text-sm">{anchorStatus === 'anchored' ? 'Credential anchored to blockchain.' : 'Credential created. Blockchain anchoring may be pending.'}</span>
-              <span className="font-mono text-xs opacity-80">ID: {data.id}</span>
+              <span className="text-sm">
+                {anchorStatus === "anchored"
+                  ? "Credential anchored to blockchain."
+                  : "Credential created. Blockchain anchoring may be pending."}
+              </span>
+              <span className="font-mono text-xs opacity-80">
+                ID: {data.id}
+              </span>
             </div>
           ),
           duration: 6000,
@@ -141,15 +220,20 @@ export default function Issuance() {
       }
 
       // Reset form partially
-      setFormData(prev => ({ ...prev, name: "", email: "", studentId: "" }));
+      setFormData((prev) => ({ ...prev, name: "", email: "", studentId: "" }));
     },
     onError: (err: any) => {
       const body = err?.body;
       const code = body?.code;
       const errors: any[] = Array.isArray(body?.errors) ? body.errors : [];
       const detail = errors.length
-        ? errors.slice(0, 3).map((e) => `${e.path}: ${e.message}`).join("\n")
-        : (body?.message || err?.message || "There was an error issuing the credential.");
+        ? errors
+            .slice(0, 3)
+            .map((e) => `${e.path}: ${e.message}`)
+            .join("\n")
+        : body?.message ||
+          err?.message ||
+          "There was an error issuing the credential.";
 
       toast({
         title: code ? `Issuance Failed (${code})` : "Issuance Failed",
@@ -166,7 +250,7 @@ export default function Issuance() {
         variant: "destructive",
         duration: 12000,
       });
-    }
+    },
   });
 
   const handleIssue = () => {
@@ -174,7 +258,7 @@ export default function Issuance() {
       toast({
         title: "Missing Information",
         description: "Please fill in the recipient name and ID.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -187,8 +271,12 @@ export default function Issuance() {
     <Layout>
       <div className="max-w-5xl mx-auto space-y-8">
         <div>
-          <h2 className="text-3xl font-heading font-bold tracking-tight">Issue Credentials</h2>
-          <p className="text-muted-foreground mt-1">Generate new verifiable credentials for any sector.</p>
+          <h2 className="text-3xl font-heading font-bold tracking-tight">
+            Issue Credentials
+          </h2>
+          <p className="text-muted-foreground mt-1">
+            Generate new verifiable credentials for any sector.
+          </p>
         </div>
 
         <Tabs defaultValue="single" className="w-full">
@@ -209,46 +297,72 @@ export default function Issuance() {
                 <CardContent className="space-y-4">
                   <div className="grid gap-2">
                     <Label htmlFor="sector">Industry Sector</Label>
-                    <Select defaultValue="education" onValueChange={handleSectorChange}>
+                    <Select
+                      defaultValue="education"
+                      onValueChange={handleSectorChange}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select Sector" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="education">Education (University)</SelectItem>
-                        <SelectItem value="healthcare">Healthcare (Hospitals/Labs)</SelectItem>
-                        <SelectItem value="corporate">Corporate (HR/Admin)</SelectItem>
-                        <SelectItem value="manufacturing">Manufacturing (Quality/Safety)</SelectItem>
+                        <SelectItem value="education">
+                          Education (University)
+                        </SelectItem>
+                        <SelectItem value="healthcare">
+                          Healthcare (Hospitals/Labs)
+                        </SelectItem>
+                        <SelectItem value="corporate">
+                          Corporate (HR/Admin)
+                        </SelectItem>
+                        <SelectItem value="manufacturing">
+                          Manufacturing (Quality/Safety)
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="grid gap-2">
                     <Label htmlFor="template">Credential Template</Label>
-                    <Select onValueChange={handleSelectChange} value={formData.credentialType}>
+                    <Select
+                      onValueChange={handleSelectChange}
+                      value={formData.credentialType}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select template" />
                       </SelectTrigger>
                       <SelectContent>
-                        {formData.sector === 'education' && (
+                        {formData.sector === "education" && (
                           <>
-                            <SelectItem value="template-1">Degree Certificate 2025</SelectItem>
-                            <SelectItem value="template-2">Semester Grade Card</SelectItem>
-                            <SelectItem value="template-3">Course Completion</SelectItem>
+                            <SelectItem value="template-1">
+                              Degree Certificate 2025
+                            </SelectItem>
+                            <SelectItem value="template-2">
+                              Semester Grade Card
+                            </SelectItem>
+                            <SelectItem value="template-3">
+                              Course Completion
+                            </SelectItem>
                           </>
                         )}
-                        {formData.sector === 'healthcare' && (
+                        {formData.sector === "healthcare" && (
                           <>
-                            <SelectItem value="template-4">Medical Lab Report</SelectItem>
+                            <SelectItem value="template-4">
+                              Medical Lab Report
+                            </SelectItem>
                           </>
                         )}
-                        {formData.sector === 'corporate' && (
+                        {formData.sector === "corporate" && (
                           <>
-                            <SelectItem value="template-6">Employee ID Card</SelectItem>
+                            <SelectItem value="template-6">
+                              Employee ID Card
+                            </SelectItem>
                           </>
                         )}
-                        {formData.sector === 'manufacturing' && (
+                        {formData.sector === "manufacturing" && (
                           <>
-                            <SelectItem value="template-5">ISO 9001 Compliance</SelectItem>
+                            <SelectItem value="template-5">
+                              ISO 9001 Compliance
+                            </SelectItem>
                           </>
                         )}
                       </SelectContent>
@@ -257,18 +371,34 @@ export default function Issuance() {
 
                   <div className="grid gap-2">
                     <Label htmlFor="name">Recipient Name</Label>
-                    <Input id="name" placeholder="e.g. Aditi Sharma" value={formData.name} onChange={handleInputChange} />
+                    <Input
+                      id="name"
+                      placeholder="e.g. Aditi Sharma"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                    />
                   </div>
 
                   <div className="grid gap-2">
                     <Label htmlFor="email">Email Address</Label>
-                    <Input id="email" type="email" placeholder="e.g. aditi.s@domain.com" value={formData.email} onChange={handleInputChange} />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="e.g. aditi.s@domain.com"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                    />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
                       <Label htmlFor="studentId">ID / Reference No.</Label>
-                      <Input id="studentId" placeholder="UNI-2025-001" value={formData.studentId} onChange={handleInputChange} />
+                      <Input
+                        id="studentId"
+                        placeholder="UNI-2025-001"
+                        value={formData.studentId}
+                        onChange={handleInputChange}
+                      />
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="cgpa">Meta Data / Grade</Label>
@@ -278,16 +408,28 @@ export default function Issuance() {
 
                   <div className="grid gap-2">
                     <Label htmlFor="major">Sub-Title / Major</Label>
-                    <Input id="major" placeholder="Computer Science Engineering" value={formData.major} onChange={handleInputChange} />
+                    <Input
+                      id="major"
+                      placeholder="Computer Science Engineering"
+                      value={formData.major}
+                      onChange={handleInputChange}
+                    />
                   </div>
 
                   <div className="grid gap-2">
                     <Label htmlFor="notes">Internal Notes (Optional)</Label>
-                    <Textarea id="notes" placeholder="Any verification notes..." />
+                    <Textarea
+                      id="notes"
+                      placeholder="Any verification notes..."
+                    />
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button className="w-full" onClick={handleIssue} disabled={isProcessing}>
+                  <Button
+                    className="w-full"
+                    onClick={handleIssue}
+                    disabled={isProcessing}
+                  >
                     {isProcessing ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -311,32 +453,51 @@ export default function Issuance() {
                   <CardContent className="flex items-center justify-center min-h-[300px]">
                     <div className="w-full aspect-[1.414] bg-white shadow-lg rounded-sm p-6 relative overflow-hidden flex flex-col items-center text-center border border-border/50 transition-all">
                       {/* Mock Certificate Preview */}
-                      <div className={`absolute top-0 left-0 w-full h-2 ${formData.sector === 'healthcare' ? 'bg-red-500' : formData.sector === 'corporate' ? 'bg-slate-800' : 'bg-primary/80'}`}></div>
+                      <div
+                        className={`absolute top-0 left-0 w-full h-2 ${formData.sector === "healthcare" ? "bg-red-500" : formData.sector === "corporate" ? "bg-slate-800" : "bg-primary/80"}`}
+                      ></div>
                       <div className="mt-8 mb-4">
                         <div className="w-16 h-16 flex items-center justify-center mx-auto mb-2">
-                          <img src={logo} className="w-16 h-16 object-contain" />
+                          <img
+                            src={logo}
+                            className="w-16 h-16 object-contain"
+                          />
                         </div>
                       </div>
                       <h3 className="font-serif text-xl font-bold text-slate-900 mb-1">
-                        {formData.sector === 'education' ? 'University of North' :
-                          formData.sector === 'healthcare' ? 'City General Hospital' :
-                            formData.sector === 'corporate' ? 'TechCorp Inc.' : 'Global Manufacturing Ltd.'}
+                        {formData.sector === "education"
+                          ? "University of North"
+                          : formData.sector === "healthcare"
+                            ? "City General Hospital"
+                            : formData.sector === "corporate"
+                              ? "TechCorp Inc."
+                              : "Global Manufacturing Ltd."}
                       </h3>
-                      <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-6">{formData.credentialName}</p>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-6">
+                        {formData.credentialName}
+                      </p>
 
-                      <p className="text-xs text-slate-600 mb-1">This is to certify that</p>
-                      <h4 className="font-serif text-lg text-primary font-bold mb-1">{formData.name || "Recipient Name"}</h4>
+                      <p className="text-xs text-slate-600 mb-1">
+                        This is to certify that
+                      </p>
+                      <h4 className="font-serif text-lg text-primary font-bold mb-1">
+                        {formData.name || "Recipient Name"}
+                      </h4>
                       <p className="text-xs text-slate-600 px-8 leading-relaxed">
-                        {formData.sector === 'education' ? `Has successfully completed the requirements for ${formData.major || "Major"}.` :
-                          formData.sector === 'healthcare' ? `Has been tested and verified for the above medical procedure.` :
-                            `Has been authorized for ${formData.major || "Role/Department"}.`}
+                        {formData.sector === "education"
+                          ? `Has successfully completed the requirements for ${formData.major || "Major"}.`
+                          : formData.sector === "healthcare"
+                            ? `Has been tested and verified for the above medical procedure.`
+                            : `Has been authorized for ${formData.major || "Role/Department"}.`}
                       </p>
 
                       <div className="mt-auto w-full flex justify-between items-end px-4 pt-4">
                         <div className="flex flex-col items-center">
                           <div className="w-20 h-8 border-b border-slate-400 mb-1"></div>
                           <span className="text-[8px] text-slate-400 uppercase">
-                            {formData.sector === 'education' ? 'Dean' : 'Director'}
+                            {formData.sector === "education"
+                              ? "Dean"
+                              : "Director"}
                           </span>
                         </div>
                         <div className="flex flex-col items-center justify-center gap-1">
@@ -350,7 +511,9 @@ export default function Issuance() {
                         <div className="flex flex-col items-center">
                           <div className="w-20 h-8 border-b border-slate-400 mb-1"></div>
                           <span className="text-[8px] text-slate-400 uppercase">
-                            {formData.sector === 'education' ? 'Registrar' : 'Authorized Sig.'}
+                            {formData.sector === "education"
+                              ? "Registrar"
+                              : "Authorized Sig."}
                           </span>
                         </div>
                       </div>
@@ -362,7 +525,10 @@ export default function Issuance() {
                   <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0" />
                   <div className="text-sm text-blue-800 dark:text-blue-300">
                     <p className="font-semibold mb-1">Blockchain Anchoring</p>
-                    <p>Credentials are automatically hashed and anchored to the Polygon blockchain for immutable verification.</p>
+                    <p>
+                      Credentials are automatically hashed and anchored to the
+                      Polygon blockchain for immutable verification.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -376,7 +542,9 @@ export default function Issuance() {
                   <Upload className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="font-semibold text-lg">Drag and drop CSV file</h3>
+                  <h3 className="font-semibold text-lg">
+                    Drag and drop CSV file
+                  </h3>
                   <p className="text-sm text-muted-foreground">
                     Or click to browse your computer
                   </p>
@@ -386,7 +554,11 @@ export default function Issuance() {
                   Select File
                 </Button>
                 <p className="text-xs text-muted-foreground pt-4">
-                  Download <span className="text-primary underline cursor-pointer">sample_template.csv</span> for format guide.
+                  Download{" "}
+                  <span className="text-primary underline cursor-pointer">
+                    sample_template.csv
+                  </span>{" "}
+                  for format guide.
                 </p>
               </CardContent>
             </Card>
@@ -401,7 +573,10 @@ export default function Issuance() {
                   <div className="text-right">Status</div>
                 </div>
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="grid grid-cols-5 p-4 border-b last:border-0 text-sm hover:bg-muted/20 transition-colors">
+                  <div
+                    key={i}
+                    className="grid grid-cols-5 p-4 border-b last:border-0 text-sm hover:bg-muted/20 transition-colors"
+                  >
                     <div className="col-span-2 font-medium flex items-center gap-2">
                       <FileSpreadsheet className="h-4 w-4 text-green-600" />
                       Batch_2025_May_{i}.csv

@@ -12,7 +12,9 @@ function getRequiredFieldsFromJsonSchema(schema: unknown): string[] {
   return [];
 }
 
-function getPropertyTypesFromJsonSchema(schema: unknown): Record<string, string> {
+function getPropertyTypesFromJsonSchema(
+  schema: unknown,
+): Record<string, string> {
   if (!schema || typeof schema !== "object") return {};
   const s = schema as any;
   const props = s.properties;
@@ -28,23 +30,38 @@ function getPropertyTypesFromJsonSchema(schema: unknown): Record<string, string>
 
 function isType(value: unknown, expected: string): boolean {
   if (expected === "string") return typeof value === "string";
-  if (expected === "number") return typeof value === "number" && Number.isFinite(value);
-  if (expected === "integer") return typeof value === "number" && Number.isInteger(value);
+  if (expected === "number")
+    return typeof value === "number" && Number.isFinite(value);
+  if (expected === "integer")
+    return typeof value === "number" && Number.isInteger(value);
   if (expected === "boolean") return typeof value === "boolean";
-  if (expected === "object") return !!value && typeof value === "object" && !Array.isArray(value);
+  if (expected === "object")
+    return !!value && typeof value === "object" && !Array.isArray(value);
   if (expected === "array") return Array.isArray(value);
   return true; // unknown type → don't block
 }
 
-export function validateCredentialDataAgainstTemplateSchema(templateSchema: unknown, data: unknown): {
+export function validateCredentialDataAgainstTemplateSchema(
+  templateSchema: unknown,
+  data: unknown,
+): {
   ok: boolean;
   errors: FieldError[];
-  schemaHint?: { required?: string[]; properties?: Record<string, { type?: string }> };
+  schemaHint?: {
+    required?: string[];
+    properties?: Record<string, { type?: string }>;
+  };
 } {
   if (!data || typeof data !== "object" || Array.isArray(data)) {
     return {
       ok: false,
-      errors: [{ path: "credentialData", message: "credentialData must be a JSON object", expected: "object" }],
+      errors: [
+        {
+          path: "credentialData",
+          message: "credentialData must be a JSON object",
+          expected: "object",
+        },
+      ],
     };
   }
 
@@ -88,7 +105,9 @@ export function validateCredentialDataAgainstTemplateSchema(templateSchema: unkn
 
   const schemaHint = {
     required,
-    properties: Object.fromEntries(Object.entries(propTypes).map(([k, t]) => [k, { type: t }])),
+    properties: Object.fromEntries(
+      Object.entries(propTypes).map(([k, t]) => [k, { type: t }]),
+    ),
   };
 
   return {
@@ -126,8 +145,10 @@ export function normalizeRecipient(recipient: any): any {
 export function validateRecipient(recipient: any): FieldError[] {
   const errors: FieldError[] = [];
   const hasDid = typeof recipient?.did === "string" && recipient.did.length > 0;
-  const hasStudentId = typeof recipient?.studentId === "string" && recipient.studentId.length > 0;
-  const hasEmail = typeof recipient?.email === "string" && recipient.email.length > 0;
+  const hasStudentId =
+    typeof recipient?.studentId === "string" && recipient.studentId.length > 0;
+  const hasEmail =
+    typeof recipient?.email === "string" && recipient.email.length > 0;
 
   if (!hasDid && !hasStudentId) {
     errors.push({

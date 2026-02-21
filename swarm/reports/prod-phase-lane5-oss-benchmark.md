@@ -18,14 +18,15 @@
 
 ## A. Reputation dispute flow (PRD F5A)
 
-| Candidate | Why it is relevant | License signal | Decision |
-|---|---|---|---|
-| **temporalio/temporal** | Durable workflow orchestration, retries, timers, human-in-loop stages; ideal for 48h dispute SLA orchestration and escalations. | MIT | **ADOPT** |
-| **zammad/zammad** | Mature ticket/case lifecycle concepts (status, ownership, audit trail, SLA mindset) for dispute ops UX patterns. | AGPL-3.0 | **ADOPT (pattern-only, not embedded runtime)** |
-| **camunda/camunda** | BPMN/DMN orchestration for complex dispute processes. | license model unclear from quick scan; Camunda 7 CE EoL noted | **REJECT for now** (licensing/runtime complexity risk) |
-| **osTicket/osTicket** | Simple ticketing lifecycle reference. | (not fully validated in this pass) | **REJECT** (legacy PHP stack mismatch with TS services) |
+| Candidate               | Why it is relevant                                                                                                              | License signal                                                | Decision                                                |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------- |
+| **temporalio/temporal** | Durable workflow orchestration, retries, timers, human-in-loop stages; ideal for 48h dispute SLA orchestration and escalations. | MIT                                                           | **ADOPT**                                               |
+| **zammad/zammad**       | Mature ticket/case lifecycle concepts (status, ownership, audit trail, SLA mindset) for dispute ops UX patterns.                | AGPL-3.0                                                      | **ADOPT (pattern-only, not embedded runtime)**          |
+| **camunda/camunda**     | BPMN/DMN orchestration for complex dispute processes.                                                                           | license model unclear from quick scan; Camunda 7 CE EoL noted | **REJECT for now** (licensing/runtime complexity risk)  |
+| **osTicket/osTicket**   | Simple ticketing lifecycle reference.                                                                                           | (not fully validated in this pass)                            | **REJECT** (legacy PHP stack mismatch with TS services) |
 
 **Recommended build for F5A:**
+
 - Core engine: **Temporal**
 - Product/API layer in Credity services:
   - `POST /api/v1/reputation/disputes`
@@ -39,15 +40,16 @@
 
 ## B. WorkScore ATS integration (PRD F8)
 
-| Candidate | Why it is relevant | License signal | Decision |
-|---|---|---|---|
-| **MeltanoLabs/tap-greenhouse** | Working Greenhouse Harvest OAuth2 extraction logic; good reference for schema + auth handling. | Apache-2.0 | **ADOPT** |
-| **singer-io/tap-lever** | Lever resource coverage (candidates/applications/offers/opportunities); useful baseline for ingestion contracts. | AGPL-3.0 | **ADOPT (reference only / avoid code-copy into closed modules)** |
-| **NangoHQ/nango** | OAuth + API integration infrastructure for many SaaS APIs; can accelerate ATS connector maintenance. | Elastic License 2.0 | **REJECT for core dependency** (license constraints) |
-| **airbytehq/airbyte** | Broad connector ecosystem, includes ATS-adjacent connectors; good for batch analytics pipeline. | Elastic License 2.0 | **REJECT for embedded product path** (heavy + license) |
-| **opencats/OpenCATS** | Open ATS domain model and pipeline semantics. | MPL 2.0 + legacy CATS public license | **ADOPT (domain model reference only)** |
+| Candidate                      | Why it is relevant                                                                                               | License signal                       | Decision                                                         |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------ | ---------------------------------------------------------------- |
+| **MeltanoLabs/tap-greenhouse** | Working Greenhouse Harvest OAuth2 extraction logic; good reference for schema + auth handling.                   | Apache-2.0                           | **ADOPT**                                                        |
+| **singer-io/tap-lever**        | Lever resource coverage (candidates/applications/offers/opportunities); useful baseline for ingestion contracts. | AGPL-3.0                             | **ADOPT (reference only / avoid code-copy into closed modules)** |
+| **NangoHQ/nango**              | OAuth + API integration infrastructure for many SaaS APIs; can accelerate ATS connector maintenance.             | Elastic License 2.0                  | **REJECT for core dependency** (license constraints)             |
+| **airbytehq/airbyte**          | Broad connector ecosystem, includes ATS-adjacent connectors; good for batch analytics pipeline.                  | Elastic License 2.0                  | **REJECT for embedded product path** (heavy + license)           |
+| **opencats/OpenCATS**          | Open ATS domain model and pipeline semantics.                                                                    | MPL 2.0 + legacy CATS public license | **ADOPT (domain model reference only)**                          |
 
 **Recommended build for F8:**
+
 - Build first-party thin adapter layer (`workscore-ats-integration-service.ts`) using **Meltano/Singer schema ideas**, not full platform embedding.
 - Canonical ingestion endpoint: `POST /api/v1/workscore/ats/webhook`.
 - Provider adapters:
@@ -61,14 +63,15 @@
 
 ## C. Gig onboarding acceleration (PRD F7)
 
-| Candidate | Why it is relevant | License signal | Decision |
-|---|---|---|---|
-| **CacheControl/json-rules-engine** | Lightweight JSON policy engine for APPROVE/REVIEW/REJECT fast-track decisions with explainable reasons. | ISC | **ADOPT** |
-| **temporalio/temporal** | Best fit for <5 min multi-step onboarding orchestration + retries/timeouts + idempotency. | MIT | **ADOPT** |
-| **ballerine-io/ballerine** | Strong KYC/KYB + case mgmt concept match for onboarding journeys. | mixed/multi-license; OSS repo notes major rebuild & not actively supported | **REJECT (stability risk now)** |
-| **kestra-io/kestra** | Event-driven orchestration with plugin ecosystem. | (not fully validated in this pass) | **REJECT for core path** (extra platform overhead vs Temporal already chosen) |
+| Candidate                          | Why it is relevant                                                                                      | License signal                                                             | Decision                                                                      |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| **CacheControl/json-rules-engine** | Lightweight JSON policy engine for APPROVE/REVIEW/REJECT fast-track decisions with explainable reasons. | ISC                                                                        | **ADOPT**                                                                     |
+| **temporalio/temporal**            | Best fit for <5 min multi-step onboarding orchestration + retries/timeouts + idempotency.               | MIT                                                                        | **ADOPT**                                                                     |
+| **ballerine-io/ballerine**         | Strong KYC/KYB + case mgmt concept match for onboarding journeys.                                       | mixed/multi-license; OSS repo notes major rebuild & not actively supported | **REJECT (stability risk now)**                                               |
+| **kestra-io/kestra**               | Event-driven orchestration with plugin ecosystem.                                                       | (not fully validated in this pass)                                         | **REJECT for core path** (extra platform overhead vs Temporal already chosen) |
 
 **Recommended build for F7:**
+
 - Use shared orchestration substrate (**Temporal**) + decision layer (**json-rules-engine**).
 - Add APIs:
   - `POST /api/v1/gig/profile/build`
@@ -108,12 +111,14 @@
 ## 4) Final recommendation (what to implement now)
 
 ## Phase 1 (immediate, low risk)
+
 - Adopt **Temporal + json-rules-engine** as common substrate.
 - Implement F5A dispute APIs + workflow timers + SLA tests.
 - Implement F7 gig profile + fast-track APIs with explainable decisions.
 - Implement F8 ATS adapter framework with Greenhouse first, Lever second.
 
 ## Phase 2 (after baseline)
+
 - Pull reporting patterns from OpenCATS/Zammad into admin dashboards.
 - Re-evaluate Ballerine/Camunda only if license/support posture improves or specific enterprise need emerges.
 

@@ -1,50 +1,51 @@
 #!/usr/bin/env node
-import { spawn } from 'node:child_process';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { spawn } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(__dirname, '..');
+const repoRoot = path.resolve(__dirname, "..");
 
-const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
 
 const startupEnv = {
-  NODE_ENV: 'development',
-  ALLOW_DEMO_ROUTES: 'false',
-  REQUIRE_DATABASE: 'false',
-  REQUIRE_QUEUE: 'false',
-  BLOCKCHAIN_ANCHOR_MODE: 'async',
-  ISSUER_BOOTSTRAP_API_KEY: process.env.ISSUER_BOOTSTRAP_API_KEY || 'test-api-key',
+  NODE_ENV: "development",
+  ALLOW_DEMO_ROUTES: "false",
+  REQUIRE_DATABASE: "false",
+  REQUIRE_QUEUE: "false",
+  BLOCKCHAIN_ANCHOR_MODE: "async",
+  ISSUER_BOOTSTRAP_API_KEY:
+    process.env.ISSUER_BOOTSTRAP_API_KEY || "test-api-key",
 };
 
 const services = [
   {
-    name: 'issuer',
-    cwd: path.join(repoRoot, 'CredVerseIssuer 3'),
-    cmd: [npmCmd, 'run', 'dev'],
-    env: { PORT: '5001', ...startupEnv },
-    healthUrl: 'http://localhost:5001/api/health',
+    name: "issuer",
+    cwd: path.join(repoRoot, "CredVerseIssuer 3"),
+    cmd: [npmCmd, "run", "dev"],
+    env: { PORT: "5001", ...startupEnv },
+    healthUrl: "http://localhost:5001/api/health",
   },
   {
-    name: 'wallet',
-    cwd: path.join(repoRoot, 'BlockWalletDigi'),
-    cmd: [npmCmd, 'run', 'dev'],
-    env: { PORT: '5002', ...startupEnv },
-    healthUrl: 'http://localhost:5002/api/health',
+    name: "wallet",
+    cwd: path.join(repoRoot, "BlockWalletDigi"),
+    cmd: [npmCmd, "run", "dev"],
+    env: { PORT: "5002", ...startupEnv },
+    healthUrl: "http://localhost:5002/api/health",
   },
   {
-    name: 'recruiter',
-    cwd: path.join(repoRoot, 'CredVerseRecruiter'),
-    cmd: [npmCmd, 'run', 'dev'],
-    env: { PORT: '5003', ...startupEnv },
-    healthUrl: 'http://localhost:5003/api/health',
+    name: "recruiter",
+    cwd: path.join(repoRoot, "CredVerseRecruiter"),
+    cmd: [npmCmd, "run", "dev"],
+    env: { PORT: "5003", ...startupEnv },
+    healthUrl: "http://localhost:5003/api/health",
   },
   {
-    name: 'gateway',
-    cwd: path.join(repoRoot, 'credverse-gateway'),
-    cmd: [npmCmd, 'run', 'dev:server'],
-    env: { PORT: '5173', ...startupEnv },
-    healthUrl: 'http://localhost:5173/api/health',
+    name: "gateway",
+    cwd: path.join(repoRoot, "credverse-gateway"),
+    cmd: [npmCmd, "run", "dev:server"],
+    env: { PORT: "5173", ...startupEnv },
+    healthUrl: "http://localhost:5173/api/health",
   },
 ];
 
@@ -66,20 +67,20 @@ function spawnService(def) {
       ...process.env,
       ...def.env,
     },
-    stdio: ['ignore', 'pipe', 'pipe'],
+    stdio: ["ignore", "pipe", "pipe"],
   });
 
-  child.stdout.on('data', (chunk) => {
+  child.stdout.on("data", (chunk) => {
     const text = String(chunk).trim();
     if (text) log(def.name, text);
   });
-  child.stderr.on('data', (chunk) => {
+  child.stderr.on("data", (chunk) => {
     const text = String(chunk).trim();
     if (text) log(def.name, text);
   });
 
-  child.on('exit', (code, signal) => {
-    log(def.name, `exited (code=${code ?? 'null'} signal=${signal ?? 'null'})`);
+  child.on("exit", (code, signal) => {
+    log(def.name, `exited (code=${code ?? "null"} signal=${signal ?? "null"})`);
   });
 
   running.push(child);
@@ -100,57 +101,59 @@ async function waitForHealth(name, url, timeoutMs = 120_000) {
     }
     await sleep(1500);
   }
-  throw new Error(`${name} did not become healthy at ${url} within ${timeoutMs}ms`);
+  throw new Error(
+    `${name} did not become healthy at ${url} within ${timeoutMs}ms`,
+  );
 }
 
 function terminateChildren() {
   for (const child of running) {
     if (!child.killed) {
-      child.kill('SIGTERM');
+      child.kill("SIGTERM");
     }
   }
 }
 
 async function runGate() {
   return new Promise((resolve, reject) => {
-    const gate = spawn('node', ['scripts/foundation-e2e-gate.mjs'], {
+    const gate = spawn("node", ["scripts/foundation-e2e-gate.mjs"], {
       cwd: repoRoot,
       env: {
         ...process.env,
-        ISSUER_BASE_URL: 'http://localhost:5001',
-        WALLET_BASE_URL: 'http://localhost:5002',
-        RECRUITER_BASE_URL: 'http://localhost:5003',
+        ISSUER_BASE_URL: "http://localhost:5001",
+        WALLET_BASE_URL: "http://localhost:5002",
+        RECRUITER_BASE_URL: "http://localhost:5003",
         E2E_ISSUER_API_KEY:
-          process.env.E2E_ISSUER_API_KEY
-          || process.env.ISSUER_BOOTSTRAP_API_KEY
-          || 'test-api-key',
+          process.env.E2E_ISSUER_API_KEY ||
+          process.env.ISSUER_BOOTSTRAP_API_KEY ||
+          "test-api-key",
       },
-      stdio: 'inherit',
+      stdio: "inherit",
     });
 
-    gate.on('exit', (code) => {
+    gate.on("exit", (code) => {
       if (code === 0) {
         resolve();
       } else {
         reject(new Error(`foundation gate exited with code ${code}`));
       }
     });
-    gate.on('error', reject);
+    gate.on("error", reject);
   });
 }
 
 async function main() {
-  process.on('SIGINT', () => {
+  process.on("SIGINT", () => {
     terminateChildren();
     process.exit(130);
   });
-  process.on('SIGTERM', () => {
+  process.on("SIGTERM", () => {
     terminateChildren();
     process.exit(143);
   });
 
   try {
-    log('orchestrator', 'starting local services for foundation gate...');
+    log("orchestrator", "starting local services for foundation gate...");
     for (const service of services) {
       spawnService(service);
     }
@@ -159,9 +162,9 @@ async function main() {
       await waitForHealth(service.name, service.healthUrl);
     }
 
-    log('orchestrator', 'all services healthy. running foundation gate...');
+    log("orchestrator", "all services healthy. running foundation gate...");
     await runGate();
-    log('orchestrator', 'foundation gate completed successfully.');
+    log("orchestrator", "foundation gate completed successfully.");
   } finally {
     terminateChildren();
     await sleep(800);
@@ -169,6 +172,8 @@ async function main() {
 }
 
 main().catch((error) => {
-  process.stderr.write(`[orchestrator] failed: ${error instanceof Error ? error.message : String(error)}\n`);
+  process.stderr.write(
+    `[orchestrator] failed: ${error instanceof Error ? error.message : String(error)}\n`,
+  );
   process.exit(1);
 });

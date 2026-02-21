@@ -4,23 +4,29 @@
  * Source of truth: swarm/reports/credity-s34-master-board.csv
  * Output: credverse-gateway/public/progress/latest.json
  */
-import fs from 'node:fs';
-import path from 'node:path';
+import fs from "node:fs";
+import path from "node:path";
 
 const ROOT = path.resolve(process.cwd());
-const csvPath = path.join(ROOT, 'swarm', 'reports', 'credity-s34-master-board.csv');
-const outDir = path.join(ROOT, 'credverse-gateway', 'public', 'progress');
-const outPath = path.join(outDir, 'latest.json');
+const csvPath = path.join(
+  ROOT,
+  "swarm",
+  "reports",
+  "credity-s34-master-board.csv",
+);
+const outDir = path.join(ROOT, "credverse-gateway", "public", "progress");
+const outPath = path.join(outDir, "latest.json");
 
 function parseCsv(csv) {
   const lines = csv.split(/\r?\n/).filter(Boolean);
   const headerLine = lines.shift();
-  const header = headerLine.split(',');
+  const header = headerLine.split(",");
   const rows = [];
   for (const line of lines) {
     const cols = parseFixedBoardLine(line, header.length);
     const row = {};
-    for (let i = 0; i < header.length; i++) row[header[i]] = (cols[i] ?? '').trim();
+    for (let i = 0; i < header.length; i++)
+      row[header[i]] = (cols[i] ?? "").trim();
     rows.push(row);
   }
   return rows;
@@ -32,7 +38,7 @@ function parseFixedBoardLine(line, expectedCols) {
   // Column schema (17):
   // ID,Lane,Title,Workstream,DRI,Deputy,Priority,RAG,ImpactHypothesis,DueIST,Dependencies,
   // DefinitionOfDone,ControlGateNeeded,ControlGate,RollbackPlan,Status,LastUpdatedIST
-  const parts = line.split(',');
+  const parts = line.split(",");
   if (parts.length === expectedCols) return parts;
 
   // Recompose from the RIGHT:
@@ -44,7 +50,7 @@ function parseFixedBoardLine(line, expectedCols) {
 
   const head = parts.slice(0, HEAD);
   const tail = parts.slice(parts.length - TAIL);
-  const definitionOfDone = parts.slice(HEAD, parts.length - TAIL).join(',');
+  const definitionOfDone = parts.slice(HEAD, parts.length - TAIL).join(",");
 
   return [...head, definitionOfDone, ...tail];
 }
@@ -57,7 +63,7 @@ function summarize(rows) {
     byStatus: {},
   };
 
-  const norm = (s) => (s || '').trim();
+  const norm = (s) => (s || "").trim();
 
   for (const r of rows) {
     const lane = norm(r.Lane);
@@ -71,7 +77,7 @@ function summarize(rows) {
     totals.byStatus[status] = (totals.byStatus[status] || 0) + 1;
   }
 
-  const done = (totals.byStatus['Done'] || 0) + (totals.byStatus['DONE'] || 0);
+  const done = (totals.byStatus["Done"] || 0) + (totals.byStatus["DONE"] || 0);
   const all = rows.length;
   const completion = all > 0 ? Math.round((done / all) * 1000) / 10 : 0;
 
@@ -83,47 +89,75 @@ function main() {
     console.error(`Missing board CSV: ${csvPath}`);
     process.exit(1);
   }
-  const csv = fs.readFileSync(csvPath, 'utf8');
+  const csv = fs.readFileSync(csvPath, "utf8");
   const rows = parseCsv(csv);
   const summary = summarize(rows);
 
   let prd = null;
-try {
-  const prdPath = path.join(ROOT, 'credverse-gateway', 'public', 'progress', 'prd.json');
-  if (fs.existsSync(prdPath)) prd = JSON.parse(fs.readFileSync(prdPath, 'utf8'));
-} catch {
-  prd = null;
-}
+  try {
+    const prdPath = path.join(
+      ROOT,
+      "credverse-gateway",
+      "public",
+      "progress",
+      "prd.json",
+    );
+    if (fs.existsSync(prdPath))
+      prd = JSON.parse(fs.readFileSync(prdPath, "utf8"));
+  } catch {
+    prd = null;
+  }
 
-let prdReq = null;
-try {
-  const prdReqPath = path.join(ROOT, 'credverse-gateway', 'public', 'progress', 'prd-requirements.json');
-  if (fs.existsSync(prdReqPath)) prdReq = JSON.parse(fs.readFileSync(prdReqPath, 'utf8'));
-} catch {
-  prdReq = null;
-}
+  let prdReq = null;
+  try {
+    const prdReqPath = path.join(
+      ROOT,
+      "credverse-gateway",
+      "public",
+      "progress",
+      "prd-requirements.json",
+    );
+    if (fs.existsSync(prdReqPath))
+      prdReq = JSON.parse(fs.readFileSync(prdReqPath, "utf8"));
+  } catch {
+    prdReq = null;
+  }
 
-let prdTracker = null;
-try {
-  const prdTrackerPath = path.join(ROOT, 'credverse-gateway', 'public', 'progress', 'prd-feature-tracker.json');
-  if (fs.existsSync(prdTrackerPath)) prdTracker = JSON.parse(fs.readFileSync(prdTrackerPath, 'utf8'));
-} catch {
-  prdTracker = null;
-}
+  let prdTracker = null;
+  try {
+    const prdTrackerPath = path.join(
+      ROOT,
+      "credverse-gateway",
+      "public",
+      "progress",
+      "prd-feature-tracker.json",
+    );
+    if (fs.existsSync(prdTrackerPath))
+      prdTracker = JSON.parse(fs.readFileSync(prdTrackerPath, "utf8"));
+  } catch {
+    prdTracker = null;
+  }
 
-const snapshot = {
+  const snapshot = {
     generatedAt: new Date().toISOString(),
     source: {
-      boardCsv: 'swarm/reports/credity-s34-master-board.csv',
-      prdJson: prd ? 'credverse-gateway/public/progress/prd.json' : null,
-      prdRequirementsJson: prdReq ? 'credverse-gateway/public/progress/prd-requirements.json' : null,
-      prdFeatureTrackerJson: prdTracker ? 'credverse-gateway/public/progress/prd-feature-tracker.json' : null,
-      prdFeatureTrackerCsv: prdTracker ? 'credverse-gateway/public/progress/prd-feature-tracker.csv' : null,
+      boardCsv: "swarm/reports/credity-s34-master-board.csv",
+      prdJson: prd ? "credverse-gateway/public/progress/prd.json" : null,
+      prdRequirementsJson: prdReq
+        ? "credverse-gateway/public/progress/prd-requirements.json"
+        : null,
+      prdFeatureTrackerJson: prdTracker
+        ? "credverse-gateway/public/progress/prd-feature-tracker.json"
+        : null,
+      prdFeatureTrackerCsv: prdTracker
+        ? "credverse-gateway/public/progress/prd-feature-tracker.csv"
+        : null,
     },
     summary: {
       ...summary,
       prdCompletionPct: prd?.prdCompletionPct ?? null,
-      prdRequirementsCompletionPct: prdReq?.prdRequirementsCompletionPct ?? null,
+      prdRequirementsCompletionPct:
+        prdReq?.prdRequirementsCompletionPct ?? null,
       prdRequirementsTotal: prdReq?.totalRequirements ?? null,
       prdEvidenceMappedFeatures: prdTracker?.mappedEvidenceFeatures ?? null,
       prdFeaturesTotal: prdTracker?.totalFeatures ?? null,

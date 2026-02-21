@@ -1,4 +1,4 @@
-export { CredVerse } from './client.js';
+export { CredVerse } from "./client.js";
 export type {
   CredVerseClientOptions,
   IngestReputationEventRequest,
@@ -23,4 +23,4 @@ export type {
   VerifyDecision,
   VerifyRequest,
   VerifyResult,
-} from './types.js';
+} from "./types.js";

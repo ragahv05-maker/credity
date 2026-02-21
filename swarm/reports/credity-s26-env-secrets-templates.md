@@ -1,7 +1,9 @@
 # Credity S26 — Env Templates + Secrets Guidance Consolidation
 
 ## Scope completed
+
 Consolidated the current environment/secret requirements across:
+
 - `.env.launch.example`
 - `DEPLOYMENT.md`
 - `infra/gcp/cloudrun/env.example.yaml`
@@ -24,6 +26,7 @@ No real secrets are included below (placeholders only).
 - `SENTRY_DSN` **or** `GATEWAY_SENTRY_DSN` (at least one)
 
 Also required by launch gate (non-env artifacts):
+
 - `docs/runbooks/incident-response.md`
 - `docs/runbooks/rollback.md`
 - `docs/gates/production-launch-gate.md`
@@ -38,6 +41,7 @@ Source of truth: `scripts/launch-gate-check.mjs`.
 > These are sanitized templates for standardization. Keep real values in secret manager/runtime env, never in git.
 
 ### A) `.env.dev.example`
+
 ```dotenv
 # Local development defaults
 NODE_ENV=development
@@ -73,6 +77,7 @@ ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5001,http://localhost:500
 ```
 
 ### B) `.env.staging.example`
+
 ```dotenv
 NODE_ENV=production
 ALLOW_DEMO_ROUTES=false
@@ -101,6 +106,7 @@ ALLOWED_ORIGINS=https://gateway.staging.example.com,https://issuer.staging.examp
 ```
 
 ### C) `.env.prod.example`
+
 ```dotenv
 NODE_ENV=production
 ALLOW_DEMO_ROUTES=false
@@ -151,12 +157,14 @@ ALLOWED_ORIGINS=https://gateway.credity.in,https://issuer.credity.in,https://wal
 ## 4) Current-state alignment check
 
 ### Already present and aligned
+
 - Strict gate env requirements are implemented in `scripts/launch-gate-check.mjs`.
 - Launch-gate example file exists: `.env.launch.example`.
 - Production baseline flags are present in infra/docs (`REQUIRE_DATABASE=true`, `REQUIRE_QUEUE=true`, `ALLOW_DEMO_ROUTES=false`).
 - Secret-manager mapping exists (`infra/gcp/cloudrun/env.example.yaml`).
 
 ### Gaps found
+
 - Env examples are spread across multiple files and not organized as explicit `dev/staging/prod` templates in one place.
 - Strict-gate required keys are present, but not highlighted as a dedicated “must set before strict gate” block in all deployment docs.
 

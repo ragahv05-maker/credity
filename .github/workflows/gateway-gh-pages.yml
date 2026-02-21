@@ -4,10 +4,10 @@ on:
   push:
     branches: [main]
     paths:
-      - 'credverse-gateway/**'
-      - 'swarm/reports/credity-s34-master-board.csv'
-      - '.github/workflows/gateway-gh-pages.yml'
-      - 'scripts/progress-snapshot.mjs'
+      - "credverse-gateway/**"
+      - "swarm/reports/credity-s34-master-board.csv"
+      - ".github/workflows/gateway-gh-pages.yml"
+      - "scripts/progress-snapshot.mjs"
   workflow_dispatch: {}
 
 permissions:
@@ -16,7 +16,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: 'pages'
+  group: "pages"
   cancel-in-progress: true
 
 jobs:
@@ -29,8 +29,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: "22"
+          cache: "npm"
           cache-dependency-path: |
             credverse-gateway/package-lock.json
 

@@ -9,6 +9,7 @@
 **NO-GO (evidence-backed)** for production release in current audited state.
 
 ### Why NO-GO
+
 1. `npm run lint` fails with **253 errors / 3 warnings** (wallet package fails first; broad repo lint debt).
 2. `npm run gate:launch:strict` fails required production checks:
    - missing `REDIS_URL`
@@ -21,6 +22,7 @@
 ## What was executed
 
 ### 1) Root + service checks
+
 - `npm run check` → ✅ PASS
 - `npm run test` → ✅ PASS
   - Wallet tests passed
@@ -40,6 +42,7 @@
 ## Failing points (exact) and disposition
 
 ### A) Foundation local gate failures (fixed in this lane)
+
 1. **401 No token provided** when posting wallet credential in foundation gate flow
    - File: `scripts/foundation-e2e-gate.mjs`
    - Failing call: `POST /api/wallet/credentials` (without bearer auth)
@@ -53,6 +56,7 @@
 Result after patch: `npm run gate:foundation:local` → ✅ PASS.
 
 ### B) Sepolia smoke test teardown regression (fixed in this lane)
+
 - File: `CredVerseRecruiter/tests/sepolia-smoke.test.ts`
 - Location: `afterAll` block (around line 65)
 - Symptom: secondary `TypeError: Cannot read properties of undefined (reading 'close')` when `beforeAll` exits early due missing relayer key.
@@ -60,7 +64,9 @@ Result after patch: `npm run gate:foundation:local` → ✅ PASS.
 - Post-fix behavior: only the meaningful primary failure remains (`Missing RELAYER_PRIVATE_KEY...`).
 
 ### C) Lint failures (not isolated/safe to patch in QA lane)
+
 `npm run lint` currently fails at scale; representative first failures:
+
 - `BlockWalletDigi/client/src/components/nav.tsx:2:24` — unused import `Settings`
 - `BlockWalletDigi/client/src/components/qr-scanner.tsx:31:9` — use-before-declare (`startCamera`)
 - `BlockWalletDigi/client/src/components/qr-scanner.tsx:33:13` — use-before-declare (`stopCamera`)

@@ -1,5 +1,8 @@
-import { Engine } from 'json-rules-engine';
-import type { WorkScoreDecision, WorkScoreReasonCode } from '@credverse/shared-auth';
+import { Engine } from "json-rules-engine";
+import type {
+  WorkScoreDecision,
+  WorkScoreReasonCode,
+} from "@credverse/shared-auth";
 
 type PolicyInput = {
   score: number;
@@ -21,36 +24,41 @@ const decisionRank: Record<WorkScoreDecision, number> = {
 };
 
 const baseDecisionFromScore = (score: number): WorkScoreDecision => {
-  if (score >= 850) return 'HIRE_FAST';
-  if (score >= 700) return 'REVIEW';
-  return 'INVESTIGATE_REJECT';
+  if (score >= 850) return "HIRE_FAST";
+  if (score >= 700) return "REVIEW";
+  return "INVESTIGATE_REJECT";
 };
 
-export async function evaluateWorkScorePolicy(input: PolicyInput): Promise<WorkScorePolicyResult> {
+export async function evaluateWorkScorePolicy(
+  input: PolicyInput,
+): Promise<WorkScorePolicyResult> {
   const engine = new Engine();
 
   engine.addRule({
-    name: 'force-review-when-evidence-weak',
+    name: "force-review-when-evidence-weak",
     conditions: {
       all: [
-        { fact: 'hasStrongEvidence', operator: 'equal', value: false },
-        { fact: 'score', operator: 'greaterThanInclusive', value: 700 },
+        { fact: "hasStrongEvidence", operator: "equal", value: false },
+        { fact: "score", operator: "greaterThanInclusive", value: 700 },
       ],
     },
     event: {
-      type: 'set-decision',
-      params: { decision: 'REVIEW', reason_code: 'DATA_SPARSITY' },
+      type: "set-decision",
+      params: { decision: "REVIEW", reason_code: "DATA_SPARSITY" },
     },
   });
 
   engine.addRule({
-    name: 'force-investigate-on-risk',
+    name: "force-investigate-on-risk",
     conditions: {
-      all: [{ fact: 'hasRiskSignals', operator: 'equal', value: true }],
+      all: [{ fact: "hasRiskSignals", operator: "equal", value: true }],
     },
     event: {
-      type: 'set-decision',
-      params: { decision: 'INVESTIGATE_REJECT', reason_code: 'CROSS_TRUST_LOW' },
+      type: "set-decision",
+      params: {
+        decision: "INVESTIGATE_REJECT",
+        reason_code: "CROSS_TRUST_LOW",
+      },
     },
   });
 
@@ -67,9 +75,13 @@ export async function evaluateWorkScorePolicy(input: PolicyInput): Promise<WorkS
   });
 
   for (const event of events) {
-    if (event.type !== 'set-decision') continue;
-    const eventDecision = String(event.params?.decision || '') as WorkScoreDecision;
-    const reasonCode = String(event.params?.reason_code || '') as WorkScoreReasonCode;
+    if (event.type !== "set-decision") continue;
+    const eventDecision = String(
+      event.params?.decision || "",
+    ) as WorkScoreDecision;
+    const reasonCode = String(
+      event.params?.reason_code || "",
+    ) as WorkScoreReasonCode;
     if (decisionRank[eventDecision] < decisionRank[decision]) {
       decision = eventDecision;
     }

@@ -6,18 +6,21 @@
 ## 1) Latest hosted CI evidence (verified)
 
 ### quality-gates-ci
+
 - Run: https://github.com/ragahv05-maker/credity/actions/runs/22024661938
 - Commit: `16f59f34260916cbdfc91fb458af3c41d785a352`
 - Result: ✅ success
 - Notes: impacted recruiter/issuer checks+tests and dependency-security jobs passed; evidence artifact job passed.
 
 ### launch-gate
+
 - Run: https://github.com/ragahv05-maker/credity/actions/runs/22022372832
 - Commit: `fa20a58b24252711c84bf4015d6f90e763eaeb6e`
 - Result: ✅ success
 - Notes: gate + evidence-pack jobs passed.
 
 ### contract-security-ci
+
 - Run: https://github.com/ragahv05-maker/credity/actions/runs/22022153594
 - Commit: `a661ede4a5a04ae868f3ba36c7564d3abbcf484e`
 - Result: ✅ success
@@ -26,6 +29,7 @@
 ⚠️ **Gap:** launch/contract hosted runs are green but are not on current head SHA. Fresh `workflow_dispatch` runs on release SHA are still required for final audit closure.
 
 Generated/updated pack:
+
 - `swarm/reports/ci-evidence-pack.latest.md`
 
 ---

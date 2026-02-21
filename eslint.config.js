@@ -1,14 +1,14 @@
-import js from '@eslint/js';
-import tseslint from 'typescript-eslint';
+import js from "@eslint/js";
+import tseslint from "typescript-eslint";
 
 export default [
   {
     ignores: [
-      '**/dist/**',
-      '**/node_modules/**',
-      '**/migrations/**',
-      '**/drizzle/**',
-      'cr_backup/**',
+      "**/dist/**",
+      "**/node_modules/**",
+      "**/migrations/**",
+      "**/drizzle/**",
+      "cr_backup/**",
     ],
   },
   js.configs.recommended,
@@ -21,10 +21,10 @@ export default [
       },
     },
     rules: {
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': [
-        'warn',
-        { argsIgnorePattern: '^_' },
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_" },
       ],
     },
   },

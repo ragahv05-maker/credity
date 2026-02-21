@@ -1,6 +1,7 @@
 # DB Migration Safety
 
 Use expand/contract pattern only:
+
 1. Expand schema in backward-compatible way.
 2. Deploy app supporting old + new schema.
 3. Backfill safely with progress checkpoints.

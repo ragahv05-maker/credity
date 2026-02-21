@@ -1,6 +1,7 @@
 # CredVerse Wallet API Documentation
 
 ## Base URL
+
 ```
 http://localhost:5002/api
 ```
@@ -8,6 +9,7 @@ http://localhost:5002/api
 ## Authentication
 
 Most endpoints require JWT authentication. Include the access token in the Authorization header:
+
 ```
 Authorization: Bearer <access_token>
 ```
@@ -17,9 +19,11 @@ Authorization: Bearer <access_token>
 ## Auth Endpoints
 
 ### POST /auth/register
+
 Register a new user account.
 
 **Request Body:**
+
 ```json
 {
   "username": "john_doe",
@@ -30,6 +34,7 @@ Register a new user account.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -50,9 +55,11 @@ Register a new user account.
 ---
 
 ### POST /auth/login
+
 Login with username and password.
 
 **Request Body:**
+
 ```json
 {
   "username": "john_doe",
@@ -61,6 +68,7 @@ Login with username and password.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -80,9 +88,11 @@ Login with username and password.
 ---
 
 ### POST /auth/refresh
+
 Refresh access token using refresh token.
 
 **Request Body:**
+
 ```json
 {
   "refreshToken": "eyJhbG..."
@@ -92,6 +102,7 @@ Refresh access token using refresh token.
 ---
 
 ### POST /auth/logout
+
 Logout and invalidate tokens.
 
 **Headers:** `Authorization: Bearer <access_token>`
@@ -101,9 +112,11 @@ Logout and invalidate tokens.
 ## Wallet Endpoints
 
 ### POST /wallet/init
+
 Initialize wallet for a user. Creates DID if not exists.
 
 **Request Body:**
+
 ```json
 {
   "userId": 1
@@ -111,6 +124,7 @@ Initialize wallet for a user. Creates DID if not exists.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -121,7 +135,7 @@ Initialize wallet for a user. Creates DID if not exists.
   },
   "stats": {
     "totalCredentials": 3,
-    "byCategory": {"academic": 1, "employment": 1, "skill": 1}
+    "byCategory": { "academic": 1, "employment": 1, "skill": 1 }
   }
 }
 ```
@@ -129,18 +143,22 @@ Initialize wallet for a user. Creates DID if not exists.
 ---
 
 ### GET /wallet/credentials
+
 List all credentials in wallet.
 
 **Query Params:**
+
 - `userId` - User ID
 - `category` - Optional filter (academic, employment, skill, government)
 
 ---
 
 ### POST /wallet/credentials
+
 Store a new credential.
 
 **Request Body:**
+
 ```json
 {
   "userId": 1,
@@ -160,9 +178,11 @@ Store a new credential.
 ---
 
 ### POST /wallet/share
+
 Create a shareable link for a credential.
 
 **Request Body:**
+
 ```json
 {
   "userId": 1,
@@ -174,6 +194,7 @@ Create a shareable link for a credential.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -189,9 +210,11 @@ Create a shareable link for a credential.
 ---
 
 ### GET /verify/:token
+
 Verify a shared credential (public endpoint).
 
 **Response:**
+
 ```json
 {
   "valid": true,
@@ -215,11 +238,13 @@ Verify a shared credential (public endpoint).
 ## Inbox Endpoints (Credential Push)
 
 ### GET /inbox
+
 Get pending credential offers.
 
 **Query Params:** `userId`
 
 **Response:**
+
 ```json
 {
   "offers": [
@@ -240,9 +265,11 @@ Get pending credential offers.
 ---
 
 ### POST /inbox/:offerId/accept
+
 Accept a credential offer.
 
 **Request Body:**
+
 ```json
 {
   "userId": 1
@@ -252,14 +279,17 @@ Accept a credential offer.
 ---
 
 ### POST /inbox/:offerId/reject
+
 Reject a credential offer.
 
 ---
 
 ### POST /push
+
 Push a credential to a wallet (for issuers).
 
 **Request Body:**
+
 ```json
 {
   "issuerId": "issuer-123",
@@ -278,6 +308,7 @@ Push a credential to a wallet (for issuers).
 ## DigiLocker Endpoints
 
 ### GET /digilocker/auth
+
 Get OAuth authorization URL.
 
 **Query Params:** `userId`
@@ -285,19 +316,23 @@ Get OAuth authorization URL.
 ---
 
 ### GET /digilocker/status
+
 Check connection status.
 
 ---
 
 ### GET /digilocker/documents
+
 List available documents.
 
 ---
 
 ### POST /digilocker/import
+
 Import a single document.
 
 **Request Body:**
+
 ```json
 {
   "userId": 1,
@@ -311,6 +346,7 @@ Import a single document.
 ---
 
 ### POST /digilocker/import-all
+
 Import all available documents.
 
 ---
@@ -318,9 +354,11 @@ Import all available documents.
 ## Backup & Recovery
 
 ### POST /wallet/backup
+
 Create encrypted wallet backup.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -333,9 +371,11 @@ Create encrypted wallet backup.
 ---
 
 ### POST /wallet/restore
+
 Restore wallet from backup.
 
 **Request Body:**
+
 ```json
 {
   "userId": 1,
@@ -349,17 +389,18 @@ Restore wallet from backup.
 ## Error Responses
 
 All errors follow this format:
+
 ```json
 {
   "error": "Error message here"
 }
 ```
 
-| Status Code | Meaning |
-|-------------|---------|
-| 400 | Bad Request |
-| 401 | Unauthorized |
-| 403 | Forbidden |
-| 404 | Not Found |
-| 429 | Rate Limited |
-| 500 | Server Error |
+| Status Code | Meaning      |
+| ----------- | ------------ |
+| 400         | Bad Request  |
+| 401         | Unauthorized |
+| 403         | Forbidden    |
+| 404         | Not Found    |
+| 429         | Rate Limited |
+| 500         | Server Error |

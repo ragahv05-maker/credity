@@ -1,6 +1,7 @@
 # Credity S34 — Master Board Field Map (CSV/Notion/Jira)
 
 ## Required fields
+
 - ID
 - Lane (`Now`, `Next`, `This Week`, `Week 2`, `Blocked`, `Done`)
 - Title
@@ -20,6 +21,7 @@
 - LastUpdatedIST
 
 ## Governance rules
+
 1. One task = one DRI.
 2. Any `Blocked` item >4h auto-escalates to Dependency SWAT.
 3. No production-impacting task can move to Done without `DefinitionOfDone` evidence.

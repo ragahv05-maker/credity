@@ -18,6 +18,7 @@ Scope: `/Users/raghav/Desktop/untitled folder 3`
 ## Validation results
 
 ### 1) Issuer -> Wallet -> Verifier E2E (current proof metadata + chain/deferred)
+
 - **Status:** ✅ PASS
 - **Covered by:** `CredVerseRecruiter/tests/e2e-issuer-wallet-verifier.test.ts`
 - **Assertions validated:**
@@ -30,6 +31,7 @@ Scope: `/Users/raghav/Desktop/untitled folder 3`
   - Chain/deferred metadata behavior validated from offer payload (`proof.deferred` + code consistency)
 
 ### 2) Chain policy/deferred behavior in issuer runtime
+
 - **Status:** ✅ PASS
 - **Covered by existing tests:**
   - `tests/blockchain-policy.test.ts`
@@ -40,6 +42,7 @@ Scope: `/Users/raghav/Desktop/untitled folder 3`
   - chain alias/network resolution behavior
 
 ### 3) Recruiter proof lifecycle contract behavior
+
 - **Status:** ✅ PASS
 - **Covered by existing tests:** `CredVerseRecruiter/tests/proof-lifecycle.test.ts`
 - **Assertions validated:**
@@ -47,6 +50,7 @@ Scope: `/Users/raghav/Desktop/untitled folder 3`
   - Explicit mismatch reason code behavior
 
 ### 4) Wallet local proof-lifecycle test execution
+
 - **Status:** ❌ FAIL (test harness dependency issue)
 - **Command:** `cd "BlockWalletDigi" && npm test -- tests/proof-lifecycle.test.ts`
 - **Failure:** `Cannot find package 'supertest'`

@@ -12,7 +12,7 @@ import { blockchainService } from "./services/blockchain-service";
 
 export async function registerRoutes(
   httpServer: Server,
-  app: Express
+  app: Express,
 ): Promise<Server> {
   // Health check endpoint for Railway
   app.get("/api/health", (_req, res) => {
@@ -32,7 +32,7 @@ export async function registerRoutes(
   app.use("/api", claimsProxyRoutes);
   app.use("/api", workScoreRoutes);
   app.use("/api", safeDateRoutes);
-  app.use('/api', proofRoutes);
+  app.use("/api", proofRoutes);
 
   return httpServer;
 }

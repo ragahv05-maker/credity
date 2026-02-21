@@ -11,20 +11,20 @@ import type {
   ProofVerificationRequestContract,
   ProofVerificationResultContract,
   RevocationWitnessContract,
-} from '@credverse/shared-auth';
+} from "@credverse/shared-auth";
 
 export type TrustVertical =
-  | 'OVERALL'
-  | 'DATING'
-  | 'HIRING'
-  | 'GIG'
-  | 'RENTAL'
-  | 'HEALTH'
-  | 'EDUCATION'
-  | 'FINANCE'
-  | 'IDENTITY';
+  | "OVERALL"
+  | "DATING"
+  | "HIRING"
+  | "GIG"
+  | "RENTAL"
+  | "HEALTH"
+  | "EDUCATION"
+  | "FINANCE"
+  | "IDENTITY";
 
-export type VerifyDecision = 'APPROVE' | 'REVIEW' | 'REJECT';
+export type VerifyDecision = "APPROVE" | "REVIEW" | "REJECT";
 
 export interface CredVerseClientOptions {
   baseUrl: string;
@@ -47,7 +47,7 @@ export interface VerifyResult {
   recommendation: VerifyDecision;
   requiredScore: number;
   normalizedScore: number;
-  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  confidence: "HIGH" | "MEDIUM" | "LOW";
   zkProof: ProofGenerationResultWithCode | null;
   raw: ReputationScoreContract | SafeDateScoreContract;
 }

@@ -1,4 +1,18 @@
-import { Bell, Search, HelpCircle, Smartphone, Wallet, Copy, ExternalLink, LogOut, User, CreditCard, Settings, Check, AlertCircle } from "lucide-react";
+import {
+  Bell,
+  Search,
+  HelpCircle,
+  Smartphone,
+  Wallet,
+  Copy,
+  ExternalLink,
+  LogOut,
+  User,
+  CreditCard,
+  Settings,
+  Check,
+  AlertCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -37,7 +51,7 @@ export function Header() {
     formatAddress,
     getChainName,
     isMetaMaskInstalled,
-    error
+    error,
   } = useWallet();
 
   const [showWalletDetails, setShowWalletDetails] = useState(false);
@@ -63,23 +77,29 @@ export function Header() {
       navigator.clipboard.writeText(address);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-      toast({ title: "Address copied", description: "Wallet address copied to clipboard" });
+      toast({
+        title: "Address copied",
+        description: "Wallet address copied to clipboard",
+      });
     }
   };
 
   const handleDisconnect = () => {
     disconnect();
     setShowWalletDetails(false);
-    toast({ title: "Disconnected", description: "Wallet disconnected successfully" });
+    toast({
+      title: "Disconnected",
+      description: "Wallet disconnected successfully",
+    });
   };
 
   const handleViewOnExplorer = () => {
     if (address && chainId) {
-      let baseUrl = 'https://etherscan.io';
-      if (chainId === 137) baseUrl = 'https://polygonscan.com';
-      if (chainId === 80001) baseUrl = 'https://mumbai.polygonscan.com';
-      if (chainId === 11155111) baseUrl = 'https://sepolia.etherscan.io';
-      window.open(`${baseUrl}/address/${address}`, '_blank');
+      let baseUrl = "https://etherscan.io";
+      if (chainId === 137) baseUrl = "https://polygonscan.com";
+      if (chainId === 80001) baseUrl = "https://mumbai.polygonscan.com";
+      if (chainId === 11155111) baseUrl = "https://sepolia.etherscan.io";
+      window.open(`${baseUrl}/address/${address}`, "_blank");
     }
   };
 
@@ -102,7 +122,7 @@ export function Header() {
           <Button
             variant={isConnected ? "outline" : "default"}
             size="sm"
-            className={`gap-2 hidden md:flex ${isConnected ? 'border-green-500/50 text-green-600' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+            className={`gap-2 hidden md:flex ${isConnected ? "border-green-500/50 text-green-600" : "bg-blue-600 hover:bg-blue-700 text-white"}`}
             onClick={handleConnect}
             disabled={isConnecting}
           >
@@ -114,13 +134,19 @@ export function Header() {
             ) : (
               <>
                 <Wallet className="h-4 w-4" />
-                {isConnected && address ? formatAddress(address) : "Connect Wallet"}
+                {isConnected && address
+                  ? formatAddress(address)
+                  : "Connect Wallet"}
               </>
             )}
           </Button>
 
           <Link href="/passport" target="_blank">
-            <Button variant="outline" size="sm" className="gap-2 hidden md:flex">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 hidden md:flex"
+            >
               <Smartphone className="h-4 w-4" />
               Student View
             </Button>
@@ -132,7 +158,7 @@ export function Header() {
             variant="ghost"
             size="icon"
             className="text-muted-foreground hover:text-foreground"
-            onClick={() => navigate('/help')}
+            onClick={() => navigate("/help")}
           >
             <HelpCircle className="h-5 w-5" />
           </Button>
@@ -140,7 +166,7 @@ export function Header() {
             variant="ghost"
             size="icon"
             className="text-muted-foreground hover:text-foreground relative"
-            onClick={() => navigate('/verification-logs')}
+            onClick={() => navigate("/verification-logs")}
           >
             <Bell className="h-5 w-5" />
             <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-background"></span>
@@ -153,7 +179,10 @@ export function Header() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                 <Avatar className="h-9 w-9 border border-border">
-                  <AvatarImage src="https://github.com/shadcn.png" alt="@admin" />
+                  <AvatarImage
+                    src="https://github.com/shadcn.png"
+                    alt="@admin"
+                  />
                   <AvatarFallback>AD</AvatarFallback>
                 </Avatar>
               </Button>
@@ -168,23 +197,29 @@ export function Header() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate('/profile')}>
+              <DropdownMenuItem onClick={() => navigate("/profile")}>
                 <User className="mr-2 h-4 w-4" />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/billing')}>
+              <DropdownMenuItem onClick={() => navigate("/billing")}>
                 <CreditCard className="mr-2 h-4 w-4" />
                 Billing
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/settings')}>
+              <DropdownMenuItem onClick={() => navigate("/settings")}>
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600" onClick={() => {
-                toast({ title: "Logged out", description: "You have been logged out successfully." });
-                navigate('/');
-              }}>
+              <DropdownMenuItem
+                className="text-red-600"
+                onClick={() => {
+                  toast({
+                    title: "Logged out",
+                    description: "You have been logged out successfully.",
+                  });
+                  navigate("/");
+                }}
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 Log out
               </DropdownMenuItem>
@@ -206,7 +241,10 @@ export function Header() {
             {/* Chain Badge */}
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Network</span>
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+              <Badge
+                variant="outline"
+                className="bg-green-50 text-green-700 border-green-200"
+              >
                 {getChainName(chainId)}
               </Badge>
             </div>
@@ -219,18 +257,30 @@ export function Header() {
                   {address}
                 </code>
                 <Button size="icon" variant="ghost" onClick={handleCopyAddress}>
-                  {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                  {copied ? (
+                    <Check className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             </div>
 
             {/* Actions */}
             <div className="flex flex-col gap-2">
-              <Button variant="outline" onClick={handleViewOnExplorer} className="w-full">
+              <Button
+                variant="outline"
+                onClick={handleViewOnExplorer}
+                className="w-full"
+              >
                 <ExternalLink className="mr-2 h-4 w-4" />
                 View on Explorer
               </Button>
-              <Button variant="destructive" onClick={handleDisconnect} className="w-full">
+              <Button
+                variant="destructive"
+                onClick={handleDisconnect}
+                className="w-full"
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 Disconnect Wallet
               </Button>

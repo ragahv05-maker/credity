@@ -1,7 +1,7 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import * as SecureStore from 'expo-secure-store';
-import type { AppRole, RoleSession } from '../types';
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import * as SecureStore from "expo-secure-store";
+import type { AppRole, RoleSession } from "../types";
 
 // ---------------------------------------------------------------------------
 // expo-secure-store async adapter for Zustand persist
@@ -67,15 +67,27 @@ export const useSessionStore = create<SessionState>()(
         }),
     }),
     {
-      name: 'credity-session',
+      name: "credity-session",
       storage: createJSONStorage(() => secureStoreAdapter),
       // Only persist activeRole and user profiles — never persist tokens
       partialize: (state) => ({
         activeRole: state.activeRole,
         sessions: {
-          holder: { user: state.sessions.holder.user, accessToken: null, refreshToken: null },
-          issuer: { user: state.sessions.issuer.user, accessToken: null, refreshToken: null },
-          recruiter: { user: state.sessions.recruiter.user, accessToken: null, refreshToken: null },
+          holder: {
+            user: state.sessions.holder.user,
+            accessToken: null,
+            refreshToken: null,
+          },
+          issuer: {
+            user: state.sessions.issuer.user,
+            accessToken: null,
+            refreshToken: null,
+          },
+          recruiter: {
+            user: state.sessions.recruiter.user,
+            accessToken: null,
+            refreshToken: null,
+          },
         },
       }),
     },

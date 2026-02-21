@@ -3,7 +3,13 @@ import { useLocation, useSearch } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sidebar } from "@/components/sidebar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   CheckCircle2,
@@ -18,7 +24,7 @@ import {
   Car,
   GraduationCap,
   RefreshCw,
-  LogOut
+  LogOut,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -52,16 +58,16 @@ export default function ConnectDigiLocker() {
 
   // Check URL params for callback result
   useEffect(() => {
-    const connected = searchParams.get('connected');
-    const error = searchParams.get('error');
+    const connected = searchParams.get("connected");
+    const error = searchParams.get("error");
 
-    if (connected === 'true') {
+    if (connected === "true") {
       toast({
         title: "DigiLocker Connected!",
         description: "Your account is now linked. You can import documents.",
         className: "bg-emerald-900/90 border-emerald-500/20 text-white",
       });
-      queryClient.invalidateQueries({ queryKey: ['digilocker-status'] });
+      queryClient.invalidateQueries({ queryKey: ["digilocker-status"] });
     }
 
     if (error) {
@@ -75,18 +81,18 @@ export default function ConnectDigiLocker() {
 
   // Check connection status
   const { data: statusData, isLoading: statusLoading } = useQuery({
-    queryKey: ['digilocker-status'],
+    queryKey: ["digilocker-status"],
     queryFn: async () => {
-      const res = await fetch('/api/digilocker/status?userId=1');
+      const res = await fetch("/api/digilocker/status?userId=1");
       return res.json();
     },
   });
 
   // Get available documents
   const { data: documentsData, isLoading: docsLoading } = useQuery({
-    queryKey: ['digilocker-documents'],
+    queryKey: ["digilocker-documents"],
     queryFn: async () => {
-      const res = await fetch('/api/digilocker/documents?userId=1');
+      const res = await fetch("/api/digilocker/documents?userId=1");
       return res.json();
     },
     enabled: statusData?.connected,
@@ -95,9 +101,9 @@ export default function ConnectDigiLocker() {
   // Connect mutation
   const connectMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/digilocker/connect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/digilocker/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: 1 }),
       });
       return res.json();
@@ -112,9 +118,9 @@ export default function ConnectDigiLocker() {
           description: `${data.documentsImported} documents imported.`,
           className: "bg-emerald-900/90 border-emerald-500/20 text-white",
         });
-        queryClient.invalidateQueries({ queryKey: ['digilocker-status'] });
-        queryClient.invalidateQueries({ queryKey: ['digilocker-documents'] });
-        queryClient.invalidateQueries({ queryKey: ['wallet-credentials'] });
+        queryClient.invalidateQueries({ queryKey: ["digilocker-status"] });
+        queryClient.invalidateQueries({ queryKey: ["digilocker-documents"] });
+        queryClient.invalidateQueries({ queryKey: ["wallet-credentials"] });
       }
     },
     onError: () => {
@@ -130,9 +136,9 @@ export default function ConnectDigiLocker() {
   const importMutation = useMutation({
     mutationFn: async (doc: DigiLockerDocument) => {
       setImporting(doc.uri);
-      const res = await fetch('/api/digilocker/import', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/digilocker/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: 1,
           documentUri: doc.uri,
@@ -149,7 +155,7 @@ export default function ConnectDigiLocker() {
         description: data.message,
         className: "bg-emerald-900/90 border-emerald-500/20 text-white",
       });
-      queryClient.invalidateQueries({ queryKey: ['wallet-credentials'] });
+      queryClient.invalidateQueries({ queryKey: ["wallet-credentials"] });
       setImporting(null);
     },
     onError: () => {
@@ -165,9 +171,9 @@ export default function ConnectDigiLocker() {
   // Import all documents
   const importAllMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/digilocker/import-all', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/digilocker/import-all", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: 1 }),
       });
       return res.json();
@@ -178,23 +184,23 @@ export default function ConnectDigiLocker() {
         description: `Imported ${data.imported.length} of ${data.total} documents.`,
         className: "bg-emerald-900/90 border-emerald-500/20 text-white",
       });
-      queryClient.invalidateQueries({ queryKey: ['wallet-credentials'] });
+      queryClient.invalidateQueries({ queryKey: ["wallet-credentials"] });
     },
   });
 
   // Disconnect
   const disconnectMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/digilocker/disconnect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/digilocker/disconnect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: 1 }),
       });
       return res.json();
     },
     onSuccess: () => {
       toast({ title: "Disconnected from DigiLocker" });
-      queryClient.invalidateQueries({ queryKey: ['digilocker-status'] });
+      queryClient.invalidateQueries({ queryKey: ["digilocker-status"] });
     },
   });
 
@@ -207,7 +213,6 @@ export default function ConnectDigiLocker() {
 
       <main className="flex-1 md:ml-64 p-6 overflow-y-auto">
         <div className="max-w-2xl mx-auto space-y-6">
-
           {/* Header */}
           <div className="text-center space-y-2">
             <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center shadow-xl shadow-blue-900/30">
@@ -218,7 +223,10 @@ export default function ConnectDigiLocker() {
               Import your government-issued documents securely to your wallet.
             </p>
             {statusData?.isDemoMode && (
-              <Badge variant="outline" className="text-amber-500 border-amber-500/30">
+              <Badge
+                variant="outline"
+                className="text-amber-500 border-amber-500/30"
+              >
                 Demo Mode
               </Badge>
             )}
@@ -246,7 +254,9 @@ export default function ConnectDigiLocker() {
               ) : isConnected ? (
                 <div className="space-y-4">
                   <div className="p-4 bg-secondary/30 rounded-lg">
-                    <p className="font-medium">{statusData.user?.name || 'User'}</p>
+                    <p className="font-medium">
+                      {statusData.user?.name || "User"}
+                    </p>
                     <p className="text-sm text-muted-foreground font-mono">
                       ID: {statusData.user?.digilockerid}
                     </p>
@@ -255,7 +265,11 @@ export default function ConnectDigiLocker() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => queryClient.invalidateQueries({ queryKey: ['digilocker-documents'] })}
+                      onClick={() =>
+                        queryClient.invalidateQueries({
+                          queryKey: ["digilocker-documents"],
+                        })
+                      }
                     >
                       <RefreshCw className="w-4 h-4 mr-2" /> Refresh
                     </Button>
@@ -306,7 +320,8 @@ export default function ConnectDigiLocker() {
                   </Button>
 
                   <p className="text-xs text-center text-muted-foreground">
-                    By connecting, you agree to our Terms of Service and Privacy Policy.
+                    By connecting, you agree to our Terms of Service and Privacy
+                    Policy.
                   </p>
                 </div>
               )}
@@ -318,11 +333,15 @@ export default function ConnectDigiLocker() {
             <Card className="border-border">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Available Documents ({documents.length})</CardTitle>
+                  <CardTitle>
+                    Available Documents ({documents.length})
+                  </CardTitle>
                   <Button
                     size="sm"
                     onClick={() => importAllMutation.mutate()}
-                    disabled={importAllMutation.isPending || documents.length === 0}
+                    disabled={
+                      importAllMutation.isPending || documents.length === 0
+                    }
                   >
                     {importAllMutation.isPending ? (
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -396,11 +415,14 @@ export default function ConnectDigiLocker() {
               <div className="flex gap-3">
                 <AlertCircle className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
                 <div className="text-sm text-muted-foreground">
-                  <p className="font-medium text-foreground mb-1">About DigiLocker</p>
+                  <p className="font-medium text-foreground mb-1">
+                    About DigiLocker
+                  </p>
                   <p>
-                    DigiLocker is the Government of India's official platform for storing
-                    and accessing documents digitally. Documents imported from DigiLocker
-                    are legally valid and cryptographically signed.
+                    DigiLocker is the Government of India's official platform
+                    for storing and accessing documents digitally. Documents
+                    imported from DigiLocker are legally valid and
+                    cryptographically signed.
                   </p>
                   <a
                     href="https://digilocker.gov.in"
@@ -414,7 +436,6 @@ export default function ConnectDigiLocker() {
               </div>
             </CardContent>
           </Card>
-
         </div>
       </main>
     </div>

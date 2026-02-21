@@ -1,5 +1,5 @@
-import type { Request, Response, NextFunction } from 'express';
-import { randomUUID } from 'crypto';
+import type { Request, Response, NextFunction } from "express";
+import { randomUUID } from "crypto";
 
 type Bucket = { le: number; count: number };
 
@@ -32,16 +32,17 @@ function observeDuration(durationMs: number): void {
 }
 
 function getOrCreateRequestId(req: Request): string {
-  const headerValue = req.headers['x-request-id'];
-  if (typeof headerValue === 'string' && headerValue.trim()) {
+  const headerValue = req.headers["x-request-id"];
+  if (typeof headerValue === "string" && headerValue.trim()) {
     return headerValue;
   }
   return randomUUID();
 }
 
 function getOrCreateTraceId(req: Request): string {
-  const traceHeader = req.headers['x-trace-id'] || req.headers['x-correlation-id'];
-  if (typeof traceHeader === 'string' && traceHeader.trim()) {
+  const traceHeader =
+    req.headers["x-trace-id"] || req.headers["x-correlation-id"];
+  if (typeof traceHeader === "string" && traceHeader.trim()) {
     return traceHeader;
   }
   return randomUUID();
@@ -53,14 +54,14 @@ export function telemetryMiddleware(service: string) {
     const requestId = getOrCreateRequestId(req);
     const traceId = getOrCreateTraceId(req);
 
-    res.setHeader('x-request-id', requestId);
-    res.setHeader('x-trace-id', traceId);
-    res.setHeader('x-correlation-id', traceId);
+    res.setHeader("x-request-id", requestId);
+    res.setHeader("x-trace-id", traceId);
+    res.setHeader("x-correlation-id", traceId);
 
     requestsTotal += 1;
     requestsInFlight += 1;
 
-    res.on('finish', () => {
+    res.on("finish", () => {
       const durationMs = Date.now() - startedAt;
       requestsInFlight = Math.max(0, requestsInFlight - 1);
       observeDuration(durationMs);
@@ -68,19 +69,21 @@ export function telemetryMiddleware(service: string) {
       const statusClass = `${Math.floor(res.statusCode / 100)}xx`;
       statusCounts.set(statusClass, (statusCounts.get(statusClass) || 0) + 1);
 
-      if (req.path.startsWith('/api')) {
-        console.log(JSON.stringify({
-          level: 'info',
-          type: 'trace_http',
-          service,
-          traceId,
-          requestId,
-          method: req.method,
-          path: req.path,
-          statusCode: res.statusCode,
-          durationMs,
-          ts: new Date().toISOString(),
-        }));
+      if (req.path.startsWith("/api")) {
+        console.log(
+          JSON.stringify({
+            level: "info",
+            type: "trace_http",
+            service,
+            traceId,
+            requestId,
+            method: req.method,
+            path: req.path,
+            statusCode: res.statusCode,
+            durationMs,
+            ts: new Date().toISOString(),
+          }),
+        );
       }
     });
 
@@ -91,29 +94,47 @@ export function telemetryMiddleware(service: string) {
 export function metricsHandler(service: string) {
   return (_req: Request, res: Response) => {
     const lines: string[] = [];
-    lines.push('# HELP credverse_http_requests_total Total HTTP requests');
-    lines.push('# TYPE credverse_http_requests_total counter');
-    lines.push(`credverse_http_requests_total{service="${service}"} ${requestsTotal}`);
-    lines.push('# HELP credverse_http_requests_in_flight In-flight HTTP requests');
-    lines.push('# TYPE credverse_http_requests_in_flight gauge');
-    lines.push(`credverse_http_requests_in_flight{service="${service}"} ${requestsInFlight}`);
+    lines.push("# HELP credverse_http_requests_total Total HTTP requests");
+    lines.push("# TYPE credverse_http_requests_total counter");
+    lines.push(
+      `credverse_http_requests_total{service="${service}"} ${requestsTotal}`,
+    );
+    lines.push(
+      "# HELP credverse_http_requests_in_flight In-flight HTTP requests",
+    );
+    lines.push("# TYPE credverse_http_requests_in_flight gauge");
+    lines.push(
+      `credverse_http_requests_in_flight{service="${service}"} ${requestsInFlight}`,
+    );
 
-    lines.push('# HELP credverse_http_requests_by_status_total HTTP requests by status class');
-    lines.push('# TYPE credverse_http_requests_by_status_total counter');
+    lines.push(
+      "# HELP credverse_http_requests_by_status_total HTTP requests by status class",
+    );
+    lines.push("# TYPE credverse_http_requests_by_status_total counter");
     for (const [statusClass, count] of statusCounts.entries()) {
-      lines.push(`credverse_http_requests_by_status_total{service="${service}",status_class="${statusClass}"} ${count}`);
+      lines.push(
+        `credverse_http_requests_by_status_total{service="${service}",status_class="${statusClass}"} ${count}`,
+      );
     }
 
-    lines.push('# HELP credverse_http_request_duration_ms Request duration histogram in milliseconds');
-    lines.push('# TYPE credverse_http_request_duration_ms histogram');
+    lines.push(
+      "# HELP credverse_http_request_duration_ms Request duration histogram in milliseconds",
+    );
+    lines.push("# TYPE credverse_http_request_duration_ms histogram");
     for (const bucket of LATENCY_BUCKETS) {
-      const le = Number.isFinite(bucket.le) ? String(bucket.le) : '+Inf';
-      lines.push(`credverse_http_request_duration_ms_bucket{service="${service}",le="${le}"} ${bucket.count}`);
+      const le = Number.isFinite(bucket.le) ? String(bucket.le) : "+Inf";
+      lines.push(
+        `credverse_http_request_duration_ms_bucket{service="${service}",le="${le}"} ${bucket.count}`,
+      );
     }
-    lines.push(`credverse_http_request_duration_ms_sum{service="${service}"} ${latencyMsSum}`);
-    lines.push(`credverse_http_request_duration_ms_count{service="${service}"} ${latencyMsCount}`);
+    lines.push(
+      `credverse_http_request_duration_ms_sum{service="${service}"} ${latencyMsSum}`,
+    );
+    lines.push(
+      `credverse_http_request_duration_ms_count{service="${service}"} ${latencyMsCount}`,
+    );
 
-    res.setHeader('content-type', 'text/plain; version=0.0.4; charset=utf-8');
-    res.status(200).send(`${lines.join('\n')}\n`);
+    res.setHeader("content-type", "text/plain; version=0.0.4; charset=utf-8");
+    res.status(200).send(`${lines.join("\n")}\n`);
   };
 }

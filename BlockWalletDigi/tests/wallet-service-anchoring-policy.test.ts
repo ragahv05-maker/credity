@@ -1,7 +1,10 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import { resetWalletServiceStoreForTests, walletService } from '../server/services/wallet-service';
+import { afterEach, describe, expect, it } from "vitest";
+import {
+  resetWalletServiceStoreForTests,
+  walletService,
+} from "../server/services/wallet-service";
 
-describe('wallet credential anchoring policy', () => {
+describe("wallet credential anchoring policy", () => {
   const originalNodeEnv = process.env.NODE_ENV;
   const originalAnchorUrl = process.env.WALLET_ANCHOR_SERVICE_URL;
 
@@ -15,18 +18,18 @@ describe('wallet credential anchoring policy', () => {
     resetWalletServiceStoreForTests();
   });
 
-  it('fails closed in production when no anchor service is configured', async () => {
-    process.env.NODE_ENV = 'production';
+  it("fails closed in production when no anchor service is configured", async () => {
+    process.env.NODE_ENV = "production";
     delete process.env.WALLET_ANCHOR_SERVICE_URL;
 
     await expect(
       walletService.storeCredential(777, {
-        type: ['DegreeCredential'],
-        issuer: 'CredVerse University',
+        type: ["DegreeCredential"],
+        issuer: "CredVerse University",
         issuanceDate: new Date(),
-        data: { student: 'Prod User' },
-        category: 'academic',
+        data: { student: "Prod User" },
+        category: "academic",
       }),
-    ).rejects.toThrow('Credential anchoring unavailable in production');
+    ).rejects.toThrow("Credential anchoring unavailable in production");
   });
 });

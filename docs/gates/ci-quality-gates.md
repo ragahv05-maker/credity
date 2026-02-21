@@ -16,6 +16,7 @@ The quality workflow is path-aware and only runs impacted module jobs for pull r
 **Purpose:** fail fast on static hygiene issues before expensive tests.
 
 Runs on impacted modules:
+
 - `packages/shared-auth`: `npm run lint`
 - `BlockWalletDigi`: `npm run lint`
 - `CredVerseIssuer 3`: `npm run lint`
@@ -31,6 +32,7 @@ Runs on impacted modules:
 **Purpose:** catch compile/type errors before merge.
 
 Runs on impacted modules:
+
 - `packages/shared-auth`: `npm run build`
 - `BlockWalletDigi`: `npm run check`
 - `CredVerseIssuer 3`: `npm run check`
@@ -42,6 +44,7 @@ Runs on impacted modules:
 ### 3) Test gate (unit/integration regression guard)
 
 Runs on impacted modules:
+
 - `BlockWalletDigi`: `npm test`
 - `CredVerseIssuer 3`: `npm test`
 - `CredVerseRecruiter`: `npm test`
@@ -54,9 +57,11 @@ Runs on impacted modules:
 ### 4) Contracts security gate
 
 Runs when smart contract files are touched, or manually via workflow dispatch:
+
 - `CredVerseIssuer 3/contracts`: `npm run analyze:static`
 
 `analyze:static` includes:
+
 - Solidity linting
 - Contract compilation
 - Hardhat tests
@@ -67,6 +72,7 @@ Runs when smart contract files are touched, or manually via workflow dispatch:
 ### 5) Dependency security gate
 
 Runs for impacted module lockfile/package changes:
+
 - `npm audit --omit=dev --audit-level=high`
 
 Scope includes root and all major modules (wallet, issuer, recruiter, gateway, mobile, shared-auth, contracts).
@@ -77,9 +83,11 @@ Scope includes root and all major modules (wallet, issuer, recruiter, gateway, m
 ### 6) OSS readiness gate
 
 Runs from root script:
+
 - `npm run ci:oss:readiness`
 
 This gate is designed for staged rollout from the OSS implementation plan and executes optional suites when present:
+
 - `packages/policy-rules` tests
 - `packages/workflows-temporal` tests
 - wallet dispute SLA tests
@@ -93,6 +101,7 @@ This gate is designed for staged rollout from the OSS implementation plan and ex
 ## Practicality Controls
 
 To keep CI practical while still strict:
+
 - Path-based filtering avoids running unrelated module jobs.
 - Matrix jobs run with `fail-fast: false` to show full failure surface in one CI run.
 - Job timeouts cap runaway executions.

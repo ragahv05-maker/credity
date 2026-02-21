@@ -17,20 +17,20 @@ import type {
   VerifyRequest,
   VerifyResult,
   CandidateVerificationSummary,
-} from './types.js';
+} from "./types.js";
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 
 const VERTICAL_MAP: Record<TrustVertical, string> = {
-  OVERALL: 'overall',
-  DATING: 'safe_date',
-  HIRING: 'work',
-  GIG: 'gig',
-  RENTAL: 'rental',
-  HEALTH: 'health',
-  EDUCATION: 'education',
-  FINANCE: 'finance',
-  IDENTITY: 'identity',
+  OVERALL: "overall",
+  DATING: "safe_date",
+  HIRING: "work",
+  GIG: "gig",
+  RENTAL: "rental",
+  HEALTH: "health",
+  EDUCATION: "education",
+  FINANCE: "finance",
+  IDENTITY: "identity",
 };
 
 function clamp(value: number, min: number, max: number): number {
@@ -38,21 +38,22 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 function deriveDecision(score: number, requiredScore: number): VerifyDecision {
-  if (score >= requiredScore) return 'APPROVE';
-  if (score >= Math.max(50, requiredScore - 15)) return 'REVIEW';
-  return 'REJECT';
+  if (score >= requiredScore) return "APPROVE";
+  if (score >= Math.max(50, requiredScore - 15)) return "REVIEW";
+  return "REJECT";
 }
 
-function deriveConfidence(normalizedScore: number): 'HIGH' | 'MEDIUM' | 'LOW' {
-  if (normalizedScore >= 85) return 'HIGH';
-  if (normalizedScore >= 65) return 'MEDIUM';
-  return 'LOW';
+function deriveConfidence(normalizedScore: number): "HIGH" | "MEDIUM" | "LOW" {
+  if (normalizedScore >= 85) return "HIGH";
+  if (normalizedScore >= 65) return "MEDIUM";
+  return "LOW";
 }
 
 function normalizeIdentity(subjectDid?: string, userId?: number): string {
   if (subjectDid && subjectDid.trim().length > 0) return subjectDid;
-  if (typeof userId === 'number' && Number.isFinite(userId) && userId > 0) return String(Math.floor(userId));
-  throw new Error('Either subjectDid or userId is required');
+  if (typeof userId === "number" && Number.isFinite(userId) && userId > 0)
+    return String(Math.floor(userId));
+  throw new Error("Either subjectDid or userId is required");
 }
 
 export class CredVerse {
@@ -62,7 +63,7 @@ export class CredVerse {
   private readonly fetchImpl: typeof fetch;
 
   constructor(options: CredVerseClientOptions) {
-    this.baseUrl = options.baseUrl.replace(/\/$/, '');
+    this.baseUrl = options.baseUrl.replace(/\/$/, "");
     this.apiKey = options.apiKey;
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.fetchImpl = options.fetchImpl ?? fetch;
@@ -70,19 +71,23 @@ export class CredVerse {
 
   async verify(input: VerifyRequest): Promise<VerifyResult> {
     const requiredScore = clamp(Math.round(input.requiredScore ?? 70), 0, 100);
-    const subjectDid = input.subjectDid ?? (input.userId ? String(input.userId) : undefined);
+    const subjectDid =
+      input.subjectDid ?? (input.userId ? String(input.userId) : undefined);
 
-    if (input.vertical === 'DATING') {
-      const safeDate = await this.getSafeDateScore({ userId: input.userId, subjectDid: input.subjectDid });
+    if (input.vertical === "DATING") {
+      const safeDate = await this.getSafeDateScore({
+        userId: input.userId,
+        subjectDid: input.subjectDid,
+      });
       const normalizedScore = clamp(Math.round(safeDate.score), 0, 100);
       let zkProof: ProofGenerationResultWithCode | null = null;
       if (input.includeZkProof) {
         try {
           zkProof = await this.generateProof({
-            format: 'sd-jwt-vc',
+            format: "sd-jwt-vc",
             subject_did: subjectDid,
-            proof_purpose: 'assertionMethod',
-            metadata: { vertical: 'safe_date', score: normalizedScore },
+            proof_purpose: "assertionMethod",
+            metadata: { vertical: "safe_date", score: normalizedScore },
           });
         } catch {
           zkProof = null;
@@ -106,14 +111,18 @@ export class CredVerse {
       vertical: input.vertical,
     });
 
-    const normalizedScore = clamp(Math.round((reputation.score / 1000) * 100), 0, 100);
+    const normalizedScore = clamp(
+      Math.round((reputation.score / 1000) * 100),
+      0,
+      100,
+    );
     let zkProof: ProofGenerationResultWithCode | null = null;
     if (input.includeZkProof) {
       try {
         zkProof = await this.generateProof({
-          format: 'sd-jwt-vc',
+          format: "sd-jwt-vc",
           subject_did: subjectDid,
-          proof_purpose: 'assertionMethod',
+          proof_purpose: "assertionMethod",
           metadata: { vertical: input.vertical, score: normalizedScore },
         });
       } catch {
@@ -132,7 +141,9 @@ export class CredVerse {
     };
   }
 
-  async ingestReputationEvent(payload: IngestReputationEventRequest): Promise<{ success: true; event: unknown }> {
+  async ingestReputationEvent(
+    payload: IngestReputationEventRequest,
+  ): Promise<{ success: true; event: unknown }> {
     const subjectDid = normalizeIdentity(payload.subjectDid, payload.userId);
     const body = {
       event_id: payload.eventId,
@@ -146,8 +157,8 @@ export class CredVerse {
       metadata: payload.metadata,
     };
 
-    return this.request('/v1/reputation/events', {
-      method: 'POST',
+    return this.request("/v1/reputation/events", {
+      method: "POST",
       body: JSON.stringify(body),
     });
   }
@@ -158,52 +169,68 @@ export class CredVerse {
     vertical?: TrustVertical;
   }): Promise<ReputationScoreContract> {
     const subjectDid = normalizeIdentity(params.subjectDid, params.userId);
-    const vertical = params.vertical ? VERTICAL_MAP[params.vertical] : VERTICAL_MAP.OVERALL;
+    const vertical = params.vertical
+      ? VERTICAL_MAP[params.vertical]
+      : VERTICAL_MAP.OVERALL;
     const search = new URLSearchParams({ subjectDid, vertical });
-    if (params.userId) search.set('userId', String(params.userId));
+    if (params.userId) search.set("userId", String(params.userId));
 
-    const response = await this.request<{ success: boolean; reputation: ReputationScoreContract }>(
-      `/v1/reputation/score?${search.toString()}`,
-    );
+    const response = await this.request<{
+      success: boolean;
+      reputation: ReputationScoreContract;
+    }>(`/v1/reputation/score?${search.toString()}`);
 
     return response.reputation;
   }
 
-  async getSafeDateScore(params: { userId?: number; subjectDid?: string }): Promise<SafeDateScoreContract> {
+  async getSafeDateScore(params: {
+    userId?: number;
+    subjectDid?: string;
+  }): Promise<SafeDateScoreContract> {
     const subjectDid = normalizeIdentity(params.subjectDid, params.userId);
     const search = new URLSearchParams({ subjectDid });
-    if (params.userId) search.set('userId', String(params.userId));
+    if (params.userId) search.set("userId", String(params.userId));
 
-    const response = await this.request<{ success: boolean; safe_date: SafeDateScoreContract }>(
-      `/v1/reputation/safedate?${search.toString()}`,
-    );
+    const response = await this.request<{
+      success: boolean;
+      safe_date: SafeDateScoreContract;
+    }>(`/v1/reputation/safedate?${search.toString()}`);
 
     return response.safe_date;
   }
 
-  async getVerificationSummary(params: { userId?: number; subjectDid?: string }): Promise<CandidateVerificationSummary> {
+  async getVerificationSummary(params: {
+    userId?: number;
+    subjectDid?: string;
+  }): Promise<CandidateVerificationSummary> {
     const subjectDid = normalizeIdentity(params.subjectDid, params.userId);
     const search = new URLSearchParams({ subjectDid });
-    if (params.userId) search.set('userId', String(params.userId));
+    if (params.userId) search.set("userId", String(params.userId));
 
-    const response = await this.request<{ success: boolean; candidate_summary: CandidateVerificationSummary }>(
-      `/v1/reputation/summary?${search.toString()}`,
-    );
+    const response = await this.request<{
+      success: boolean;
+      candidate_summary: CandidateVerificationSummary;
+    }>(`/v1/reputation/summary?${search.toString()}`);
 
     return response.candidate_summary;
   }
 
-  async getReputationProfile(subjectDid: string): Promise<ReputationProfileContract> {
-    const response = await this.request<{ success: boolean; profile: ReputationProfileContract }>(
-      `/v1/reputation/profiles/${encodeURIComponent(subjectDid)}`,
-    );
+  async getReputationProfile(
+    subjectDid: string,
+  ): Promise<ReputationProfileContract> {
+    const response = await this.request<{
+      success: boolean;
+      profile: ReputationProfileContract;
+    }>(`/v1/reputation/profiles/${encodeURIComponent(subjectDid)}`);
 
     return response.profile;
   }
 
-  async createShareGrant(payload: ReputationShareGrantRequest): Promise<{ success: true; grant: unknown }> {
-    return this.request('/v1/reputation/share-grants', {
-      method: 'POST',
+  async createShareGrant(
+    payload: ReputationShareGrantRequest,
+  ): Promise<{ success: true; grant: unknown }> {
+    return this.request("/v1/reputation/share-grants", {
+      method: "POST",
       body: JSON.stringify({
         subject_did: payload.subjectDid,
         grantee_id: payload.granteeId,
@@ -214,39 +241,54 @@ export class CredVerse {
     });
   }
 
-  async revokeShareGrant(id: string): Promise<{ success: true; grant: unknown }> {
-    return this.request(`/v1/reputation/share-grants/${encodeURIComponent(id)}/revoke`, {
-      method: 'POST',
-    });
+  async revokeShareGrant(
+    id: string,
+  ): Promise<{ success: true; grant: unknown }> {
+    return this.request(
+      `/v1/reputation/share-grants/${encodeURIComponent(id)}/revoke`,
+      {
+        method: "POST",
+      },
+    );
   }
 
-  async generateProof(payload: ProofGenerationRequestContract): Promise<ProofGenerationResultWithCode> {
-    return this.request('/api/v1/proofs/generate', {
-      method: 'POST',
+  async generateProof(
+    payload: ProofGenerationRequestContract,
+  ): Promise<ProofGenerationResultWithCode> {
+    return this.request("/api/v1/proofs/generate", {
+      method: "POST",
       body: JSON.stringify(payload),
     });
   }
 
-  async verifyProof(payload: ProofVerificationRequestContract): Promise<ProofVerificationResultWithCode> {
-    return this.request('/v1/proofs/verify', {
-      method: 'POST',
+  async verifyProof(
+    payload: ProofVerificationRequestContract,
+  ): Promise<ProofVerificationResultWithCode> {
+    return this.request("/v1/proofs/verify", {
+      method: "POST",
       body: JSON.stringify(payload),
     });
   }
 
-  async getProofMetadata(payload: ProofMetadataRequest): Promise<ProofMetadataResult> {
-    return this.request('/v1/proofs/metadata', {
-      method: 'POST',
+  async getProofMetadata(
+    payload: ProofMetadataRequest,
+  ): Promise<ProofMetadataResult> {
+    return this.request("/v1/proofs/metadata", {
+      method: "POST",
       body: JSON.stringify({
         credential: payload.credential,
-        hash_algorithm: payload.hashAlgorithm ?? 'sha256',
-        canonicalization: payload.canonicalization ?? 'json-stable-v1',
+        hash_algorithm: payload.hashAlgorithm ?? "sha256",
+        canonicalization: payload.canonicalization ?? "json-stable-v1",
       }),
     });
   }
 
-  async getRevocationWitness(credentialId: string): Promise<RevocationWitnessContract> {
-    return this.request(`/api/v1/proofs/revocation-witness/${encodeURIComponent(credentialId)}`);
+  async getRevocationWitness(
+    credentialId: string,
+  ): Promise<RevocationWitnessContract> {
+    return this.request(
+      `/api/v1/proofs/revocation-witness/${encodeURIComponent(credentialId)}`,
+    );
   }
 
   private async request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -255,8 +297,8 @@ export class CredVerse {
 
     try {
       const headers = new Headers(init?.headers || {});
-      headers.set('content-type', 'application/json');
-      if (this.apiKey) headers.set('x-api-key', this.apiKey);
+      headers.set("content-type", "application/json");
+      if (this.apiKey) headers.set("x-api-key", this.apiKey);
 
       const response = await this.fetchImpl(`${this.baseUrl}${path}`, {
         ...init,

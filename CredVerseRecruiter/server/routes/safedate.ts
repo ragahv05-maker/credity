@@ -1,7 +1,10 @@
-import { Router } from 'express';
-import { z } from 'zod';
-import { SAFEDATE_REASON_CODES, SAFEDATE_WEIGHTS } from '@credverse/shared-auth';
-import { evaluateSafeDate } from '../services/safedate';
+import { Router } from "express";
+import { z } from "zod";
+import {
+  SAFEDATE_REASON_CODES,
+  SAFEDATE_WEIGHTS,
+} from "@credverse/shared-auth";
+import { evaluateSafeDate } from "../services/safedate";
 
 const router = Router();
 
@@ -31,15 +34,15 @@ const safeDatePayloadSchema = z
   })
   .strict();
 
-router.post('/safedate/evaluate', (req, res) => {
+router.post("/safedate/evaluate", (req, res) => {
   const parsed = safeDatePayloadSchema.safeParse(req.body);
 
   if (!parsed.success) {
     return res.status(400).json({
-      error: 'VALIDATION_ERROR',
-      message: 'Invalid SafeDate request payload',
+      error: "VALIDATION_ERROR",
+      message: "Invalid SafeDate request payload",
       details: parsed.error.issues.map((issue) => ({
-        path: issue.path.join('.'),
+        path: issue.path.join("."),
         message: issue.message,
       })),
     });

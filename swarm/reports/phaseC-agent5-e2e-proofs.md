@@ -33,11 +33,13 @@ Repo: `/Users/raghav/Desktop/credity`
 ## Repro commands and outputs
 
 ### Command
+
 ```bash
 npm run test:e2e:proofs:local
 ```
 
 ### Output summary
+
 - `test:lane4:e2e` -> **2 files passed, 5 tests passed**
   - `tests/e2e-issuer-wallet-verifier.test.ts` passed (3)
   - `tests/revocation-status-propagation.test.ts` passed (2)

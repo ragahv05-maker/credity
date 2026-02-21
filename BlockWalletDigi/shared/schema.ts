@@ -1,4 +1,15 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, uuid, decimal, varchar } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  integer,
+  boolean,
+  timestamp,
+  jsonb,
+  uuid,
+  decimal,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -184,7 +195,7 @@ export const subscriptions = pgTable("subscriptions", {
 export const apiUsage = pgTable("api_usage", {
   id: serial("id").primaryKey(),
   userId: integer("user_id"),
-  platformApiKey: text("platform_api_key"),   // for platform (B2B) usage
+  platformApiKey: text("platform_api_key"), // for platform (B2B) usage
   endpoint: text("endpoint").notNull(),
   month: varchar("month", { length: 7 }).notNull(), // "2026-02"
   count: integer("count").notNull().default(0),
@@ -223,7 +234,7 @@ export const platformConnections = pgTable("platform_connections", {
   platformId: varchar("platform_id", { length: 100 }).notNull(), // "uber" | "linkedin" | "swiggy"
   platformName: text("platform_name").notNull(),
   status: varchar("status", { length: 20 }).notNull().default("pending"), // pending|active|revoked
-  oauthAccessToken: text("oauth_access_token"),   // encrypted
+  oauthAccessToken: text("oauth_access_token"), // encrypted
   oauthRefreshToken: text("oauth_refresh_token"), // encrypted
   scopes: text("scopes"),
   connectedAt: timestamp("connected_at"),
@@ -239,11 +250,11 @@ export type InsertPlatformConnection = typeof platformConnections.$inferInsert;
 export const reputationEvents = pgTable("reputation_events", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
-  eventId: text("event_id").notNull().unique(),     // SHA-256 hash (dedup key)
+  eventId: text("event_id").notNull().unique(), // SHA-256 hash (dedup key)
   platform: text("platform").notNull(),
   category: varchar("category", { length: 50 }).notNull(), // identity/collaboration/etc
   signalType: text("signal_type").notNull(),
-  score: integer("score").notNull(),                // 0 to 100
+  score: integer("score").notNull(), // 0 to 100
   weight: integer("weight").notNull(),
   decayFactor: decimal("decay_factor", { precision: 5, scale: 4 }),
   metadata: jsonb("metadata"),
@@ -253,10 +264,10 @@ export const reputationEvents = pgTable("reputation_events", {
 
 export const reputationScores = pgTable("reputation_scores", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().unique(),    // one row per user
+  userId: integer("user_id").notNull().unique(), // one row per user
   rawScore: integer("raw_score").notNull().default(500),
   normalizedScore: integer("normalized_score").notNull().default(500),
-  categoryBreakdown: jsonb("category_breakdown"),  // { identity: 120, collaboration: 80, ... }
+  categoryBreakdown: jsonb("category_breakdown"), // { identity: 120, collaboration: 80, ... }
   eventCount: integer("event_count").notNull().default(0),
   lastCalculatedAt: timestamp("last_calculated_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -264,10 +275,10 @@ export const reputationScores = pgTable("reputation_scores", {
 
 export const safeDateScores = pgTable("safedate_scores", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().unique(),   // one row per user
-  score: integer("score").notNull().default(50),   // 0-100
+  userId: integer("user_id").notNull().unique(), // one row per user
+  score: integer("score").notNull().default(50), // 0-100
   trustLevel: varchar("trust_level", { length: 20 }),
-  inputs: jsonb("inputs"),                          // raw SafeDate factor inputs
+  inputs: jsonb("inputs"), // raw SafeDate factor inputs
   calculatedAt: timestamp("calculated_at").defaultNow(),
 });
 

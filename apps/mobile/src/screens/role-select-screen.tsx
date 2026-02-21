@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import type { AppRole } from '../types';
-import { useTheme } from '../theme/ThemeContext';
-import type { ColorPalette } from '../theme/tokens';
+import React, { useMemo } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import type { AppRole } from "../types";
+import { useTheme } from "../theme/ThemeContext";
+import type { ColorPalette } from "../theme/tokens";
 
 interface Props {
   onSelectRole: (role: AppRole) => void;
@@ -15,18 +15,18 @@ export function RoleSelectScreen({ onSelectRole }: Props) {
   const ROLE_COPY = useMemo(
     () => ({
       holder: {
-        title: 'Holder Wallet',
-        subtitle: 'Manage credentials, share proofs, and verify profile.',
+        title: "Holder Wallet",
+        subtitle: "Manage credentials, share proofs, and verify profile.",
         color: colors.holder,
       },
       issuer: {
-        title: 'Issuer Console',
-        subtitle: 'Issue and revoke credentials with audit-safe workflows.',
+        title: "Issuer Console",
+        subtitle: "Issue and revoke credentials with audit-safe workflows.",
         color: colors.issuer,
       },
       recruiter: {
-        title: 'Recruiter Verify',
-        subtitle: 'Run instant verification and track risk signals.',
+        title: "Recruiter Verify",
+        subtitle: "Run instant verification and track risk signals.",
         color: colors.recruiter,
       },
     }),
@@ -37,9 +37,11 @@ export function RoleSelectScreen({ onSelectRole }: Props) {
     <View style={styles.container}>
       <Text style={styles.kicker}>CredVerse Mobile</Text>
       <Text style={styles.title}>Choose your role</Text>
-      <Text style={styles.subtitle}>Sessions are isolated by role. Switch anytime.</Text>
+      <Text style={styles.subtitle}>
+        Sessions are isolated by role. Switch anytime.
+      </Text>
 
-      {(['holder', 'issuer', 'recruiter'] as AppRole[]).map((role) => {
+      {(["holder", "issuer", "recruiter"] as AppRole[]).map((role) => {
         const entry = ROLE_COPY[role];
         return (
           <Pressable
@@ -47,7 +49,9 @@ export function RoleSelectScreen({ onSelectRole }: Props) {
             onPress={() => onSelectRole(role)}
             style={[styles.card, { borderColor: entry.color }]}
           >
-            <View style={[styles.accentBar, { backgroundColor: entry.color }]} />
+            <View
+              style={[styles.accentBar, { backgroundColor: entry.color }]}
+            />
             <View style={styles.cardContent}>
               <Text style={styles.cardTitle}>{entry.title}</Text>
               <Text style={styles.cardSubtitle}>{entry.subtitle}</Text>
@@ -72,20 +76,20 @@ function makeStyles(colors: ColorPalette) {
     kicker: {
       color: colors.muted,
       fontSize: 12,
-      fontWeight: '700',
-      fontFamily: 'Inter_700Bold',
+      fontWeight: "700",
+      fontFamily: "Inter_700Bold",
       letterSpacing: 0.6,
-      textTransform: 'uppercase',
+      textTransform: "uppercase",
     },
     title: {
       color: colors.text,
       fontSize: 28,
-      fontWeight: '800',
-      fontFamily: 'Inter_800ExtraBold',
+      fontWeight: "800",
+      fontFamily: "Inter_800ExtraBold",
     },
     subtitle: {
       color: colors.muted,
-      fontFamily: 'Inter_400Regular',
+      fontFamily: "Inter_400Regular",
       marginBottom: 16,
     },
     card: {
@@ -94,8 +98,8 @@ function makeStyles(colors: ColorPalette) {
       borderRadius: 16,
       padding: 14,
       gap: 6,
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: "row",
+      alignItems: "center",
       shadowColor: colors.shadow,
       shadowOpacity: 0.05,
       shadowRadius: 8,
@@ -114,19 +118,19 @@ function makeStyles(colors: ColorPalette) {
     cardTitle: {
       color: colors.text,
       fontSize: 18,
-      fontWeight: '700',
-      fontFamily: 'Inter_700Bold',
+      fontWeight: "700",
+      fontFamily: "Inter_700Bold",
     },
     cardSubtitle: {
       color: colors.muted,
       fontSize: 13,
-      fontFamily: 'Inter_400Regular',
+      fontFamily: "Inter_400Regular",
     },
     cardAction: {
       color: colors.primary,
       fontSize: 12,
-      fontWeight: '700',
-      fontFamily: 'Inter_700Bold',
+      fontWeight: "700",
+      fontFamily: "Inter_700Bold",
       letterSpacing: 0.4,
       marginTop: 4,
     },

@@ -30,6 +30,7 @@ Scope: exact deploy sequence (Railway + Vercel), live smoke artifact collection 
 ### B. Deploy order and hard checks
 
 #### Step 1 — Railway deploy: Issuer
+
 - Root directory: `CredVerseIssuer 3`
 - Trigger deploy from release SHA.
 - Wait for “healthy” state.
@@ -38,18 +39,21 @@ Scope: exact deploy sequence (Railway + Vercel), live smoke artifact collection 
   - `curl https://issuer.<domain>/api/health/relayer`
 
 #### Step 2 — Railway deploy: Wallet
+
 - Root directory: `BlockWalletDigi`
 - Trigger deploy from same release SHA.
 - Verify:
   - `curl https://wallet.<domain>/api/health`
 
 #### Step 3 — Railway deploy: Recruiter
+
 - Root directory: `CredVerseRecruiter`
 - Trigger deploy from same release SHA.
 - Verify:
   - `curl https://recruiter.<domain>/api/health`
 
 #### Step 4 — Cross-service backend smoke (before gateway switch)
+
 ```bash
 GATEWAY_URL=https://gateway.<domain> \
 ISSUER_URL=https://issuer.<domain> \
@@ -57,15 +61,18 @@ WALLET_URL=https://wallet.<domain> \
 RECRUITER_URL=https://recruiter.<domain> \
 npm run smoke:infra:live
 ```
+
 Expected: `Infra live smoke: PASS`
 
 #### Step 5 — Vercel deploy: Gateway
+
 - Project root: `credverse-gateway`
 - Promote release SHA to production.
 - Verify:
   - `curl https://gateway.<domain>/api/health`
 
 #### Step 6 — Full live smoke + evidence capture
+
 ```bash
 RELEASE_TAG=<tag-or-sha> \
 OPERATOR="<name>" \
@@ -76,10 +83,13 @@ RECRUITER_URL=https://recruiter.<domain> \
 RUN_LAUNCH_GATE_STRICT=1 \
 bash scripts/capture-live-evidence.sh
 ```
+
 Artifacts are written to: `evidence-pack/live/<release>/<timestamp>/`
 
 #### Step 7 — Go/No-Go decision
+
 Go only if all are true:
+
 - all 4 health endpoints green,
 - infra smoke pass,
 - no Sev-1/Sev-2 incidents open,
@@ -91,7 +101,7 @@ Go only if all are true:
 
 Use this template in release notes or incident thread.
 
-```md
+````md
 # Live Smoke Evidence — <release>
 
 - Environment: production
@@ -102,6 +112,7 @@ Use this template in release notes or incident thread.
 - Evidence directory: evidence-pack/live/<release>/<timestamp>/
 
 ## Endpoint checks
+
 - [ ] gateway `/api/health` (200 + expected payload)
 - [ ] issuer `/api/health` (200 + expected payload)
 - [ ] issuer `/api/health/relayer` (ok=true, configured=true)
@@ -109,11 +120,14 @@ Use this template in release notes or incident thread.
 - [ ] recruiter `/api/health` (200 + expected payload)
 
 ## Command transcript
+
 ```bash
 <insert live-smoke.log contents or file link>
 ```
+````
 
 ## Attachments
+
 - metadata.txt
 - gateway-health.json
 - issuer-health.json
@@ -124,11 +138,13 @@ Use this template in release notes or incident thread.
 - gate-launch-strict.log (if run)
 
 ## Result
+
 - Decision: GO / NO-GO
 - Decision owners: <...>
 - Decision timestamp (IST): <...>
 - Notes: <...>
-```
+
+````
 
 ---
 
@@ -171,26 +187,26 @@ Use this template in release notes or incident thread.
 - Residual impact: <...>
 - Next corrective action owner: <...>
 - RCA due date: <...>
-```
+````
 
 ---
 
 ## 4) Operator Checklist with Timestamps (Execution Clock)
 
-| Time (IST) | Owner | Action | Evidence required | Status |
-|---|---|---|---|---|
-| T-60m | Release Manager | Freeze SHA/tag and announce window | Release message + SHA | ☐ |
-| T-50m | Security Lead | Verify mandatory secrets present (masked) | Secret manager snapshots | ☐ |
-| T-45m | Operator | Run `npm run gate:launch:strict` | Log artifact | ☐ |
-| T-40m | Operator | Run `npm run gate:contracts:security` | CI/log link | ☐ |
-| T-30m | Operator | Deploy Issuer on Railway | deployment ID + health curl | ☐ |
-| T-22m | Operator | Deploy Wallet on Railway | deployment ID + health curl | ☐ |
-| T-15m | Operator | Deploy Recruiter on Railway | deployment ID + health curl | ☐ |
-| T-10m | Operator | Run backend smoke (`npm run smoke:infra:live`) | smoke log | ☐ |
-| T-05m | Operator | Deploy Gateway on Vercel | deployment URL + health curl | ☐ |
-| T+00m | Operator | Run `scripts/capture-live-evidence.sh` | evidence-pack path | ☐ |
-| T+10m | Release+Security | Go/No-Go review | signed decision note | ☐ |
-| T+20m | Incident Commander | If NO-GO: execute rollback runbook | rollback evidence sheet | ☐ |
+| Time (IST) | Owner              | Action                                         | Evidence required            | Status |
+| ---------- | ------------------ | ---------------------------------------------- | ---------------------------- | ------ |
+| T-60m      | Release Manager    | Freeze SHA/tag and announce window             | Release message + SHA        | ☐      |
+| T-50m      | Security Lead      | Verify mandatory secrets present (masked)      | Secret manager snapshots     | ☐      |
+| T-45m      | Operator           | Run `npm run gate:launch:strict`               | Log artifact                 | ☐      |
+| T-40m      | Operator           | Run `npm run gate:contracts:security`          | CI/log link                  | ☐      |
+| T-30m      | Operator           | Deploy Issuer on Railway                       | deployment ID + health curl  | ☐      |
+| T-22m      | Operator           | Deploy Wallet on Railway                       | deployment ID + health curl  | ☐      |
+| T-15m      | Operator           | Deploy Recruiter on Railway                    | deployment ID + health curl  | ☐      |
+| T-10m      | Operator           | Run backend smoke (`npm run smoke:infra:live`) | smoke log                    | ☐      |
+| T-05m      | Operator           | Deploy Gateway on Vercel                       | deployment URL + health curl | ☐      |
+| T+00m      | Operator           | Run `scripts/capture-live-evidence.sh`         | evidence-pack path           | ☐      |
+| T+10m      | Release+Security   | Go/No-Go review                                | signed decision note         | ☐      |
+| T+20m      | Incident Commander | If NO-GO: execute rollback runbook             | rollback evidence sheet      | ☐      |
 
 ---
 

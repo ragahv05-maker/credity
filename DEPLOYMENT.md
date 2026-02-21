@@ -34,12 +34,12 @@ Use only the current active contract for issuer/wallet/recruiter testnet wiring 
 
 CredVerse is a monorepo with 4 services:
 
-| Service | Description | Port | Health Endpoint |
-|---------|-------------|------|-----------------|
-| **CredVerse Issuer** | University/Institution dashboard for issuing credentials | 5001 | `/api/health` |
-| **BlockWallet** | Student digital wallet for managing credentials | 5002 | `/api/health` |
-| **CredVerse Recruiter** | Employer portal for verifying credentials | 5003 | `/api/health` |
-| **CredVerse Gateway** | Landing page & OAuth authentication | 5173 | `/api/health` |
+| Service                 | Description                                              | Port | Health Endpoint |
+| ----------------------- | -------------------------------------------------------- | ---- | --------------- |
+| **CredVerse Issuer**    | University/Institution dashboard for issuing credentials | 5001 | `/api/health`   |
+| **BlockWallet**         | Student digital wallet for managing credentials          | 5002 | `/api/health`   |
+| **CredVerse Recruiter** | Employer portal for verifying credentials                | 5003 | `/api/health`   |
+| **CredVerse Gateway**   | Landing page & OAuth authentication                      | 5173 | `/api/health`   |
 
 ## 📋 Prerequisites
 
@@ -123,22 +123,26 @@ npm run gate:launch:strict
 Since this is a monorepo, you need to deploy each service separately:
 
 #### Deploy Issuer Service
+
 1. Click **"New Service"** → **"GitHub Repo"** → Select `credity`
 2. Go to **Settings** → **Source**
 3. Set **Root Directory** to: `CredVerseIssuer 3`
 4. Click **Deploy**
 
 #### Deploy Wallet Service
+
 1. Click **"New Service"** → **"GitHub Repo"** → Select `credity`
 2. Set **Root Directory** to: `BlockWalletDigi`
 3. Click **Deploy**
 
 #### Deploy Recruiter Service
+
 1. Click **"New Service"** → **"GitHub Repo"** → Select `credity`
 2. Set **Root Directory** to: `CredVerseRecruiter`
 3. Click **Deploy**
 
 #### Deploy Gateway Service
+
 1. Click **"New Service"** → **"GitHub Repo"** → Select `credity`
 2. Set **Root Directory** to: `credverse-gateway`
 3. Click **Deploy**
@@ -148,6 +152,7 @@ Since this is a monorepo, you need to deploy each service separately:
 For each service, add these environment variables in Railway:
 
 #### Required for ALL Services
+
 ```env
 NODE_ENV=production
 JWT_SECRET=<64-char-random-string>
@@ -156,11 +161,13 @@ ALLOWED_ORIGINS=https://issuer.yourdomain.com,https://wallet.yourdomain.com,http
 ```
 
 Generate secure secrets:
+
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
 #### Issuer Service (Additional)
+
 ```env
 ISSUER_KEY_ENCRYPTION=<64-char-hex-key>
 # Optional key-rotation support (keep previous keys temporarily while rotating):
@@ -182,6 +189,7 @@ SENTRY_DSN=https://...  # Error monitoring
 ```
 
 `CHAIN_NETWORK` supported values:
+
 - `ethereum-sepolia` (default, safest pilot)
 - `polygon-mainnet`
 - `polygon-amoy`
@@ -191,6 +199,7 @@ SENTRY_DSN=https://...  # Error monitoring
 `ENABLE_ZKEVM_MAINNET` must be set to `true` before write operations (anchor/revoke) are allowed on `polygon-zkevm-mainnet`.
 
 #### Gateway Service (Additional)
+
 ```env
 GOOGLE_CLIENT_ID=<your-google-client-id>
 GOOGLE_CLIENT_SECRET=<your-google-client-secret>
@@ -208,6 +217,7 @@ GOOGLE_REDIRECT_URI=https://gateway.yourdomain.com/api/auth/google/callback
 ### Step 5: Verify Deployment
 
 Test each health endpoint:
+
 ```bash
 curl https://issuer.yourdomain.com/api/health
 curl https://wallet.yourdomain.com/api/health
@@ -216,8 +226,9 @@ curl https://gateway.yourdomain.com/api/health
 ```
 
 Each should return:
+
 ```json
-{"status":"ok","app":"<service-name>"}
+{ "status": "ok", "app": "<service-name>" }
 ```
 
 ## 🔐 Security Checklist
@@ -244,10 +255,12 @@ Currently CredVerse uses in-memory storage. For production persistence:
 ## 📊 Monitoring
 
 ### Sentry Error Tracking
+
 1. Create project at https://sentry.io
 2. Add `SENTRY_DSN` to each service
 
 ### PostHog Analytics
+
 1. Create project at https://posthog.com
 2. Add `POSTHOG_API_KEY` to each service
 
@@ -274,20 +287,24 @@ cd credverse-gateway && npm run start
 ## 🆘 Troubleshooting
 
 ### Build Fails
+
 - Check Railway build logs
 - Ensure `packages/shared-auth` is built first (handled automatically)
 - Verify all dependencies are in `package.json`
 
 ### Health Check Fails
+
 - Wait 60 seconds for startup
 - Check `healthcheckTimeout` in `railway.toml`
 - Verify `PORT` environment variable is not overridden
 
 ### CORS Errors
+
 - Update `ALLOWED_ORIGINS` with production domains
 - Include both www and non-www versions
 
 ### API Not Working
+
 - Check `NODE_ENV=production` is set
 - Verify all required environment variables
 
@@ -329,13 +346,13 @@ DIGILOCKER_ENV=sandbox
 
 ### Sandbox vs Production
 
-| | Sandbox | Production |
-|---|---|---|
-| Base URL | `https://digilocker.meripehchaan.gov.in` | `https://digilocker.meripehchaan.gov.in` |
-| Client credentials | Test credentials from NHA portal | Live credentials from NHA portal |
-| Documents returned | Mock/test documents only | Real government documents |
-| Aadhaar OTP | Bypassed (fixed OTP accepted) | Live OTP via UIDAI |
-| Rate limits | Relaxed | Enforced (see NHA SLA) |
+|                    | Sandbox                                  | Production                               |
+| ------------------ | ---------------------------------------- | ---------------------------------------- |
+| Base URL           | `https://digilocker.meripehchaan.gov.in` | `https://digilocker.meripehchaan.gov.in` |
+| Client credentials | Test credentials from NHA portal         | Live credentials from NHA portal         |
+| Documents returned | Mock/test documents only                 | Real government documents                |
+| Aadhaar OTP        | Bypassed (fixed OTP accepted)            | Live OTP via UIDAI                       |
+| Rate limits        | Relaxed                                  | Enforced (see NHA SLA)                   |
 
 Set `DIGILOCKER_ENV=sandbox` (or leave unset) during development. Switch to `DIGILOCKER_ENV=production` only after NHA production approval and IP whitelisting.
 

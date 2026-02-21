@@ -3,6 +3,7 @@
 This directory stores release proof artifacts.
 
 ## Structure
+
 - `01-access-control/`
 - `02-ci-cd/`
 - `03-security/`
@@ -12,6 +13,7 @@ This directory stores release proof artifacts.
 - `07-slo/`
 
 ## Rules
+
 - Evidence must map to current release SHA.
 - Include timestamp + owner for each artifact.
 - No secrets in evidence files.

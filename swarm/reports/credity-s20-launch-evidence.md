@@ -1,12 +1,15 @@
 # Credity Swarm S20 — Launch Evidence Pack Template Refresh + Current Gate Snapshot
 
 ## Scope completed
+
 Updated launch compliance evidence documentation to be audit-ready and captured a current baseline of checks/tests/gates with explicit residual risks.
 
 ## Files changed
+
 - `docs/compliance/launch-evidence-template.md`
 
 ## What was improved (audit readiness)
+
 The template was upgraded from a short checklist into a structured, sign-off ready evidence pack with:
 
 1. **Release metadata block**
@@ -46,17 +49,20 @@ The template was upgraded from a short checklist into a structured, sign-off rea
 ## Current checks/tests/gate outputs captured
 
 ### 1) `npm run check`
+
 - **Status:** ❌ FAIL
 - **Failure:**
   - `CredVerseIssuer 3/server/services/queue-service.ts(204,64): error TS2339: Property 'attemptsMade' does not exist on type '{ jobId: string; failedReason: string; prev?: string | undefined; }'.`
 
 ### 2) `npm test`
+
 - **Status:** ⚠️ Incomplete / no final monorepo exit code recorded
 - Wallet suite observed passing (12 files / 28 tests).
 - Issuer suite observed passing (17 files / 49 tests).
 - Full command was interrupted during recruiter stage; therefore not counted as a pass for launch evidence.
 
 ### 3) `set -a; source .env.launch.local; set +a; npm run gate:launch:strict`
+
 - **Status:** ✅ PASS
 - Reported passes include:
   - runbooks present
@@ -67,17 +73,20 @@ The template was upgraded from a short checklist into a structured, sign-off rea
   - JWT secrets present
 
 ### 4) `npm run gate:foundation`
+
 - **Status:** ❌ FAIL
 - **Failure:** `fetch failed`
 - Gate hint indicated services should be started or use local orchestrated gate.
 
 ### 5) `npm run gate:foundation:local`
+
 - **Status:** ❌ FAIL
 - Services started and health checks reached green.
 - Flow failed at wallet credential storage:
   - `POST /api/wallet/credentials failed (401): {"error":"No token provided"}`
 
 ### 6) `npm run gate:contracts:security`
+
 - **Status:** ✅ PASS
 - Solhint + Hardhat compile + Hardhat tests completed.
 - Contract suite summary: **28 passing**.
@@ -85,6 +94,7 @@ The template was upgraded from a short checklist into a structured, sign-off rea
 ---
 
 ## Remaining known risks (launch-relevant)
+
 1. **Type-check gate blocker (high)**
    - Issuer queue service typing error breaks `npm run check` gate.
 
@@ -98,5 +108,6 @@ The template was upgraded from a short checklist into a structured, sign-off rea
    - Development fallback warnings seen in runtime/test logs (JWT/ISSUER_KEY_ENCRYPTION/Redis/DigiLocker) require production-config evidence in release packet.
 
 ## Notes for main agent
+
 - S20 requested report is complete and saved at: `swarm/reports/credity-s20-launch-evidence.md`.
 - Template is now audit-oriented and includes a baseline appendix with today’s observed gate status, so release owners can immediately fork it into a release-specific evidence file.

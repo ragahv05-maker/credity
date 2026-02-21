@@ -34,6 +34,7 @@ npm test -- tests/auth-apple-oauth.test.ts tests/auth-session-30day-policy.test.
 ```
 
 Result:
+
 - **5 files passed**
 - **8 tests passed**
 - No failures
@@ -46,6 +47,7 @@ npm test -- src/lib/api-client.test.ts
 ```
 
 Result:
+
 - **1 file passed**
 - **4 tests passed**
 - No failures
@@ -58,6 +60,7 @@ npm test -- tests/biometrics-encryption-workflow.test.ts tests/digilocker-produc
 ```
 
 Result:
+
 - **3 files passed**
 - **5 tests passed**
 - No failures
@@ -68,6 +71,7 @@ Result:
 ## Changed files (auth/identity lane)
 
 ### Modified
+
 - `BlockWalletDigi/server/routes/identity.ts`
 - `BlockWalletDigi/server/services/biometrics-service.ts`
 - `BlockWalletDigi/server/services/face-match-service.ts`
@@ -77,6 +81,7 @@ Result:
 - `apps/mobile/src/screens/auth-screen.tsx`
 
 ### Added
+
 - `BlockWalletDigi/tests/biometrics-encryption-workflow.test.ts`
 - `BlockWalletDigi/tests/digilocker-production-policy.test.ts`
 - `BlockWalletDigi/tests/identity-liveness-challenge-hooks.test.ts`
@@ -92,6 +97,7 @@ Result:
 ## Summary
 
 Auth + identity hardening lane is in a releasable state at test level for:
+
 - Apple sign-in verification + mobile exchange path
 - 30-day session policy enforcement and PIN fallback
 - Identity anti-spoof and liveness challenge edge cases

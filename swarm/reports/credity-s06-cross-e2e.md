@@ -1,11 +1,13 @@
 # S06 — Cross-service E2E expansion (issuer → wallet → recruiter)
 
 ## Scope completed
+
 Implemented expanded cross-service E2E coverage in:
 
 - `CredVerseRecruiter/tests/e2e-issuer-wallet-verifier.test.ts`
 
 ### What was added
+
 1. **Issuer auth permutations**
    - Missing auth → `401`
    - Invalid API key → `401`
@@ -33,6 +35,7 @@ Implemented expanded cross-service E2E coverage in:
    - No random assertions around deferred/active behavior (fully mode-driven)
 
 ## Validation run
+
 Executed:
 
 ```bash
@@ -41,6 +44,7 @@ npm test -- tests/e2e-issuer-wallet-verifier.test.ts
 ```
 
 ### Result
+
 Run was **blocked by a pre-existing syntax error** in recruiter codebase (not introduced by this task):
 
 - File: `CredVerseRecruiter/server/routes/verification.ts`
@@ -49,5 +53,6 @@ Run was **blocked by a pre-existing syntax error** in recruiter codebase (not in
 Because this parse error occurs during transform/import, Vitest reports no tests executed for the suite.
 
 ## Notes for integrator
+
 - S06 changes are isolated to the e2e test file above.
 - Once the syntax error in `server/routes/verification.ts` is fixed, rerun the same Vitest command to execute and verify the expanded matrix.

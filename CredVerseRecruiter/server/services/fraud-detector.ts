@@ -3,22 +3,25 @@
  * Rules engine + AI anomaly copilot (deterministic fallback when provider is unavailable).
  */
 
-import { AIAnomalyResult, analyzeCredentialAnomalyRisk } from './ai-anomaly-adapter';
+import {
+  AIAnomalyResult,
+  analyzeCredentialAnomalyRisk,
+} from "./ai-anomaly-adapter";
 
 export interface FraudAnalysisResult {
   score: number; // 0-100 (higher = more suspicious)
   ruleScore: number; // baseline score from deterministic checks
   aiScore: number; // score from AI/deterministic anomaly copilot
   flags: string[];
-  recommendation: 'accept' | 'review' | 'reject';
+  recommendation: "accept" | "review" | "reject";
   details: FraudDetail[];
   ai: AIAnomalyResult;
-  mode: 'rules-only' | 'hybrid-ai';
+  mode: "rules-only" | "hybrid-ai";
 }
 
 export interface FraudDetail {
   check: string;
-  status: 'passed' | 'warning' | 'failed';
+  status: "passed" | "warning" | "failed";
   message: string;
 }
 
@@ -26,8 +29,14 @@ const AI_RULE_WEIGHT = Number(process.env.AI_RISK_RULE_WEIGHT || 0.68);
 const AI_MODEL_WEIGHT = Number(process.env.AI_RISK_MODEL_WEIGHT || 0.32);
 
 function normalizeWeights(): { ruleWeight: number; aiWeight: number } {
-  const safeRule = Number.isFinite(AI_RULE_WEIGHT) && AI_RULE_WEIGHT >= 0 ? AI_RULE_WEIGHT : 0.68;
-  const safeAI = Number.isFinite(AI_MODEL_WEIGHT) && AI_MODEL_WEIGHT >= 0 ? AI_MODEL_WEIGHT : 0.32;
+  const safeRule =
+    Number.isFinite(AI_RULE_WEIGHT) && AI_RULE_WEIGHT >= 0
+      ? AI_RULE_WEIGHT
+      : 0.68;
+  const safeAI =
+    Number.isFinite(AI_MODEL_WEIGHT) && AI_MODEL_WEIGHT >= 0
+      ? AI_MODEL_WEIGHT
+      : 0.32;
   const sum = safeRule + safeAI;
   if (sum <= 0) {
     return { ruleWeight: 0.7, aiWeight: 0.3 };
@@ -38,41 +47,59 @@ function normalizeWeights(): { ruleWeight: number; aiWeight: number } {
   };
 }
 
-function mapSignalSeverityToDetailStatus(severity: 'low' | 'medium' | 'high'): FraudDetail['status'] {
-  if (severity === 'high') return 'failed';
-  if (severity === 'medium') return 'warning';
-  return 'passed';
+function mapSignalSeverityToDetailStatus(
+  severity: "low" | "medium" | "high",
+): FraudDetail["status"] {
+  if (severity === "high") return "failed";
+  if (severity === "medium") return "warning";
+  return "passed";
 }
 
 /**
  * Fraud Detector Class
  */
 class FraudDetector {
-  private suspiciousPatterns: RegExp[] = [/test/i, /fake/i, /sample/i, /demo/i, /placeholder/i];
+  private suspiciousPatterns: RegExp[] = [
+    /test/i,
+    /fake/i,
+    /sample/i,
+    /demo/i,
+    /placeholder/i,
+  ];
 
-  private knownFraudulentIssuers: Set<string> = new Set(['fake-university', 'diploma-mill.com', 'instant-degrees.net']);
+  private knownFraudulentIssuers: Set<string> = new Set([
+    "fake-university",
+    "diploma-mill.com",
+    "instant-degrees.net",
+  ]);
 
   getStatistics(): {
     suspiciousPatternCount: number;
     knownFraudulentIssuerCount: number;
     modelVersion: string;
-    mode: 'rules-only' | 'hybrid-ai';
+    mode: "rules-only" | "hybrid-ai";
     aiProvider: string;
   } {
-    const hasProvider = Boolean(process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY || process.env.DEEPSEEK_API_KEY);
+    const hasProvider = Boolean(
+      process.env.OPENAI_API_KEY ||
+      process.env.GEMINI_API_KEY ||
+      process.env.DEEPSEEK_API_KEY,
+    );
     const aiProvider = process.env.OPENAI_API_KEY
-      ? 'openai'
+      ? "openai"
       : process.env.GEMINI_API_KEY
-        ? 'gemini'
+        ? "gemini"
         : process.env.DEEPSEEK_API_KEY
-          ? 'deepseek'
-          : 'deterministic';
+          ? "deepseek"
+          : "deterministic";
 
     return {
       suspiciousPatternCount: this.suspiciousPatterns.length,
       knownFraudulentIssuerCount: this.knownFraudulentIssuers.size,
-      modelVersion: hasProvider ? 'rules-v2+ai-risk-v1' : 'rules-v2+deterministic-risk-v1',
-      mode: 'hybrid-ai',
+      modelVersion: hasProvider
+        ? "rules-v2+ai-risk-v1"
+        : "rules-v2+deterministic-risk-v1",
+      mode: "hybrid-ai",
       aiProvider,
     };
   }
@@ -88,62 +115,66 @@ class FraudDetector {
     // Check 1: Issuer Analysis
     const issuerCheck = this.checkIssuer(credential);
     details.push(issuerCheck);
-    if (issuerCheck.status === 'failed') {
+    if (issuerCheck.status === "failed") {
       ruleScore += 40;
-      flags.push('FRAUDULENT_ISSUER');
-    } else if (issuerCheck.status === 'warning') {
+      flags.push("FRAUDULENT_ISSUER");
+    } else if (issuerCheck.status === "warning") {
       ruleScore += 15;
-      flags.push('UNKNOWN_ISSUER');
+      flags.push("UNKNOWN_ISSUER");
     }
 
     // Check 2: Temporal Anomalies
     const temporalCheck = this.checkTemporalAnomalies(credential);
     details.push(temporalCheck);
-    if (temporalCheck.status === 'failed') {
+    if (temporalCheck.status === "failed") {
       ruleScore += 30;
-      flags.push('TEMPORAL_ANOMALY');
-    } else if (temporalCheck.status === 'warning') {
+      flags.push("TEMPORAL_ANOMALY");
+    } else if (temporalCheck.status === "warning") {
       ruleScore += 10;
-      flags.push('TEMPORAL_WARNING');
+      flags.push("TEMPORAL_WARNING");
     }
 
     // Check 3: Content Patterns
     const contentCheck = this.checkContentPatterns(credential);
     details.push(contentCheck);
-    if (contentCheck.status === 'failed') {
+    if (contentCheck.status === "failed") {
       ruleScore += 25;
-      flags.push('SUSPICIOUS_CONTENT');
-    } else if (contentCheck.status === 'warning') {
+      flags.push("SUSPICIOUS_CONTENT");
+    } else if (contentCheck.status === "warning") {
       ruleScore += 10;
-      flags.push('CONTENT_WARNING');
+      flags.push("CONTENT_WARNING");
     }
 
     // Check 4: Format Consistency
     const formatCheck = this.checkFormatConsistency(credential);
     details.push(formatCheck);
-    if (formatCheck.status === 'failed') {
+    if (formatCheck.status === "failed") {
       ruleScore += 20;
-      flags.push('FORMAT_INCONSISTENT');
+      flags.push("FORMAT_INCONSISTENT");
     }
 
     // Check 5: Subject Validation
     const subjectCheck = this.checkSubjectInfo(credential);
     details.push(subjectCheck);
-    if (subjectCheck.status === 'warning') {
+    if (subjectCheck.status === "warning") {
       ruleScore += 10;
-      flags.push('INCOMPLETE_SUBJECT');
+      flags.push("INCOMPLETE_SUBJECT");
     }
 
     const boundedRuleScore = Math.min(100, ruleScore);
 
     const ai = await analyzeCredentialAnomalyRisk({
-      credential: credential && typeof credential === 'object' ? credential : {},
+      credential:
+        credential && typeof credential === "object" ? credential : {},
       ruleScore: boundedRuleScore,
       ruleFlags: [...flags],
     });
 
     const { ruleWeight, aiWeight } = normalizeWeights();
-    const combinedScore = Math.min(100, Math.round(boundedRuleScore * ruleWeight + ai.score * aiWeight));
+    const combinedScore = Math.min(
+      100,
+      Math.round(boundedRuleScore * ruleWeight + ai.score * aiWeight),
+    );
 
     for (const signal of ai.signals) {
       details.push({
@@ -152,7 +183,7 @@ class FraudDetector {
         message: signal.message,
       });
 
-      if (signal.severity === 'high' || signal.severity === 'medium') {
+      if (signal.severity === "high" || signal.severity === "medium") {
         flags.push(`AI_${signal.code}`);
       }
     }
@@ -160,13 +191,13 @@ class FraudDetector {
     const uniqueFlags = Array.from(new Set(flags));
 
     // Determine recommendation
-    let recommendation: 'accept' | 'review' | 'reject';
+    let recommendation: "accept" | "review" | "reject";
     if (combinedScore >= 50) {
-      recommendation = 'reject';
+      recommendation = "reject";
     } else if (combinedScore >= 25) {
-      recommendation = 'review';
+      recommendation = "review";
     } else {
-      recommendation = 'accept';
+      recommendation = "accept";
     }
 
     return {
@@ -177,7 +208,7 @@ class FraudDetector {
       recommendation,
       details,
       ai,
-      mode: 'hybrid-ai',
+      mode: "hybrid-ai",
     };
   }
 
@@ -189,35 +220,36 @@ class FraudDetector {
 
     if (!issuer) {
       return {
-        check: 'Issuer Validation',
-        status: 'warning',
-        message: 'No issuer information found',
+        check: "Issuer Validation",
+        status: "warning",
+        message: "No issuer information found",
       };
     }
 
-    const issuerStr = typeof issuer === 'string' ? issuer : JSON.stringify(issuer);
+    const issuerStr =
+      typeof issuer === "string" ? issuer : JSON.stringify(issuer);
 
     if (this.knownFraudulentIssuers.has(issuerStr.toLowerCase())) {
       return {
-        check: 'Issuer Validation',
-        status: 'failed',
-        message: 'Issuer is on fraudulent list',
+        check: "Issuer Validation",
+        status: "failed",
+        message: "Issuer is on fraudulent list",
       };
     }
 
     // Check for valid DID format
-    if (typeof issuer === 'string' && issuer.startsWith('did:')) {
+    if (typeof issuer === "string" && issuer.startsWith("did:")) {
       return {
-        check: 'Issuer Validation',
-        status: 'passed',
-        message: 'Valid DID issuer format',
+        check: "Issuer Validation",
+        status: "passed",
+        message: "Valid DID issuer format",
       };
     }
 
     return {
-      check: 'Issuer Validation',
-      status: 'warning',
-      message: 'Issuer format not standard DID',
+      check: "Issuer Validation",
+      status: "warning",
+      message: "Issuer format not standard DID",
     };
   }
 
@@ -229,20 +261,23 @@ class FraudDetector {
 
     if (!issuanceDate) {
       return {
-        check: 'Temporal Analysis',
-        status: 'warning',
-        message: 'No issuance date found',
+        check: "Temporal Analysis",
+        status: "warning",
+        message: "No issuance date found",
       };
     }
 
-    const issued = typeof issuanceDate === 'number' ? new Date(issuanceDate * 1000) : new Date(issuanceDate);
+    const issued =
+      typeof issuanceDate === "number"
+        ? new Date(issuanceDate * 1000)
+        : new Date(issuanceDate);
 
     // Future issuance date is suspicious
     if (issued > new Date()) {
       return {
-        check: 'Temporal Analysis',
-        status: 'failed',
-        message: 'Credential issuance date is in the future',
+        check: "Temporal Analysis",
+        status: "failed",
+        message: "Credential issuance date is in the future",
       };
     }
 
@@ -251,16 +286,16 @@ class FraudDetector {
     tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
     if (issued < tenYearsAgo) {
       return {
-        check: 'Temporal Analysis',
-        status: 'warning',
-        message: 'Credential is over 10 years old',
+        check: "Temporal Analysis",
+        status: "warning",
+        message: "Credential is over 10 years old",
       };
     }
 
     return {
-      check: 'Temporal Analysis',
-      status: 'passed',
-      message: 'Temporal data appears valid',
+      check: "Temporal Analysis",
+      status: "passed",
+      message: "Temporal data appears valid",
     };
   }
 
@@ -279,24 +314,24 @@ class FraudDetector {
 
     if (suspiciousFound.length > 2) {
       return {
-        check: 'Content Analysis',
-        status: 'failed',
-        message: `Multiple suspicious patterns found: ${suspiciousFound.join(', ')}`,
+        check: "Content Analysis",
+        status: "failed",
+        message: `Multiple suspicious patterns found: ${suspiciousFound.join(", ")}`,
       };
     }
 
     if (suspiciousFound.length > 0) {
       return {
-        check: 'Content Analysis',
-        status: 'warning',
-        message: 'Potential test/demo content detected',
+        check: "Content Analysis",
+        status: "warning",
+        message: "Potential test/demo content detected",
       };
     }
 
     return {
-      check: 'Content Analysis',
-      status: 'passed',
-      message: 'No suspicious content patterns detected',
+      check: "Content Analysis",
+      status: "passed",
+      message: "No suspicious content patterns detected",
     };
   }
 
@@ -305,30 +340,30 @@ class FraudDetector {
    */
   private checkFormatConsistency(credential: any): FraudDetail {
     // Check for W3C VC format compliance
-    const hasContext = credential['@context'] || credential.context;
+    const hasContext = credential["@context"] || credential.context;
     const hasType = credential.type;
     const hasIssuer = credential.issuer || credential.iss;
 
     if (!hasContext && !hasType && !hasIssuer) {
       return {
-        check: 'Format Validation',
-        status: 'failed',
-        message: 'Credential lacks standard VC structure',
+        check: "Format Validation",
+        status: "failed",
+        message: "Credential lacks standard VC structure",
       };
     }
 
     if (!hasContext || !hasType) {
       return {
-        check: 'Format Validation',
-        status: 'warning',
-        message: 'Credential missing some standard fields',
+        check: "Format Validation",
+        status: "warning",
+        message: "Credential missing some standard fields",
       };
     }
 
     return {
-      check: 'Format Validation',
-      status: 'passed',
-      message: 'Credential format is valid',
+      check: "Format Validation",
+      status: "passed",
+      message: "Credential format is valid",
     };
   }
 
@@ -340,27 +375,27 @@ class FraudDetector {
 
     if (!subject) {
       return {
-        check: 'Subject Validation',
-        status: 'warning',
-        message: 'No credential subject found',
+        check: "Subject Validation",
+        status: "warning",
+        message: "No credential subject found",
       };
     }
 
-    const subjectObj = typeof subject === 'object' ? subject : {};
+    const subjectObj = typeof subject === "object" ? subject : {};
     const hasName = (subjectObj as any).name || (subjectObj as any).id;
 
     if (!hasName) {
       return {
-        check: 'Subject Validation',
-        status: 'warning',
-        message: 'Subject lacks identifying information',
+        check: "Subject Validation",
+        status: "warning",
+        message: "Subject lacks identifying information",
       };
     }
 
     return {
-      check: 'Subject Validation',
-      status: 'passed',
-      message: 'Subject information present',
+      check: "Subject Validation",
+      status: "passed",
+      message: "Subject information present",
     };
   }
 }

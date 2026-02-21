@@ -13,7 +13,13 @@ body,
 body {
   background: #03050a;
   color: #edf3ff;
-  font-family: 'Manrope', ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+  font-family:
+    "Manrope",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    sans-serif;
 }
 
 a {

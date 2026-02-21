@@ -1,15 +1,64 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, uuid, pgEnum, real } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  serial,
+  integer,
+  boolean,
+  timestamp,
+  jsonb,
+  uuid,
+  pgEnum,
+  real,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const trustStatusEnum = pgEnum("trust_status", ["pending", "trusted", "revoked"]);
-export const studentStatusEnum = pgEnum("student_status", ["Active", "Alumni", "Suspended"]);
+export const trustStatusEnum = pgEnum("trust_status", [
+  "pending",
+  "trusted",
+  "revoked",
+]);
+export const studentStatusEnum = pgEnum("student_status", [
+  "Active",
+  "Alumni",
+  "Suspended",
+]);
 export const teamRoleEnum = pgEnum("team_role", ["Admin", "Issuer", "Viewer"]);
-export const teamStatusEnum = pgEnum("team_status", ["Active", "Pending", "Inactive"]);
-export const verificationStatusEnum = pgEnum("verification_status", ["success", "failed", "suspicious"]);
-export const reputationCategoryEnum = pgEnum("reputation_category", ["transport", "accommodation", "delivery", "employment", "finance", "social", "identity"]);
-export const reputationVerticalEnum = pgEnum("reputation_vertical", ["overall", "work", "safe_date", "gig", "rental", "health", "education", "finance", "identity"]);
-export const platformAuthorityStatusEnum = pgEnum("platform_authority_status", ["pending", "active", "suspended"]);
+export const teamStatusEnum = pgEnum("team_status", [
+  "Active",
+  "Pending",
+  "Inactive",
+]);
+export const verificationStatusEnum = pgEnum("verification_status", [
+  "success",
+  "failed",
+  "suspicious",
+]);
+export const reputationCategoryEnum = pgEnum("reputation_category", [
+  "transport",
+  "accommodation",
+  "delivery",
+  "employment",
+  "finance",
+  "social",
+  "identity",
+]);
+export const reputationVerticalEnum = pgEnum("reputation_vertical", [
+  "overall",
+  "work",
+  "safe_date",
+  "gig",
+  "rental",
+  "health",
+  "education",
+  "finance",
+  "identity",
+]);
+export const platformAuthorityStatusEnum = pgEnum("platform_authority_status", [
+  "pending",
+  "active",
+  "suspended",
+]);
 
 export const tenants = pgTable("tenants", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -20,7 +69,9 @@ export const tenants = pgTable("tenants", {
 
 export const apiKeys = pgTable("api_keys", {
   id: uuid("id").primaryKey().defaultRandom(),
-  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  tenantId: uuid("tenant_id")
+    .references(() => tenants.id)
+    .notNull(),
   keyHash: text("key_hash").notNull(),
   permissions: jsonb("permissions").default([]),
   createdAt: timestamp("created_at").defaultNow(),
@@ -29,7 +80,9 @@ export const apiKeys = pgTable("api_keys", {
 
 export const issuers = pgTable("issuers", {
   id: uuid("id").primaryKey().defaultRandom(),
-  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  tenantId: uuid("tenant_id")
+    .references(() => tenants.id)
+    .notNull(),
   name: text("name").notNull(),
   domain: text("domain").notNull(),
   did: text("did"),
@@ -49,7 +102,9 @@ export const users = pgTable("users", {
 
 export const templates = pgTable("templates", {
   id: uuid("id").primaryKey().defaultRandom(),
-  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  tenantId: uuid("tenant_id")
+    .references(() => tenants.id)
+    .notNull(),
   name: text("name").notNull(),
   schema: jsonb("schema").notNull(),
   render: text("render").notNull(),
@@ -60,9 +115,15 @@ export const templates = pgTable("templates", {
 
 export const credentials = pgTable("credentials", {
   id: uuid("id").primaryKey().defaultRandom(),
-  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
-  templateId: uuid("template_id").references(() => templates.id).notNull(),
-  issuerId: uuid("issuer_id").references(() => issuers.id).notNull(),
+  tenantId: uuid("tenant_id")
+    .references(() => tenants.id)
+    .notNull(),
+  templateId: uuid("template_id")
+    .references(() => templates.id)
+    .notNull(),
+  issuerId: uuid("issuer_id")
+    .references(() => issuers.id)
+    .notNull(),
   format: text("format").default("vc+jwt"),
   issuerDid: text("issuer_did"),
   subjectDid: text("subject_did"),
@@ -121,13 +182,16 @@ export const reputationEvents = pgTable("reputation_events", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const reputationSignalSnapshots = pgTable("reputation_signal_snapshots", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  subjectDid: text("subject_did").notNull(),
-  signals: jsonb("signals").notNull(),
-  signalsVersion: text("signals_version").notNull(),
-  computedAt: timestamp("computed_at").defaultNow(),
-});
+export const reputationSignalSnapshots = pgTable(
+  "reputation_signal_snapshots",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    subjectDid: text("subject_did").notNull(),
+    signals: jsonb("signals").notNull(),
+    signalsVersion: text("signals_version").notNull(),
+    computedAt: timestamp("computed_at").defaultNow(),
+  },
+);
 
 export const reputationScores = pgTable("reputation_scores", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -164,7 +228,9 @@ export const consentGrants = pgTable("consent_grants", {
 
 export const students = pgTable("students", {
   id: uuid("id").primaryKey().defaultRandom(),
-  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  tenantId: uuid("tenant_id")
+    .references(() => tenants.id)
+    .notNull(),
   name: text("name").notNull(),
   email: text("email").notNull(),
   studentId: text("student_id").notNull(),
@@ -176,7 +242,9 @@ export const students = pgTable("students", {
 
 export const teamMembers = pgTable("team_members", {
   id: uuid("id").primaryKey().defaultRandom(),
-  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  tenantId: uuid("tenant_id")
+    .references(() => tenants.id)
+    .notNull(),
   name: text("name").notNull(),
   email: text("email").notNull(),
   role: teamRoleEnum("role").default("Viewer"),
@@ -187,7 +255,9 @@ export const teamMembers = pgTable("team_members", {
 
 export const verificationLogs = pgTable("verification_logs", {
   id: uuid("id").primaryKey().defaultRandom(),
-  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  tenantId: uuid("tenant_id")
+    .references(() => tenants.id)
+    .notNull(),
   credentialId: uuid("credential_id").references(() => credentials.id),
   verifierName: text("verifier_name").notNull(),
   verifierLocation: text("verifier_location"),
@@ -199,7 +269,9 @@ export const verificationLogs = pgTable("verification_logs", {
 
 export const activityLogs = pgTable("activity_logs", {
   id: uuid("id").primaryKey().defaultRandom(),
-  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  tenantId: uuid("tenant_id")
+    .references(() => tenants.id)
+    .notNull(),
   type: text("type").notNull(),
   title: text("title").notNull(),
   description: text("description"),
@@ -209,7 +281,9 @@ export const activityLogs = pgTable("activity_logs", {
 
 export const templateDesigns = pgTable("template_designs", {
   id: uuid("id").primaryKey().defaultRandom(),
-  tenantId: uuid("tenant_id").references(() => tenants.id).notNull(),
+  tenantId: uuid("tenant_id")
+    .references(() => tenants.id)
+    .notNull(),
   name: text("name").notNull(),
   category: text("category"),
   type: text("type"),
@@ -234,13 +308,19 @@ export const insertTeamMemberSchema = createInsertSchema(teamMembers);
 export const insertVerificationLogSchema = createInsertSchema(verificationLogs);
 export const insertActivityLogSchema = createInsertSchema(activityLogs);
 export const insertTemplateDesignSchema = createInsertSchema(templateDesigns);
-export const insertTrustScoreSnapshotSchema = createInsertSchema(trustScoreSnapshots);
+export const insertTrustScoreSnapshotSchema =
+  createInsertSchema(trustScoreSnapshots);
 export const insertConsentGrantSchema = createInsertSchema(consentGrants);
-export const insertPlatformAuthoritySchema = createInsertSchema(platformAuthorities);
+export const insertPlatformAuthoritySchema =
+  createInsertSchema(platformAuthorities);
 export const insertReputationEventSchema = createInsertSchema(reputationEvents);
-export const insertReputationSignalSnapshotSchema = createInsertSchema(reputationSignalSnapshots);
+export const insertReputationSignalSnapshotSchema = createInsertSchema(
+  reputationSignalSnapshots,
+);
 export const insertReputationScoreSchema = createInsertSchema(reputationScores);
-export const insertReputationShareGrantSchema = createInsertSchema(reputationShareGrants);
+export const insertReputationShareGrantSchema = createInsertSchema(
+  reputationShareGrants,
+);
 
 // Types
 export type Tenant = typeof tenants.$inferSelect;
@@ -262,19 +342,26 @@ export type Credential = typeof credentials.$inferSelect;
 export type InsertCredential = z.infer<typeof insertCredentialSchema>;
 
 export type PlatformAuthority = typeof platformAuthorities.$inferSelect;
-export type InsertPlatformAuthority = z.infer<typeof insertPlatformAuthoritySchema>;
+export type InsertPlatformAuthority = z.infer<
+  typeof insertPlatformAuthoritySchema
+>;
 
 export type ReputationEvent = typeof reputationEvents.$inferSelect;
 export type InsertReputationEvent = z.infer<typeof insertReputationEventSchema>;
 
-export type ReputationSignalSnapshot = typeof reputationSignalSnapshots.$inferSelect;
-export type InsertReputationSignalSnapshot = z.infer<typeof insertReputationSignalSnapshotSchema>;
+export type ReputationSignalSnapshot =
+  typeof reputationSignalSnapshots.$inferSelect;
+export type InsertReputationSignalSnapshot = z.infer<
+  typeof insertReputationSignalSnapshotSchema
+>;
 
 export type ReputationScore = typeof reputationScores.$inferSelect;
 export type InsertReputationScore = z.infer<typeof insertReputationScoreSchema>;
 
 export type ReputationShareGrant = typeof reputationShareGrants.$inferSelect;
-export type InsertReputationShareGrant = z.infer<typeof insertReputationShareGrantSchema>;
+export type InsertReputationShareGrant = z.infer<
+  typeof insertReputationShareGrantSchema
+>;
 
 export type Student = typeof students.$inferSelect;
 export type InsertStudent = z.infer<typeof insertStudentSchema>;
@@ -292,7 +379,9 @@ export type TemplateDesign = typeof templateDesigns.$inferSelect;
 export type InsertTemplateDesign = z.infer<typeof insertTemplateDesignSchema>;
 
 export type TrustScoreSnapshot = typeof trustScoreSnapshots.$inferSelect;
-export type InsertTrustScoreSnapshot = z.infer<typeof insertTrustScoreSnapshotSchema>;
+export type InsertTrustScoreSnapshot = z.infer<
+  typeof insertTrustScoreSnapshotSchema
+>;
 
 export type ConsentGrant = typeof consentGrants.$inferSelect;
 export type InsertConsentGrant = z.infer<typeof insertConsentGrantSchema>;

@@ -1,14 +1,24 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { LinearGradient } from 'expo-linear-gradient';
-import QRCode from 'react-native-qrcode-svg';
-import { getHolderCredentials, revokeCredential } from '../lib/api-client';
-import { useTheme } from '../theme/ThemeContext';
-import type { ColorPalette } from '../theme/tokens';
+import React, { useCallback, useMemo, useRef, useState } from "react";
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetScrollView,
+} from "@gorhom/bottom-sheet";
+import { LinearGradient } from "expo-linear-gradient";
+import QRCode from "react-native-qrcode-svg";
+import { getHolderCredentials, revokeCredential } from "../lib/api-client";
+import { useTheme } from "../theme/ThemeContext";
+import type { ColorPalette } from "../theme/tokens";
 
-type CredentialStatus = 'Active' | 'Expired' | 'Pending';
+type CredentialStatus = "Active" | "Expired" | "Pending";
 
 interface CredentialItem {
   id: string;
@@ -22,32 +32,45 @@ interface CredentialItem {
 }
 
 function formatDate(value: string | null): string {
-  if (!value) return 'N/A';
+  if (!value) return "N/A";
   const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return 'N/A';
+  if (Number.isNaN(parsed.getTime())) return "N/A";
   return parsed.toLocaleDateString();
 }
 
-function normalizeStatus(statusValue: unknown, expiresAt: string | null): CredentialStatus {
-  if (typeof statusValue === 'string') {
+function normalizeStatus(
+  statusValue: unknown,
+  expiresAt: string | null,
+): CredentialStatus {
+  if (typeof statusValue === "string") {
     const normalized = statusValue.toLowerCase();
-    if (normalized.includes('pending')) return 'Pending';
-    if (normalized.includes('expired') || normalized.includes('revoked')) return 'Expired';
-    if (normalized.includes('active') || normalized.includes('valid')) return 'Active';
+    if (normalized.includes("pending")) return "Pending";
+    if (normalized.includes("expired") || normalized.includes("revoked"))
+      return "Expired";
+    if (normalized.includes("active") || normalized.includes("valid"))
+      return "Active";
   }
   if (expiresAt) {
     const expiryDate = new Date(expiresAt);
-    if (!Number.isNaN(expiryDate.getTime()) && expiryDate.getTime() < Date.now()) {
-      return 'Expired';
+    if (
+      !Number.isNaN(expiryDate.getTime()) &&
+      expiryDate.getTime() < Date.now()
+    ) {
+      return "Expired";
     }
   }
-  return 'Active';
+  return "Active";
 }
 
 function toCredentialItem(payload: unknown): CredentialItem {
   const source = (payload || {}) as Record<string, unknown>;
 
-  const idValue = source.id || source.credentialId || source.credential_id || source.vcId || source.jwtId;
+  const idValue =
+    source.id ||
+    source.credentialId ||
+    source.credential_id ||
+    source.vcId ||
+    source.jwtId;
   const issuedAt =
     (source.issuedAt as string | undefined) ||
     (source.issuanceDate as string | undefined) ||
@@ -63,11 +86,14 @@ function toCredentialItem(payload: unknown): CredentialItem {
   const typeSource = source.type || source.types || source.credentialType;
   const typeBadges = Array.isArray(typeSource)
     ? typeSource
-        .filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0)
+        .filter(
+          (entry): entry is string =>
+            typeof entry === "string" && entry.trim().length > 0,
+        )
         .slice(0, 3)
-    : typeof typeSource === 'string' && typeSource.trim().length > 0
+    : typeof typeSource === "string" && typeSource.trim().length > 0
       ? [typeSource]
-      : ['Verified Credential'];
+      : ["Verified Credential"];
 
   const jwt =
     (source.jwt as string | undefined) ||
@@ -79,7 +105,12 @@ function toCredentialItem(payload: unknown): CredentialItem {
   return {
     id: String(idValue || Math.random().toString(16).slice(2)),
     typeBadges,
-    issuerName: String(source.issuerName || source.issuer || source.issuedBy || 'CredVerse Issuer'),
+    issuerName: String(
+      source.issuerName ||
+        source.issuer ||
+        source.issuedBy ||
+        "CredVerse Issuer",
+    ),
     issuedAt,
     expiresAt,
     status: normalizeStatus(source.status, expiresAt),
@@ -88,9 +119,14 @@ function toCredentialItem(payload: unknown): CredentialItem {
   };
 }
 
-function statusColor(status: CredentialStatus, colors: ColorPalette): { bg: string; text: string } {
-  if (status === 'Active') return { bg: colors.successSurface, text: colors.successOnSurface };
-  if (status === 'Pending') return { bg: colors.warningSurface, text: colors.warningOnSurface };
+function statusColor(
+  status: CredentialStatus,
+  colors: ColorPalette,
+): { bg: string; text: string } {
+  if (status === "Active")
+    return { bg: colors.successSurface, text: colors.successOnSurface };
+  if (status === "Pending")
+    return { bg: colors.warningSurface, text: colors.warningOnSurface };
   return { bg: colors.dangerSurface, text: colors.dangerOnSurface };
 }
 
@@ -99,7 +135,7 @@ export function CredentialsScreen() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['holder', 'credentials'],
+    queryKey: ["holder", "credentials"],
     queryFn: getHolderCredentials,
   });
 
@@ -107,11 +143,13 @@ export function CredentialsScreen() {
   const revokeMutation = useMutation({
     mutationFn: (credentialId: string) => revokeCredential(credentialId),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['holder', 'credentials'] });
+      void queryClient.invalidateQueries({
+        queryKey: ["holder", "credentials"],
+      });
       sheetRef.current?.close();
     },
     onError: () => {
-      Alert.alert('Error', 'Could not revoke credential. Please try again.');
+      Alert.alert("Error", "Could not revoke credential. Please try again.");
     },
   });
 
@@ -121,16 +159,22 @@ export function CredentialsScreen() {
   }, [data]);
 
   const activeCount = useMemo(
-    () => credentials.filter((c) => c.status === 'Active').length,
+    () => credentials.filter((c) => c.status === "Active").length,
     [credentials],
   );
 
   const [selected, setSelected] = useState<CredentialItem | null>(null);
   const [showQr, setShowQr] = useState(false);
   const sheetRef = useRef<BottomSheet>(null);
-  const snapPoints = useMemo(() => ['65%', '88%'], []);
+  const snapPoints = useMemo(() => ["65%", "88%"], []);
   const renderBackdrop = useCallback(
-    (props: any) => <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} />,
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+      />
+    ),
     [],
   );
 
@@ -155,7 +199,11 @@ export function CredentialsScreen() {
 
   const detailCard = useMemo(() => {
     if (!selected) {
-      return <Text style={styles.sheetValue}>Select a credential to view details.</Text>;
+      return (
+        <Text style={styles.sheetValue}>
+          Select a credential to view details.
+        </Text>
+      );
     }
 
     return (
@@ -164,7 +212,7 @@ export function CredentialsScreen() {
         <Text style={styles.sheetValue}>{selected.issuerName}</Text>
 
         <Text style={styles.sheetLabel}>Types</Text>
-        <Text style={styles.sheetValue}>{selected.typeBadges.join(', ')}</Text>
+        <Text style={styles.sheetValue}>{selected.typeBadges.join(", ")}</Text>
 
         <Text style={styles.sheetLabel}>Issued</Text>
         <Text style={styles.sheetValue}>{formatDate(selected.issuedAt)}</Text>
@@ -177,18 +225,21 @@ export function CredentialsScreen() {
             <Text style={styles.secondaryButtonText}>Share via QR</Text>
           </Pressable>
           <Pressable
-            style={[styles.dangerButton, revokeMutation.isPending && { opacity: 0.6 }]}
+            style={[
+              styles.dangerButton,
+              revokeMutation.isPending && { opacity: 0.6 },
+            ]}
             disabled={revokeMutation.isPending}
             onPress={() => {
               if (!selected) return;
               Alert.alert(
-                'Revoke credential',
-                'This will revoke the credential and cannot be undone. Continue?',
+                "Revoke credential",
+                "This will revoke the credential and cannot be undone. Continue?",
                 [
-                  { text: 'Cancel', style: 'cancel' },
+                  { text: "Cancel", style: "cancel" },
                   {
-                    text: 'Revoke',
-                    style: 'destructive',
+                    text: "Revoke",
+                    style: "destructive",
                     onPress: () => revokeMutation.mutate(selected.id),
                   },
                 ],
@@ -196,7 +247,7 @@ export function CredentialsScreen() {
             }}
           >
             <Text style={styles.dangerButtonText}>
-              {revokeMutation.isPending ? 'Revoking...' : 'Revoke'}
+              {revokeMutation.isPending ? "Revoking..." : "Revoke"}
             </Text>
           </Pressable>
         </View>
@@ -272,7 +323,10 @@ export function CredentialsScreen() {
           <Pressable style={styles.card} onPress={() => openDetail(credential)}>
             <View style={styles.badgeRow}>
               {credential.typeBadges.map((badge) => (
-                <View key={`${credential.id}-${badge}`} style={styles.typeBadge}>
+                <View
+                  key={`${credential.id}-${badge}`}
+                  style={styles.typeBadge}
+                >
                   <Text style={styles.typeBadgeText}>{badge}</Text>
                 </View>
               ))}
@@ -281,12 +335,18 @@ export function CredentialsScreen() {
             <View style={styles.cardMetaRow}>
               <Text style={styles.issuerText}>{credential.issuerName}</Text>
               <View style={[styles.statusChip, { backgroundColor: sc.bg }]}>
-                <Text style={[styles.statusChipText, { color: sc.text }]}>{credential.status}</Text>
+                <Text style={[styles.statusChipText, { color: sc.text }]}>
+                  {credential.status}
+                </Text>
               </View>
             </View>
 
-            <Text style={styles.dateText}>Issued: {formatDate(credential.issuedAt)}</Text>
-            <Text style={styles.dateText}>Expiry: {formatDate(credential.expiresAt)}</Text>
+            <Text style={styles.dateText}>
+              Issued: {formatDate(credential.issuedAt)}
+            </Text>
+            <Text style={styles.dateText}>
+              Expiry: {formatDate(credential.expiresAt)}
+            </Text>
           </Pressable>
         </LinearGradient>
       );
@@ -295,7 +355,10 @@ export function CredentialsScreen() {
 
   function shareViaQr() {
     if (!selected?.jwt) {
-      Alert.alert('Unavailable', 'This credential does not include a shareable JWT yet.');
+      Alert.alert(
+        "Unavailable",
+        "This credential does not include a shareable JWT yet.",
+      );
       return;
     }
     setShowQr(true);
@@ -323,7 +386,10 @@ export function CredentialsScreen() {
         {isError ? (
           <View style={styles.placeholderCard}>
             <Text style={styles.errorText}>Could not load credentials.</Text>
-            <Pressable style={styles.retryButton} onPress={() => void refetch()}>
+            <Pressable
+              style={styles.retryButton}
+              onPress={() => void refetch()}
+            >
               <Text style={styles.retryButtonText}>Retry</Text>
             </Pressable>
           </View>
@@ -350,16 +416,25 @@ function makeStyles(colors: ColorPalette) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
     content: { padding: 16, gap: 12, paddingBottom: 24 },
-    headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    headerRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
     kicker: {
       color: colors.muted,
       fontSize: 12,
-      fontWeight: '700',
-      fontFamily: 'Inter_700Bold',
+      fontWeight: "700",
+      fontFamily: "Inter_700Bold",
       letterSpacing: 0.6,
-      textTransform: 'uppercase' as const,
+      textTransform: "uppercase" as const,
     },
-    title: { color: colors.text, fontSize: 26, fontWeight: '800' as const, fontFamily: 'Inter_800ExtraBold' },
+    title: {
+      color: colors.text,
+      fontSize: 26,
+      fontWeight: "800" as const,
+      fontFamily: "Inter_800ExtraBold",
+    },
     countBadge: {
       backgroundColor: colors.successSurface,
       borderRadius: 999,
@@ -368,7 +443,12 @@ function makeStyles(colors: ColorPalette) {
       paddingHorizontal: 12,
       paddingVertical: 6,
     },
-    countBadgeText: { color: colors.successOnSurface, fontWeight: '700' as const, fontFamily: 'Inter_700Bold', fontSize: 12 },
+    countBadgeText: {
+      color: colors.successOnSurface,
+      fontWeight: "700" as const,
+      fontFamily: "Inter_700Bold",
+      fontSize: 12,
+    },
     gradientBorder: { borderRadius: 16, padding: 1.4 },
     card: {
       borderRadius: 15,
@@ -378,7 +458,11 @@ function makeStyles(colors: ColorPalette) {
       padding: 14,
       gap: 10,
     },
-    badgeRow: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 8 },
+    badgeRow: {
+      flexDirection: "row" as const,
+      flexWrap: "wrap" as const,
+      gap: 8,
+    },
     typeBadge: {
       borderRadius: 999,
       backgroundColor: colors.badgeSurface,
@@ -387,17 +471,40 @@ function makeStyles(colors: ColorPalette) {
       borderWidth: 1,
       borderColor: colors.badgeBorder,
     },
-    typeBadgeText: { color: colors.badgeText, fontSize: 11, fontWeight: '700' as const, fontFamily: 'Inter_700Bold' },
+    typeBadgeText: {
+      color: colors.badgeText,
+      fontSize: 11,
+      fontWeight: "700" as const,
+      fontFamily: "Inter_700Bold",
+    },
     cardMetaRow: {
-      flexDirection: 'row' as const,
-      justifyContent: 'space-between' as const,
-      alignItems: 'center' as const,
+      flexDirection: "row" as const,
+      justifyContent: "space-between" as const,
+      alignItems: "center" as const,
       gap: 8,
     },
-    issuerText: { color: colors.text, fontSize: 14, fontWeight: '700' as const, fontFamily: 'Inter_700Bold', flexShrink: 1 },
-    statusChip: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
-    statusChipText: { fontSize: 11, fontWeight: '800' as const, fontFamily: 'Inter_800ExtraBold' },
-    dateText: { color: colors.muted, fontSize: 12, fontFamily: 'Inter_400Regular' },
+    issuerText: {
+      color: colors.text,
+      fontSize: 14,
+      fontWeight: "700" as const,
+      fontFamily: "Inter_700Bold",
+      flexShrink: 1,
+    },
+    statusChip: {
+      borderRadius: 999,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+    },
+    statusChipText: {
+      fontSize: 11,
+      fontWeight: "800" as const,
+      fontFamily: "Inter_800ExtraBold",
+    },
+    dateText: {
+      color: colors.muted,
+      fontSize: 12,
+      fontFamily: "Inter_400Regular",
+    },
     placeholderCard: {
       borderRadius: 16,
       borderWidth: 1,
@@ -406,69 +513,117 @@ function makeStyles(colors: ColorPalette) {
       padding: 16,
       gap: 8,
     },
-    placeholderText: { color: colors.muted, fontWeight: '600' as const, fontFamily: 'Inter_600SemiBold' },
-    errorText: { color: colors.text, fontWeight: '700' as const, fontFamily: 'Inter_700Bold' },
+    placeholderText: {
+      color: colors.muted,
+      fontWeight: "600" as const,
+      fontFamily: "Inter_600SemiBold",
+    },
+    errorText: {
+      color: colors.text,
+      fontWeight: "700" as const,
+      fontFamily: "Inter_700Bold",
+    },
     retryButton: {
       borderRadius: 10,
       borderWidth: 1,
       borderColor: colors.primary,
       paddingHorizontal: 14,
       paddingVertical: 8,
-      alignSelf: 'flex-start' as const,
+      alignSelf: "flex-start" as const,
     },
-    retryButtonText: { color: colors.primary, fontWeight: '700' as const, fontFamily: 'Inter_700Bold' },
-    emptyTitle: { color: colors.text, fontSize: 16, fontWeight: '800' as const, fontFamily: 'Inter_800ExtraBold' },
-    emptyText: { color: colors.muted, fontSize: 13, fontFamily: 'Inter_400Regular' },
+    retryButtonText: {
+      color: colors.primary,
+      fontWeight: "700" as const,
+      fontFamily: "Inter_700Bold",
+    },
+    emptyTitle: {
+      color: colors.text,
+      fontSize: 16,
+      fontWeight: "800" as const,
+      fontFamily: "Inter_800ExtraBold",
+    },
+    emptyText: {
+      color: colors.muted,
+      fontSize: 13,
+      fontFamily: "Inter_400Regular",
+    },
     sheetContent: { paddingHorizontal: 20, paddingBottom: 20, gap: 8 },
-    sheetTitle: { color: colors.text, fontSize: 22, fontWeight: '800' as const, fontFamily: 'Inter_800ExtraBold', marginBottom: 6 },
+    sheetTitle: {
+      color: colors.text,
+      fontSize: 22,
+      fontWeight: "800" as const,
+      fontFamily: "Inter_800ExtraBold",
+      marginBottom: 6,
+    },
     sheetLabel: {
       color: colors.muted,
       fontSize: 12,
-      fontWeight: '700' as const,
-      fontFamily: 'Inter_700Bold',
-      textTransform: 'uppercase' as const,
+      fontWeight: "700" as const,
+      fontFamily: "Inter_700Bold",
+      textTransform: "uppercase" as const,
     },
-    sheetValue: { color: colors.text, fontSize: 14, fontFamily: 'Inter_400Regular', marginBottom: 4 },
-    sheetActions: { flexDirection: 'row' as const, gap: 10, marginTop: 10 },
+    sheetValue: {
+      color: colors.text,
+      fontSize: 14,
+      fontFamily: "Inter_400Regular",
+      marginBottom: 4,
+    },
+    sheetActions: { flexDirection: "row" as const, gap: 10, marginTop: 10 },
     secondaryButton: {
       flex: 1,
       borderRadius: 12,
       borderWidth: 1,
       borderColor: colors.border,
       paddingVertical: 12,
-      alignItems: 'center' as const,
+      alignItems: "center" as const,
       backgroundColor: colors.input,
     },
-    secondaryButtonText: { color: colors.text, fontWeight: '700' as const, fontFamily: 'Inter_700Bold' },
+    secondaryButtonText: {
+      color: colors.text,
+      fontWeight: "700" as const,
+      fontFamily: "Inter_700Bold",
+    },
     dangerButton: {
       flex: 1,
       borderRadius: 12,
       paddingVertical: 12,
-      alignItems: 'center' as const,
+      alignItems: "center" as const,
       backgroundColor: colors.dangerSurface,
       borderWidth: 1,
       borderColor: colors.danger,
     },
-    dangerButtonText: { color: colors.dangerOnSurface, fontWeight: '800' as const, fontFamily: 'Inter_800ExtraBold' },
+    dangerButtonText: {
+      color: colors.dangerOnSurface,
+      fontWeight: "800" as const,
+      fontFamily: "Inter_800ExtraBold",
+    },
     qrWrap: {
       marginTop: 14,
       borderRadius: 16,
       borderWidth: 1,
       borderColor: colors.border,
       padding: 14,
-      alignItems: 'center' as const,
+      alignItems: "center" as const,
       gap: 10,
     },
-    qrCaption: { color: colors.muted, fontSize: 12, fontFamily: 'Inter_400Regular' },
+    qrCaption: {
+      color: colors.muted,
+      fontSize: 12,
+      fontFamily: "Inter_400Regular",
+    },
     closeButton: {
       borderRadius: 12,
       borderWidth: 1,
       borderColor: colors.border,
-      alignItems: 'center' as const,
+      alignItems: "center" as const,
       paddingVertical: 10,
       backgroundColor: colors.input,
       marginTop: 8,
     },
-    closeButtonText: { color: colors.text, fontWeight: '700' as const, fontFamily: 'Inter_700Bold' },
+    closeButtonText: {
+      color: colors.text,
+      fontWeight: "700" as const,
+      fontFamily: "Inter_700Bold",
+    },
   });
 }

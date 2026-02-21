@@ -11,12 +11,12 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
-      - 'CredVerseIssuer 3/contracts/**'
-      - '.github/workflows/contract-security-ci.yml'
+      - "CredVerseIssuer 3/contracts/**"
+      - ".github/workflows/contract-security-ci.yml"
   push:
-    branches: [ main, master ]
+    branches: [main, master]
     paths:
-      - 'CredVerseIssuer 3/contracts/**'
+      - "CredVerseIssuer 3/contracts/**"
 
 jobs:
   contract-security:
@@ -29,9 +29,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: 'CredVerseIssuer 3/contracts/package-lock.json'
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: "CredVerseIssuer 3/contracts/package-lock.json"
       - run: npm ci
       - run: npm run analyze:static
 

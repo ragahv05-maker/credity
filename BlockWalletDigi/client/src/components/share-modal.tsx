@@ -1,13 +1,39 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Copy, QrCode, Link as LinkIcon, Check, Share2, Clock, Mail, MessageCircle, Loader2, Shield, Eye, EyeOff, ExternalLink } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Copy,
+  QrCode,
+  Link as LinkIcon,
+  Check,
+  Share2,
+  Clock,
+  Mail,
+  MessageCircle,
+  Loader2,
+  Shield,
+  Eye,
+  EyeOff,
+  ExternalLink,
+} from "lucide-react";
 import { Credential } from "@shared/schema";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -31,7 +57,11 @@ interface FieldsData {
   fields?: string[];
 }
 
-export function ShareModal({ credential, open, onOpenChange }: ShareModalProps) {
+export function ShareModal({
+  credential,
+  open,
+  onOpenChange,
+}: ShareModalProps) {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
   const [selectedFields, setSelectedFields] = useState<string[]>([]);
@@ -61,35 +91,43 @@ export function ShareModal({ credential, open, onOpenChange }: ShareModalProps) 
   const handleShareClick = async () => {
     try {
       // PROMPT BIOMETRIC AUTH
-      const verification = await verifyBiometrics('1');
+      const verification = await verifyBiometrics("1");
       if (!verification.success) {
-        toast({ title: 'Authentication Failed', description: 'Biometric verification required to share credentials', variant: 'destructive' });
+        toast({
+          title: "Authentication Failed",
+          description: "Biometric verification required to share credentials",
+          variant: "destructive",
+        });
         return;
       }
 
       shareMutation.mutate();
     } catch (err) {
       console.error(err);
-      toast({ title: 'Error', description: 'Could not verify biometrics', variant: 'destructive' });
+      toast({
+        title: "Error",
+        description: "Could not verify biometrics",
+        variant: "destructive",
+      });
     }
   };
 
   // Create share mutation
   const shareMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch('/api/wallet/share', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/wallet/share", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: 1,
           credentialId: credential?.id,
           shareType,
           disclosedFields: selectedFields,
           expiryMinutes: parseInt(expiryMinutes),
-          purpose: 'verification',
+          purpose: "verification",
         }),
       });
-      if (!response.ok) throw new Error('Failed to create share');
+      if (!response.ok) throw new Error("Failed to create share");
       return response.json();
     },
     onSuccess: async (data) => {
@@ -105,15 +143,18 @@ export function ShareModal({ credential, open, onOpenChange }: ShareModalProps) 
         const qrUrl = await QRCode.toDataURL(data.shareUrl, {
           width: 256,
           margin: 2,
-          color: { dark: '#000000', light: '#ffffff' },
+          color: { dark: "#000000", light: "#ffffff" },
         });
         setQrCodeUrl(qrUrl);
       }
 
-      toast({ title: 'Share Created', description: `Expires in ${expiryMinutes} minutes` });
+      toast({
+        title: "Share Created",
+        description: `Expires in ${expiryMinutes} minutes`,
+      });
     },
     onError: () => {
-      toast({ title: 'Failed to create share', variant: 'destructive' });
+      toast({ title: "Failed to create share", variant: "destructive" });
     },
   });
 
@@ -127,22 +168,25 @@ export function ShareModal({ credential, open, onOpenChange }: ShareModalProps) 
     }
   };
 
-  const handleShare = async (type: 'email' | 'whatsapp' | 'native') => {
+  const handleShare = async (type: "email" | "whatsapp" | "native") => {
     if (!shareResult?.shareUrl) return;
 
-    const title = `Credential Verification: ${(credential.data as any)?.name || 'Credential'}`;
+    const title = `Credential Verification: ${(credential.data as any)?.name || "Credential"}`;
     const text = `Verify my ${credential.issuer} credential: ${shareResult.shareUrl}`;
 
-    if (type === 'email') {
-      window.open(`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(text)}`);
-    } else if (type === 'whatsapp') {
+    if (type === "email") {
+      window.open(
+        `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(text)}`,
+      );
+    } else if (type === "whatsapp") {
       window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
-    } else if (type === 'native' && navigator.share) {
+    } else if (type === "native" && navigator.share) {
       await navigator.share({ title, text, url: shareResult.shareUrl });
     }
   };
 
-  const availableFields = fieldsData?.fields || Object.keys(credential.data || {});
+  const availableFields =
+    fieldsData?.fields || Object.keys(credential.data || {});
   const expiryOptions = [
     { value: "1", label: "1 minute" },
     { value: "5", label: "5 minutes" },
@@ -166,7 +210,9 @@ export function ShareModal({ credential, open, onOpenChange }: ShareModalProps) 
         <Tabs defaultValue="disclosure" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="disclosure">Selective Disclosure</TabsTrigger>
-            <TabsTrigger value="share" disabled={!shareResult}>Share Link</TabsTrigger>
+            <TabsTrigger value="share" disabled={!shareResult}>
+              Share Link
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="disclosure" className="space-y-4">
@@ -180,8 +226,10 @@ export function ShareModal({ credential, open, onOpenChange }: ShareModalProps) 
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {expiryOptions.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  {expiryOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -192,10 +240,10 @@ export function ShareModal({ credential, open, onOpenChange }: ShareModalProps) 
               <Label>Share Method</Label>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { value: 'link', icon: LinkIcon, label: 'Link' },
-                  { value: 'qr', icon: QrCode, label: 'QR Code' },
-                  { value: 'email', icon: Mail, label: 'Email' },
-                ].map(type => (
+                  { value: "link", icon: LinkIcon, label: "Link" },
+                  { value: "qr", icon: QrCode, label: "QR Code" },
+                  { value: "email", icon: Mail, label: "Email" },
+                ].map((type) => (
                   <Button
                     key={type.value}
                     variant={shareType === type.value ? "default" : "outline"}
@@ -217,7 +265,9 @@ export function ShareModal({ credential, open, onOpenChange }: ShareModalProps) 
                   <Eye className="w-4 h-4" /> Fields to Reveal
                 </Label>
                 <Badge variant="secondary" className="text-xs">
-                  {selectedFields.length === 0 ? 'All fields' : `${selectedFields.length} selected`}
+                  {selectedFields.length === 0
+                    ? "All fields"
+                    : `${selectedFields.length} selected`}
                 </Badge>
               </div>
               <p className="text-xs text-muted-foreground mb-2">
@@ -227,8 +277,12 @@ export function ShareModal({ credential, open, onOpenChange }: ShareModalProps) 
                 {/* Required fields */}
                 <div className="flex items-center space-x-2 opacity-60">
                   <Checkbox id="f-issuer" checked disabled />
-                  <Label htmlFor="f-issuer" className="flex-1 text-sm">Issuer</Label>
-                  <Badge variant="outline" className="text-[10px]">Required</Badge>
+                  <Label htmlFor="f-issuer" className="flex-1 text-sm">
+                    Issuer
+                  </Label>
+                  <Badge variant="outline" className="text-[10px]">
+                    Required
+                  </Badge>
                 </div>
 
                 {/* Dynamic fields */}
@@ -236,7 +290,10 @@ export function ShareModal({ credential, open, onOpenChange }: ShareModalProps) 
                   <div key={field} className="flex items-center space-x-2">
                     <Checkbox
                       id={`f-${field}`}
-                      checked={selectedFields.includes(field) || selectedFields.length === 0}
+                      checked={
+                        selectedFields.includes(field) ||
+                        selectedFields.length === 0
+                      }
                       onCheckedChange={(checked) => {
                         let currentSelection = selectedFields;
                         // If currently empty (meaning "All"), use all available fields as base
@@ -247,16 +304,24 @@ export function ShareModal({ credential, open, onOpenChange }: ShareModalProps) 
                         if (checked) {
                           setSelectedFields([...currentSelection, field]);
                         } else {
-                          const newSelection = currentSelection.filter(f => f !== field);
+                          const newSelection = currentSelection.filter(
+                            (f) => f !== field,
+                          );
                           setSelectedFields(newSelection);
                         }
                       }}
                     />
-                    <Label htmlFor={`f-${field}`} className="flex-1 text-sm capitalize">
+                    <Label
+                      htmlFor={`f-${field}`}
+                      className="flex-1 text-sm capitalize"
+                    >
                       {field.replace(/_/g, " ").replace(/([A-Z])/g, " $1")}
                     </Label>
                     <span className="text-xs text-muted-foreground truncate max-w-[100px]">
-                      {String((credential.data as any)?.[field] || '').slice(0, 20)}
+                      {String((credential.data as any)?.[field] || "").slice(
+                        0,
+                        20,
+                      )}
                     </span>
                   </div>
                 ))}
@@ -309,25 +374,45 @@ export function ShareModal({ credential, open, onOpenChange }: ShareModalProps) 
                     className="font-mono text-xs bg-secondary/30"
                   />
                   <Button size="icon" variant="outline" onClick={handleCopy}>
-                    {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                    {copied ? (
+                      <Check className="w-4 h-4 text-green-600" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
                   </Button>
                 </div>
 
                 {/* Share Options */}
                 <div className="grid grid-cols-3 gap-2">
-                  <Button variant="outline" size="sm" onClick={() => handleShare('email')}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleShare("email")}
+                  >
                     <Mail className="w-4 h-4 mr-2" /> Email
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleShare('whatsapp')}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleShare("whatsapp")}
+                  >
                     <MessageCircle className="w-4 h-4 mr-2" /> WhatsApp
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleShare('native')}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleShare("native")}
+                  >
                     <Share2 className="w-4 h-4 mr-2" /> More
                   </Button>
                 </div>
 
                 {/* Open Link */}
-                <Button variant="secondary" className="w-full" onClick={() => window.open(shareResult.shareUrl, '_blank')}>
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  onClick={() => window.open(shareResult.shareUrl, "_blank")}
+                >
                   <ExternalLink className="w-4 h-4 mr-2" />
                   Open Verification Page
                 </Button>

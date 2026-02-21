@@ -1,5 +1,5 @@
-import type { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
-import type { ColorPalette } from '../theme/tokens';
+import type { BottomTabNavigationOptions } from "@react-navigation/bottom-tabs";
+import type { ColorPalette } from "../theme/tokens";
 
 export function createBottomTabOptions(
   accentColor: string,
@@ -19,8 +19,8 @@ export function createBottomTabOptions(
     tabBarInactiveTintColor: colors.muted,
     tabBarLabelStyle: {
       fontSize: 12,
-      fontWeight: '700',
-      fontFamily: 'Inter_700Bold',
+      fontWeight: "700",
+      fontFamily: "Inter_700Bold",
     },
   };
 }

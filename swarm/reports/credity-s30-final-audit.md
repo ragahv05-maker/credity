@@ -8,6 +8,7 @@
 **Current release decision: `NO-GO`**.
 
 Primary blockers are reproducible in current workspace:
+
 1. TypeScript compile failure in issuer check path.
 2. Recruiter cross-service E2E test failure (null `proof` assertion path).
 3. Strict launch gate fails due missing required production env vars.
@@ -55,13 +56,13 @@ Primary blockers are reproducible in current workspace:
 
 ## P0 Pass/Fail Snapshot
 
-| P0 ID | Item | Status | Snapshot Rationale |
-|---|---|---|---|
-| P0-01 | Recruiter verification route parse/runtime integrity | 🟩 PASS | Previous syntax-parse blocker (`Unexpected "}"`) not observed in current run; suite executes. |
-| P0-02 | Recruiter deterministic full-suite pass | 🟥 FAIL | `npm run test:recruiter` fails with null-proof assertion in cross-service E2E test. |
-| P0-03 | Cross-service quality gates pass | 🟥 FAIL | `npm test` fails; check chain fails on issuer TS error; strict launch gate fails. |
-| P0-04 | CI release workflow validation (GitHub Actions) | 🟧 PARTIAL | Workflow exists, but no new audited green-run URL/artifact validated in this snapshot. |
-| P0-05 | Security high/critical + contract static checks | 🟩 PASS (local) | Local `npm audit` high+ clean and contract security gate passes. |
+| P0 ID | Item                                                 | Status          | Snapshot Rationale                                                                            |
+| ----- | ---------------------------------------------------- | --------------- | --------------------------------------------------------------------------------------------- |
+| P0-01 | Recruiter verification route parse/runtime integrity | 🟩 PASS         | Previous syntax-parse blocker (`Unexpected "}"`) not observed in current run; suite executes. |
+| P0-02 | Recruiter deterministic full-suite pass              | 🟥 FAIL         | `npm run test:recruiter` fails with null-proof assertion in cross-service E2E test.           |
+| P0-03 | Cross-service quality gates pass                     | 🟥 FAIL         | `npm test` fails; check chain fails on issuer TS error; strict launch gate fails.             |
+| P0-04 | CI release workflow validation (GitHub Actions)      | 🟧 PARTIAL      | Workflow exists, but no new audited green-run URL/artifact validated in this snapshot.        |
+| P0-05 | Security high/critical + contract static checks      | 🟩 PASS (local) | Local `npm audit` high+ clean and contract security gate passes.                              |
 
 ---
 
@@ -88,13 +89,13 @@ Primary blockers are reproducible in current workspace:
 
 ## Risk Register
 
-| Risk | Severity | Likelihood | Impact | Mitigation (Immediate) |
-|---|---|---|---|---|
-| Issuer compile-time type break leaks into release branch | High | High | Build/deploy block, hidden runtime drift | Fix typing in queue-service, re-run `npm run check` root and issuer. |
-| Recruiter cross-service proof-mode regression | High | High | End-to-end verification reliability compromised | Add null-guard/fixture correction in E2E path, enforce deterministic proof fixture setup, rerun recruiter + root tests. |
-| Launch gate env gaps in staging/prod | High | Medium | No observability, weak auth secret posture, queue features disabled | Provision secrets in env manager, verify via `npm run gate:launch:strict`. |
-| CI gate not validated on hosted runner | Medium | Medium | Local-only confidence; release drift risk | Execute release workflow on GH Actions and attach logs/artifacts. |
-| Deferred blockchain mode masking integration behavior | Medium | Medium | Production mismatch if on-chain writes enabled later | Run one staged pass with representative chain config + relayer configured. |
+| Risk                                                     | Severity | Likelihood | Impact                                                              | Mitigation (Immediate)                                                                                                  |
+| -------------------------------------------------------- | -------- | ---------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Issuer compile-time type break leaks into release branch | High     | High       | Build/deploy block, hidden runtime drift                            | Fix typing in queue-service, re-run `npm run check` root and issuer.                                                    |
+| Recruiter cross-service proof-mode regression            | High     | High       | End-to-end verification reliability compromised                     | Add null-guard/fixture correction in E2E path, enforce deterministic proof fixture setup, rerun recruiter + root tests. |
+| Launch gate env gaps in staging/prod                     | High     | Medium     | No observability, weak auth secret posture, queue features disabled | Provision secrets in env manager, verify via `npm run gate:launch:strict`.                                              |
+| CI gate not validated on hosted runner                   | Medium   | Medium     | Local-only confidence; release drift risk                           | Execute release workflow on GH Actions and attach logs/artifacts.                                                       |
+| Deferred blockchain mode masking integration behavior    | Medium   | Medium     | Production mismatch if on-chain writes enabled later                | Run one staged pass with representative chain config + relayer configured.                                              |
 
 ---
 

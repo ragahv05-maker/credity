@@ -1,6 +1,6 @@
 // Initialize Sentry BEFORE importing anything else
 import { initSentry, sentryErrorHandler } from "./services/sentry";
-initSentry('credverse-issuer');
+initSentry("credverse-issuer");
 
 // Initialize PostHog Analytics
 import { initAnalytics } from "./services/analytics";
@@ -27,31 +27,40 @@ import { metricsHandler, telemetryMiddleware } from "./middleware/telemetry";
 const app = express();
 const httpServer = createServer(app);
 
-const requireDatabase = process.env.NODE_ENV === 'production' || process.env.REQUIRE_DATABASE === 'true';
-const requireQueue = process.env.NODE_ENV === 'production' || process.env.REQUIRE_QUEUE === 'true';
+const requireDatabase =
+  process.env.NODE_ENV === "production" ||
+  process.env.REQUIRE_DATABASE === "true";
+const requireQueue =
+  process.env.NODE_ENV === "production" || process.env.REQUIRE_QUEUE === "true";
 
 if (requireDatabase && !process.env.DATABASE_URL) {
-  console.error('[Startup] REQUIRE_DATABASE policy is enabled but DATABASE_URL is missing.');
+  console.error(
+    "[Startup] REQUIRE_DATABASE policy is enabled but DATABASE_URL is missing.",
+  );
   process.exit(1);
 }
 if (requireQueue && !process.env.REDIS_URL) {
-  console.error('[Startup] REQUIRE_QUEUE policy is enabled but REDIS_URL is missing.');
+  console.error(
+    "[Startup] REQUIRE_QUEUE policy is enabled but REDIS_URL is missing.",
+  );
   process.exit(1);
 }
 if (requireDatabase) {
-  console.log('[Startup] Database persistence policy is enforced.');
+  console.log("[Startup] Database persistence policy is enforced.");
 }
 if (requireQueue) {
-  console.log('[Startup] Queue-backed processing policy is enforced.');
+  console.log("[Startup] Queue-backed processing policy is enforced.");
 }
 if (!process.env.DIGILOCKER_CLIENT_ID) {
-  console.warn('[Startup] DIGILOCKER_CLIENT_ID is not set — DigiLocker pull service will run in sandbox/mock mode. Set DIGILOCKER_CLIENT_ID and DIGILOCKER_CLIENT_SECRET for production.');
+  console.warn(
+    "[Startup] DIGILOCKER_CLIENT_ID is not set — DigiLocker pull service will run in sandbox/mock mode. Set DIGILOCKER_CLIENT_ID and DIGILOCKER_CLIENT_SECRET for production.",
+  );
 }
 
 initAuth({
-  jwtSecret: process.env.JWT_SECRET || '',
-  jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || '',
-  app: 'issuer',
+  jwtSecret: process.env.JWT_SECRET || "",
+  jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || "",
+  app: "issuer",
 });
 
 declare module "http" {
@@ -61,66 +70,70 @@ declare module "http" {
 }
 
 // Security headers - disable CSP in development for Vite HMR compatibility
-const isDev = process.env.NODE_ENV !== 'production';
-app.use(helmet({
-  contentSecurityPolicy: isDev ? false : undefined,
-  crossOriginEmbedderPolicy: false,
-  crossOriginOpenerPolicy: isDev ? false : undefined,
-  crossOriginResourcePolicy: isDev ? false : undefined,
-}));
+const isDev = process.env.NODE_ENV !== "production";
+app.use(
+  helmet({
+    contentSecurityPolicy: isDev ? false : undefined,
+    crossOriginEmbedderPolicy: false,
+    crossOriginOpenerPolicy: isDev ? false : undefined,
+    crossOriginResourcePolicy: isDev ? false : undefined,
+  }),
+);
 
 // CORS configuration
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
-  'http://localhost:5000',
-  'http://localhost:5001',
-  'http://localhost:5002',
-  'http://localhost:5003',
-  'http://localhost:5173',
-  'http://localhost:3000'
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [
+  "http://localhost:5000",
+  "http://localhost:5001",
+  "http://localhost:5002",
+  "http://localhost:5003",
+  "http://localhost:5173",
+  "http://localhost:3000",
 ];
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, etc)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'X-API-Key',
-    'Idempotency-Key',
-    'X-Webhook-Signature',
-    'X-Webhook-Timestamp',
-  ],
-}));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, etc)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-API-Key",
+      "Idempotency-Key",
+      "X-Webhook-Signature",
+      "X-Webhook-Timestamp",
+    ],
+  }),
+);
 
 app.use(
   express.json({
-    limit: '10mb', // Prevent large payload DoS
+    limit: "10mb", // Prevent large payload DoS
     verify: (req, _res, buf) => {
       req.rawBody = buf;
     },
   }),
 );
 
-app.use(express.urlencoded({ extended: false, limit: '10mb' }));
-app.use(telemetryMiddleware('credverse-issuer'));
-app.get('/api/metrics', metricsHandler('credverse-issuer'));
+app.use(express.urlencoded({ extended: false, limit: "10mb" }));
+app.use(telemetryMiddleware("credverse-issuer"));
+app.get("/api/metrics", metricsHandler("credverse-issuer"));
 
 // Advanced security middleware
-app.use(requestIdMiddleware);           // Add request ID for audit logging
-app.use(ipBlocklistMiddleware);         // Block banned IPs
-app.use(hppProtection);                 // Prevent HTTP Parameter Pollution
-app.use(sanitizationMiddleware);        // Sanitize all input
-app.use(suspiciousRequestDetector);     // Detect SQL injection, XSS, etc.
-app.use(additionalSecurityHeaders);     // Additional security headers
-app.use('/api', apiRateLimiter);        // Rate limit API routes
+app.use(requestIdMiddleware); // Add request ID for audit logging
+app.use(ipBlocklistMiddleware); // Block banned IPs
+app.use(hppProtection); // Prevent HTTP Parameter Pollution
+app.use(sanitizationMiddleware); // Sanitize all input
+app.use(suspiciousRequestDetector); // Detect SQL injection, XSS, etc.
+app.use(additionalSecurityHeaders); // Additional security headers
+app.use("/api", apiRateLimiter); // Rate limit API routes
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -183,10 +196,7 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || "5000", 10);
-  httpServer.listen(
-    port,
-    () => {
-      log(`serving on port ${port}`);
-    },
-  );
+  httpServer.listen(port, () => {
+    log(`serving on port ${port}`);
+  });
 })();

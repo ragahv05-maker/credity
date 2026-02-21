@@ -1,11 +1,26 @@
-import crypto from 'crypto';
+import crypto from "crypto";
 
 // ── Plan configuration ──────────────────────────────────────────────────────────
 
 export const PLANS = {
-  safedate_premium: { price: 14900, currency: 'INR', interval: 'monthly', name: 'SafeDate Premium' },
-  workscore_pro:    { price: 49900, currency: 'INR', interval: 'yearly',  name: 'WorkScore Pro' },
-  gig_pro:          { price:  9900, currency: 'INR', interval: 'monthly', name: 'Gig Pro' },
+  safedate_premium: {
+    price: 14900,
+    currency: "INR",
+    interval: "monthly",
+    name: "SafeDate Premium",
+  },
+  workscore_pro: {
+    price: 49900,
+    currency: "INR",
+    interval: "yearly",
+    name: "WorkScore Pro",
+  },
+  gig_pro: {
+    price: 9900,
+    currency: "INR",
+    interval: "monthly",
+    name: "Gig Pro",
+  },
 } as const;
 
 export type PlanKey = keyof typeof PLANS;
@@ -18,7 +33,7 @@ interface SubscriptionRecord {
   id: number;
   userId: number;
   plan: string;
-  status: 'active' | 'cancelled' | 'past_due' | 'trialing';
+  status: "active" | "cancelled" | "past_due" | "trialing";
   razorpaySubscriptionId: string | null;
   razorpayCustomerId: string | null;
   currentPeriodStart: Date | null;
@@ -39,7 +54,7 @@ interface ApiUsageRecord {
 }
 
 const subscriptionStore = new Map<number, SubscriptionRecord>(); // key = id
-const apiUsageStore = new Map<string, ApiUsageRecord>();          // key = `${userId}:${month}`
+const apiUsageStore = new Map<string, ApiUsageRecord>(); // key = `${userId}:${month}`
 let nextSubId = 1;
 let nextUsageId = 1;
 
@@ -55,12 +70,16 @@ function getRazorpayCredentials(): { keyId: string; keySecret: string } | null {
 function assertRazorpayConfigured(): { keyId: string; keySecret: string } {
   const creds = getRazorpayCredentials();
   if (!creds) {
-    const isProduction = process.env.NODE_ENV === 'production';
+    const isProduction = process.env.NODE_ENV === "production";
     if (isProduction) {
-      throw new Error('[Billing] RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are required in production');
+      throw new Error(
+        "[Billing] RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are required in production",
+      );
     }
-    console.warn('[Billing] Razorpay not configured — returning mock data in development');
-    return { keyId: 'rzp_test_mock', keySecret: 'mock_secret' };
+    console.warn(
+      "[Billing] Razorpay not configured — returning mock data in development",
+    );
+    return { keyId: "rzp_test_mock", keySecret: "mock_secret" };
   }
   return creds;
 }
@@ -73,16 +92,16 @@ async function razorpayRequest<T>(
   const { keyId, keySecret } = assertRazorpayConfigured();
 
   // If mock credentials, return mock responses
-  if (keyId === 'rzp_test_mock') {
+  if (keyId === "rzp_test_mock") {
     return createMockResponse(path, body) as T;
   }
 
-  const auth = Buffer.from(`${keyId}:${keySecret}`).toString('base64');
+  const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
   const response = await fetch(`https://api.razorpay.com/v1${path}`, {
     method,
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Basic ${auth}`,
+      "Content-Type": "application/json",
+      Authorization: `Basic ${auth}`,
     },
     body: body ? JSON.stringify(body) : undefined,
   });
@@ -95,22 +114,25 @@ async function razorpayRequest<T>(
   return response.json() as Promise<T>;
 }
 
-function createMockResponse(path: string, body?: Record<string, unknown>): unknown {
-  if (path.includes('/customers')) {
+function createMockResponse(
+  path: string,
+  body?: Record<string, unknown>,
+): unknown {
+  if (path.includes("/customers")) {
     return { id: `cust_mock_${Date.now()}`, email: body?.email };
   }
-  if (path.includes('/plans')) {
+  if (path.includes("/plans")) {
     return { id: `plan_mock_${Date.now()}` };
   }
-  if (path.includes('/subscriptions') && !path.includes('/cancel')) {
+  if (path.includes("/subscriptions") && !path.includes("/cancel")) {
     return {
       id: `sub_mock_${Date.now()}`,
       short_url: `https://rzp.io/i/mock_${Date.now()}`,
-      status: 'created',
+      status: "created",
     };
   }
-  if (path.includes('/cancel')) {
-    return { id: body?.subscription_id, status: 'cancelled' };
+  if (path.includes("/cancel")) {
+    return { id: body?.subscription_id, status: "cancelled" };
   }
   return { success: true };
 }
@@ -119,7 +141,7 @@ function createMockResponse(path: string, body?: Record<string, unknown>): unkno
 
 function currentMonth(): string {
   const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
 // ── Exported functions ──────────────────────────────────────────────────────────
@@ -139,15 +161,15 @@ export async function createSubscription(
   }
 
   // 1. Create or find Razorpay customer
-  const customer = await razorpayRequest<{ id: string }>('POST', '/customers', {
+  const customer = await razorpayRequest<{ id: string }>("POST", "/customers", {
     name: `User ${userId}`,
     email,
     notes: { credverse_user_id: String(userId) },
   });
 
   // 2. Create Razorpay plan
-  const rzpPlan = await razorpayRequest<{ id: string }>('POST', '/plans', {
-    period: planConfig.interval === 'yearly' ? 'yearly' : 'monthly',
+  const rzpPlan = await razorpayRequest<{ id: string }>("POST", "/plans", {
+    period: planConfig.interval === "yearly" ? "yearly" : "monthly",
     interval: 1,
     item: {
       name: planConfig.name,
@@ -162,10 +184,10 @@ export async function createSubscription(
     id: string;
     short_url: string;
     status: string;
-  }>('POST', '/subscriptions', {
+  }>("POST", "/subscriptions", {
     plan_id: rzpPlan.id,
     customer_id: customer.id,
-    total_count: planConfig.interval === 'yearly' ? 5 : 60, // max billing cycles
+    total_count: planConfig.interval === "yearly" ? 5 : 60, // max billing cycles
     notes: { credverse_user_id: String(userId), plan },
   });
 
@@ -174,7 +196,7 @@ export async function createSubscription(
     id: nextSubId++,
     userId,
     plan,
-    status: 'trialing',
+    status: "trialing",
     razorpaySubscriptionId: subscription.id,
     razorpayCustomerId: customer.id,
     currentPeriodStart: new Date(),
@@ -203,26 +225,31 @@ export async function handleWebhook(
   const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
   if (webhookSecret) {
     const expectedSignature = crypto
-      .createHmac('sha256', webhookSecret)
+      .createHmac("sha256", webhookSecret)
       .update(payload)
-      .digest('hex');
+      .digest("hex");
 
     if (expectedSignature !== signature) {
-      console.warn('[Billing] Invalid webhook signature');
-      throw new Error('Invalid webhook signature');
+      console.warn("[Billing] Invalid webhook signature");
+      throw new Error("Invalid webhook signature");
     }
   }
 
   const event = JSON.parse(payload);
   const eventType: string = event.event;
-  const entityPayload = event.payload?.subscription?.entity ?? event.payload?.payment?.entity;
+  const entityPayload =
+    event.payload?.subscription?.entity ?? event.payload?.payment?.entity;
 
   if (!entityPayload) {
-    console.info('[Billing] Webhook event without entity payload, skipping:', eventType);
+    console.info(
+      "[Billing] Webhook event without entity payload, skipping:",
+      eventType,
+    );
     return;
   }
 
-  const razorpaySubId: string | undefined = entityPayload.id ?? entityPayload.subscription_id;
+  const razorpaySubId: string | undefined =
+    entityPayload.id ?? entityPayload.subscription_id;
 
   // Find matching subscription in store
   let matchedRecord: SubscriptionRecord | undefined;
@@ -234,54 +261,61 @@ export async function handleWebhook(
   }
 
   switch (eventType) {
-    case 'subscription.activated':
+    case "subscription.activated":
       if (matchedRecord) {
-        matchedRecord.status = 'active';
+        matchedRecord.status = "active";
         matchedRecord.currentPeriodStart = new Date();
         matchedRecord.updatedAt = new Date();
       }
-      console.info('[Billing] Subscription activated:', razorpaySubId);
+      console.info("[Billing] Subscription activated:", razorpaySubId);
       break;
 
-    case 'subscription.charged':
+    case "subscription.charged":
       if (matchedRecord) {
-        matchedRecord.status = 'active';
+        matchedRecord.status = "active";
         matchedRecord.currentPeriodStart = new Date();
         matchedRecord.updatedAt = new Date();
       }
-      console.info('[Billing] Subscription charged:', razorpaySubId);
+      console.info("[Billing] Subscription charged:", razorpaySubId);
       break;
 
-    case 'subscription.pending':
-    case 'payment.failed':
+    case "subscription.pending":
+    case "payment.failed":
       if (matchedRecord) {
-        matchedRecord.status = 'past_due';
+        matchedRecord.status = "past_due";
         matchedRecord.updatedAt = new Date();
       }
-      console.warn('[Billing] Payment failed for subscription:', razorpaySubId);
+      console.warn("[Billing] Payment failed for subscription:", razorpaySubId);
       break;
 
-    case 'subscription.halted':
-    case 'subscription.cancelled':
+    case "subscription.halted":
+    case "subscription.cancelled":
       if (matchedRecord) {
-        matchedRecord.status = 'cancelled';
+        matchedRecord.status = "cancelled";
         matchedRecord.cancelledAt = new Date();
         matchedRecord.updatedAt = new Date();
       }
-      console.info('[Billing] Subscription cancelled:', razorpaySubId);
+      console.info("[Billing] Subscription cancelled:", razorpaySubId);
       break;
 
     default:
-      console.info('[Billing] Unhandled webhook event type:', eventType);
+      console.info("[Billing] Unhandled webhook event type:", eventType);
   }
 }
 
 /**
  * Check if user has an active subscription for a given plan.
  */
-export async function hasActivePlan(userId: number, plan: PlanKey): Promise<boolean> {
+export async function hasActivePlan(
+  userId: number,
+  plan: PlanKey,
+): Promise<boolean> {
   for (const record of subscriptionStore.values()) {
-    if (record.userId === userId && record.plan === plan && record.status === 'active') {
+    if (
+      record.userId === userId &&
+      record.plan === plan &&
+      record.status === "active"
+    ) {
       return true;
     }
   }
@@ -293,7 +327,7 @@ export async function hasActivePlan(userId: number, plan: PlanKey): Promise<bool
  */
 export async function hasAnyActivePlan(userId: number): Promise<boolean> {
   for (const record of subscriptionStore.values()) {
-    if (record.userId === userId && record.status === 'active') {
+    if (record.userId === userId && record.status === "active") {
       return true;
     }
   }
@@ -303,9 +337,11 @@ export async function hasAnyActivePlan(userId: number): Promise<boolean> {
 /**
  * Get the user's active subscription (if any).
  */
-export async function getActiveSubscription(userId: number): Promise<SubscriptionRecord | null> {
+export async function getActiveSubscription(
+  userId: number,
+): Promise<SubscriptionRecord | null> {
   for (const record of subscriptionStore.values()) {
-    if (record.userId === userId && record.status === 'active') {
+    if (record.userId === userId && record.status === "active") {
       return record;
     }
   }
@@ -318,17 +354,21 @@ export async function getActiveSubscription(userId: number): Promise<Subscriptio
 export async function cancelSubscription(userId: number): Promise<void> {
   const sub = await getActiveSubscription(userId);
   if (!sub) {
-    throw new Error('No active subscription found');
+    throw new Error("No active subscription found");
   }
 
   // Cancel on Razorpay if configured
   if (sub.razorpaySubscriptionId && getRazorpayCredentials()) {
-    await razorpayRequest('POST', `/subscriptions/${sub.razorpaySubscriptionId}/cancel`, {
-      cancel_at_cycle_end: 1, // cancel at end of current billing cycle
-    });
+    await razorpayRequest(
+      "POST",
+      `/subscriptions/${sub.razorpaySubscriptionId}/cancel`,
+      {
+        cancel_at_cycle_end: 1, // cancel at end of current billing cycle
+      },
+    );
   }
 
-  sub.status = 'cancelled';
+  sub.status = "cancelled";
   sub.cancelledAt = new Date();
   sub.updatedAt = new Date();
 }
@@ -336,7 +376,10 @@ export async function cancelSubscription(userId: number): Promise<void> {
 /**
  * Increment API usage counter for metering.
  */
-export async function trackApiCall(userId: number, endpoint: string): Promise<void> {
+export async function trackApiCall(
+  userId: number,
+  endpoint: string,
+): Promise<void> {
   const month = currentMonth();
   const key = `${userId}:${month}`;
 

@@ -1,4 +1,5 @@
 # RAGHAV BADHWAR — THE DEFINITIVE MASTER PLAN
+
 ## Credity: India's Trusted Verification Layer
 
 **Version:** 2.0 (Final)  
@@ -16,18 +17,21 @@
 **Credity** is India's first **Trust Verification Layer**—an intelligent platform that sits on top of India Stack (DigiLocker, Aadhaar, UPI) to add what the government can't build: **Trust Scores**, **AI-Powered Fraud Detection**, and **Verifiable Credential Portability**.
 
 ### The Problem (₹2 Lakh Crore Annually)
+
 - **Identity Fraud:** Fake documents, impersonation, deepfakes
 - **Claims Fraud:** Fake resumes, inflated credentials, fabricated work history
 - **Evidence Fraud:** Photoshopped documents, manipulated photos, forged certificates
 
 ### The Solution (The Trust Trifecta)
-| Layer | What It Solves | How |
-|-------|----------------|-----|
-| **Identity** | "Is this person real?" | DigiLocker + Liveness + Biometrics |
-| **Claims** | "Is what they say true?" | Timeline Analysis + Cross-Validation |
-| **Evidence** | "Is this document authentic?" | AI Forensics + Deepfake Detection |
+
+| Layer        | What It Solves                | How                                  |
+| ------------ | ----------------------------- | ------------------------------------ |
+| **Identity** | "Is this person real?"        | DigiLocker + Liveness + Biometrics   |
+| **Claims**   | "Is what they say true?"      | Timeline Analysis + Cross-Validation |
+| **Evidence** | "Is this document authentic?" | AI Forensics + Deepfake Detection    |
 
 ### Why Now?
+
 1. **Worldcoin banned in India** (Feb 2024) — Market vacuum
 2. **Humanity Protocol's $H token crashed 85%** — Web3 identity failing
 3. **DigiLocker at 513M users** — Infrastructure ready, intelligence missing
@@ -39,14 +43,17 @@
 ## 2. VISION & MISSION
 
 ### Vision Statement
+
 > "To become the **Universal Trust Layer** for India's digital economy — making every interaction verifiable, every claim validated, and every document authentic."
 
-*By 2030, Credity will be the invisible trust infrastructure behind every hiring decision, every insurance claim, and every loan approval in India.*
+_By 2030, Credity will be the invisible trust infrastructure behind every hiring decision, every insurance claim, and every loan approval in India._
 
 ### Mission Statement
+
 > "We empower 1 billion+ Indians to **own, carry, and prove** their reputation — instantly, privately, and securely — while enabling enterprises to **eliminate fraud** with military-grade AI verification."
 
 ### Core Values
+
 1. **Privacy-First:** We never store what we don't need. Zero-knowledge by default.
 2. **India-Native:** Built for Aadhaar, DigiLocker, UPI — not a Western product adapted.
 3. **Enterprise-Grade:** Bank-level security, insurance-level accuracy.
@@ -57,19 +64,21 @@
 ## 3. STRATEGIC POSITIONING (The Pivot)
 
 ### ❌ What We Are NOT
+
 - Not a Web3/crypto project (no tokens, no blockchain-first)
 - Not a biometric harvesting company (no Orbs, no palm scanners)
 - Not competing with DigiLocker (we're building ON TOP of it)
 
 ### ✅ What We ARE
+
 > **"India Stack-Native Trust Verification Layer"**
 
-| Positioning | Old (CredVerse) | New (Credity) |
-|-------------|-----------------|---------------|
-| **Narrative** | "Blockchain-powered credentials" | "India Stack-native trust layer" |
-| **Core Tech** | Polygon anchoring | DigiLocker + AI Fraud Detection |
-| **Target** | Web3 users | Enterprise B2B (Recruiters, Insurance, Banks) |
-| **Revenue** | Undefined | SaaS + Per-Verification Fees |
+| Positioning   | Old (CredVerse)                  | New (Credity)                                 |
+| ------------- | -------------------------------- | --------------------------------------------- |
+| **Narrative** | "Blockchain-powered credentials" | "India Stack-native trust layer"              |
+| **Core Tech** | Polygon anchoring                | DigiLocker + AI Fraud Detection               |
+| **Target**    | Web3 users                       | Enterprise B2B (Recruiters, Insurance, Banks) |
+| **Revenue**   | Undefined                        | SaaS + Per-Verification Fees                  |
 
 ---
 
@@ -112,18 +121,18 @@
 
 **Core Features:**
 
-| Feature | Description | Priority |
-|---------|-------------|----------|
-| **DigiLocker Sync** | One-tap import of Aadhaar, PAN, DL, Marksheets, Certificates | P0 |
-| **Trust Score (Vishwas Score)** | 0-1000 reputation score based on verified credentials | P0 |
-| **Liveness Verification** | Face scan with challenge-response for biometric binding | P0 |
-| **Selective Disclosure** | Share "Over 18" without revealing DOB | P0 |
-| **Credential Vault** | Encrypted local storage with biometric unlock | P0 |
-| **QR Sharing** | Instant credential sharing via scannable QR codes | P1 |
-| **Push Notifications** | Real-time alerts for verification requests | P1 |
-| **AI Resume Builder** | Auto-generate verified resume from credentials | P2 |
-| **Offline Mode** | Show credentials without internet | P2 |
-| **Multi-Language** | Hindi, Tamil, Telugu, Bengali, Marathi | P2 |
+| Feature                         | Description                                                  | Priority |
+| ------------------------------- | ------------------------------------------------------------ | -------- |
+| **DigiLocker Sync**             | One-tap import of Aadhaar, PAN, DL, Marksheets, Certificates | P0       |
+| **Trust Score (Vishwas Score)** | 0-1000 reputation score based on verified credentials        | P0       |
+| **Liveness Verification**       | Face scan with challenge-response for biometric binding      | P0       |
+| **Selective Disclosure**        | Share "Over 18" without revealing DOB                        | P0       |
+| **Credential Vault**            | Encrypted local storage with biometric unlock                | P0       |
+| **QR Sharing**                  | Instant credential sharing via scannable QR codes            | P1       |
+| **Push Notifications**          | Real-time alerts for verification requests                   | P1       |
+| **AI Resume Builder**           | Auto-generate verified resume from credentials               | P2       |
+| **Offline Mode**                | Show credentials without internet                            | P2       |
+| **Multi-Language**              | Hindi, Tamil, Telugu, Bengali, Marathi                       | P2       |
 
 ### 4.3 Pillar 2: Credity Verify (Enterprise Dashboard)
 
@@ -131,16 +140,16 @@
 
 **Core Features:**
 
-| Feature | Description | Priority |
-|---------|-------------|----------|
-| **Instant Verification** | Paste credential link → Get Trust Score in <5 seconds | P0 |
-| **Bulk Verification** | Upload CSV of 1000+ candidates → Batch processing | P0 |
-| **Fraud Detection AI** | Detect document tampering, timeline gaps, fake companies | P0 |
-| **Deepfake Sentinel** | Analyze video KYC for AI-generated faces | P1 |
-| **Evidence Forensics** | EXIF analysis, Photoshop detection, metadata validation | P1 |
-| **ATS Integration** | Plugins for Workday, SuccessFactors, Zoho Recruit | P2 |
-| **Analytics Dashboard** | Verification trends, fraud patterns, ROI tracking | P2 |
-| **API Access** | REST API for custom integrations | P0 |
+| Feature                  | Description                                              | Priority |
+| ------------------------ | -------------------------------------------------------- | -------- |
+| **Instant Verification** | Paste credential link → Get Trust Score in <5 seconds    | P0       |
+| **Bulk Verification**    | Upload CSV of 1000+ candidates → Batch processing        | P0       |
+| **Fraud Detection AI**   | Detect document tampering, timeline gaps, fake companies | P0       |
+| **Deepfake Sentinel**    | Analyze video KYC for AI-generated faces                 | P1       |
+| **Evidence Forensics**   | EXIF analysis, Photoshop detection, metadata validation  | P1       |
+| **ATS Integration**      | Plugins for Workday, SuccessFactors, Zoho Recruit        | P2       |
+| **Analytics Dashboard**  | Verification trends, fraud patterns, ROI tracking        | P2       |
+| **API Access**           | REST API for custom integrations                         | P0       |
 
 ### 4.4 Pillar 3: Credity Issuer (Institutional Portal)
 
@@ -148,14 +157,14 @@
 
 **Core Features:**
 
-| Feature | Description | Priority |
-|---------|-------------|----------|
-| **Bulk Issuance** | Issue 50,000 credentials in 10 minutes via CSV/API | P0 |
-| **Template Designer** | Visual editor for custom certificate templates | P1 |
-| **Revocation Management** | Revoke credentials with audit trail | P0 |
-| **Student Verification** | Validate student identity via Aadhaar before issuance | P0 |
-| **WhatsApp Delivery** | Send claim links via WhatsApp for higher conversion | P1 |
-| **Analytics** | Track claims, verifications, and engagement | P1 |
+| Feature                   | Description                                           | Priority |
+| ------------------------- | ----------------------------------------------------- | -------- |
+| **Bulk Issuance**         | Issue 50,000 credentials in 10 minutes via CSV/API    | P0       |
+| **Template Designer**     | Visual editor for custom certificate templates        | P1       |
+| **Revocation Management** | Revoke credentials with audit trail                   | P0       |
+| **Student Verification**  | Validate student identity via Aadhaar before issuance | P0       |
+| **WhatsApp Delivery**     | Send claim links via WhatsApp for higher conversion   | P1       |
+| **Analytics**             | Track claims, verifications, and engagement           | P1       |
 
 ### 4.5 Pillar 4: Credity Gateway (Public API)
 
@@ -163,12 +172,12 @@
 
 **Core Features:**
 
-| Feature | Description | Priority |
-|---------|-------------|----------|
-| **"Verify with Credity" Button** | One-click verification for any platform | P0 |
-| **OAuth SDK** | "Sign in with Credity" for verified user onboarding | P1 |
-| **Webhooks** | Real-time events for verification status changes | P0 |
-| **Rate Limiting** | Tiered API access based on subscription | P0 |
+| Feature                          | Description                                         | Priority |
+| -------------------------------- | --------------------------------------------------- | -------- |
+| **"Verify with Credity" Button** | One-click verification for any platform             | P0       |
+| **OAuth SDK**                    | "Sign in with Credity" for verified user onboarding | P1       |
+| **Webhooks**                     | Real-time events for verification status changes    | P0       |
+| **Rate Limiting**                | Tiered API access based on subscription             | P0       |
 
 ---
 
@@ -348,49 +357,49 @@
 
 ### 6.1 Frontend Stack
 
-| Layer | Technology | Why This Choice |
-|-------|------------|-----------------|
-| **Mobile App** | **React Native + Expo (SDK 50)** | Cross-platform, 90% code share, OTA updates |
-| **Web Dashboard** | **Next.js 14 (App Router)** | Server components, edge functions, SEO |
-| **UI Components** | **Shadcn/UI + Radix** | Accessible, customizable, modern |
-| **Styling** | **Tailwind CSS v4** | Utility-first, design tokens, dark mode |
-| **Animations** | **Framer Motion** | Production-grade animations |
-| **State** | **Zustand + TanStack Query** | Minimal boilerplate, powerful caching |
-| **Forms** | **React Hook Form + Zod** | Type-safe validation |
+| Layer             | Technology                       | Why This Choice                             |
+| ----------------- | -------------------------------- | ------------------------------------------- |
+| **Mobile App**    | **React Native + Expo (SDK 50)** | Cross-platform, 90% code share, OTA updates |
+| **Web Dashboard** | **Next.js 14 (App Router)**      | Server components, edge functions, SEO      |
+| **UI Components** | **Shadcn/UI + Radix**            | Accessible, customizable, modern            |
+| **Styling**       | **Tailwind CSS v4**              | Utility-first, design tokens, dark mode     |
+| **Animations**    | **Framer Motion**                | Production-grade animations                 |
+| **State**         | **Zustand + TanStack Query**     | Minimal boilerplate, powerful caching       |
+| **Forms**         | **React Hook Form + Zod**        | Type-safe validation                        |
 
 ### 6.2 Backend Stack
 
-| Layer | Technology | Why This Choice |
-|-------|------------|-----------------|
-| **Runtime** | **Bun v1.0+** | 3x faster than Node.js, native TypeScript |
-| **Framework** | **Hono** | Ultra-fast, edge-ready, type-safe |
-| **Database** | **PostgreSQL (Supabase)** | Managed, real-time, row-level security |
-| **Cache** | **Redis (Upstash)** | Serverless, global edge cache |
-| **Queue** | **BullMQ** | Reliable job processing for batch operations |
-| **Storage** | **Cloudflare R2** | S3-compatible, zero egress fees |
-| **Auth** | **Clerk** | Complete auth solution, passkeys, SSO |
+| Layer         | Technology                | Why This Choice                              |
+| ------------- | ------------------------- | -------------------------------------------- |
+| **Runtime**   | **Bun v1.0+**             | 3x faster than Node.js, native TypeScript    |
+| **Framework** | **Hono**                  | Ultra-fast, edge-ready, type-safe            |
+| **Database**  | **PostgreSQL (Supabase)** | Managed, real-time, row-level security       |
+| **Cache**     | **Redis (Upstash)**       | Serverless, global edge cache                |
+| **Queue**     | **BullMQ**                | Reliable job processing for batch operations |
+| **Storage**   | **Cloudflare R2**         | S3-compatible, zero egress fees              |
+| **Auth**      | **Clerk**                 | Complete auth solution, passkeys, SSO        |
 
 ### 6.3 AI/ML Stack
 
-| Capability | Technology | Why This Choice |
-|------------|------------|-----------------|
-| **OCR** | **Azure AI Document Intelligence** | Best accuracy for Indian documents |
-| **Face Liveness** | **FaceTec SDK** | 99.998% PAD accuracy, certified |
-| **Face Matching** | **AWS Rekognition** | 99.99% accuracy, scalable |
-| **Fraud Detection** | **Custom XGBoost** | Trained on Indian fraud patterns |
-| **Deepfake Detection** | **Sensity API** | Industry leader, real-time |
-| **LLM** | **OpenAI GPT-4o-mini** | Resume parsing, skill extraction |
-| **Embeddings** | **Voyage AI** | Better than OpenAI for document similarity |
+| Capability             | Technology                         | Why This Choice                            |
+| ---------------------- | ---------------------------------- | ------------------------------------------ |
+| **OCR**                | **Azure AI Document Intelligence** | Best accuracy for Indian documents         |
+| **Face Liveness**      | **FaceTec SDK**                    | 99.998% PAD accuracy, certified            |
+| **Face Matching**      | **AWS Rekognition**                | 99.99% accuracy, scalable                  |
+| **Fraud Detection**    | **Custom XGBoost**                 | Trained on Indian fraud patterns           |
+| **Deepfake Detection** | **Sensity API**                    | Industry leader, real-time                 |
+| **LLM**                | **OpenAI GPT-4o-mini**             | Resume parsing, skill extraction           |
+| **Embeddings**         | **Voyage AI**                      | Better than OpenAI for document similarity |
 
 ### 6.4 Infrastructure
 
-| Layer | Technology | Why This Choice |
-|-------|------------|-----------------|
-| **Cloud** | **AWS Mumbai (ap-south-1)** | DPDP compliance, data localization |
-| **CDN** | **Cloudflare** | Global edge, DDoS protection |
-| **Deployment** | **Railway / Vercel** | Easy scaling, auto-deploys |
-| **Monitoring** | **Sentry + PostHog** | Error tracking + analytics |
-| **CI/CD** | **GitHub Actions** | Native, powerful, free for open source |
+| Layer          | Technology                  | Why This Choice                        |
+| -------------- | --------------------------- | -------------------------------------- |
+| **Cloud**      | **AWS Mumbai (ap-south-1)** | DPDP compliance, data localization     |
+| **CDN**        | **Cloudflare**              | Global edge, DDoS protection           |
+| **Deployment** | **Railway / Vercel**        | Easy scaling, auto-deploys             |
+| **Monitoring** | **Sentry + PostHog**        | Error tracking + analytics             |
+| **CI/CD**      | **GitHub Actions**          | Native, powerful, free for open source |
 
 ---
 
@@ -433,25 +442,26 @@
 
 **Challenge-Response System:**
 
-| Challenge | Detection Method | Difficulty to Fake |
-|-----------|------------------|-------------------|
-| **Blink Twice** | Eye aspect ratio tracking | Hard (video replay fails) |
-| **Turn Head Left/Right** | Face landmark displacement | Very Hard |
-| **Smile Naturally** | Facial action unit analysis | Very Hard |
-| **Nod Up/Down** | 3D pose estimation | Extremely Hard |
-| **Raise Eyebrows** | Forehead landmark tracking | Very Hard |
+| Challenge                | Detection Method            | Difficulty to Fake        |
+| ------------------------ | --------------------------- | ------------------------- |
+| **Blink Twice**          | Eye aspect ratio tracking   | Hard (video replay fails) |
+| **Turn Head Left/Right** | Face landmark displacement  | Very Hard                 |
+| **Smile Naturally**      | Facial action unit analysis | Very Hard                 |
+| **Nod Up/Down**          | 3D pose estimation          | Extremely Hard            |
+| **Raise Eyebrows**       | Forehead landmark tracking  | Very Hard                 |
 
 **Anti-Spoofing Layers:**
 
-| Attack Type | Detection Method | Confidence |
-|-------------|------------------|------------|
-| **2D Photo Attack** | Moiré pattern detection, texture analysis | 99.5% |
-| **Video Replay** | Screen reflection detection, frame correlation | 99.2% |
-| **3D Printed Mask** | Skin texture analysis, micro-movement | 98.7% |
-| **Silicone Mask** | IR reflectance (if available), warmth signature | 97.5% |
-| **Deepfake Video** | GAN artifact detection, temporal inconsistency | 96.8% |
+| Attack Type         | Detection Method                                | Confidence |
+| ------------------- | ----------------------------------------------- | ---------- |
+| **2D Photo Attack** | Moiré pattern detection, texture analysis       | 99.5%      |
+| **Video Replay**    | Screen reflection detection, frame correlation  | 99.2%      |
+| **3D Printed Mask** | Skin texture analysis, micro-movement           | 98.7%      |
+| **Silicone Mask**   | IR reflectance (if available), warmth signature | 97.5%      |
+| **Deepfake Video**  | GAN artifact detection, temporal inconsistency  | 96.8%      |
 
 **Production SDK: FaceTec** (FinTech-grade)
+
 - ISO 30107-3 Level 2 Certified
 - 99.998% Presentation Attack Detection (PAD)
 - Cost: ~$0.05/session
@@ -495,13 +505,14 @@
 
 **Security Thresholds:**
 
-| Operation | Threshold | False Accept Rate | False Reject Rate |
-|-----------|-----------|-------------------|-------------------|
-| **Standard Verification** | 75% | 0.1% | 3% |
-| **High Security (Banking)** | 85% | 0.01% | 5% |
-| **Critical (Legal Signing)** | 95% | 0.001% | 10% |
+| Operation                    | Threshold | False Accept Rate | False Reject Rate |
+| ---------------------------- | --------- | ----------------- | ----------------- |
+| **Standard Verification**    | 75%       | 0.1%              | 3%                |
+| **High Security (Banking)**  | 85%       | 0.01%             | 5%                |
+| **Critical (Legal Signing)** | 95%       | 0.001%            | 10%               |
 
 **Face Template Security:**
+
 - 512-dimensional embedding (industry standard)
 - AES-256-GCM encryption at rest
 - No reversible images stored (GDPR compliant)
@@ -546,19 +557,21 @@
 
 **Multi-Chain Strategy:**
 
-| Chain | Use Case | Gas Cost | Finality |
-|-------|----------|----------|----------|
-| **Polygon Mainnet** | Primary anchoring | ₹2-5/anchor | 2 seconds |
+| Chain                | Use Case                    | Gas Cost       | Finality   |
+| -------------------- | --------------------------- | -------------- | ---------- |
+| **Polygon Mainnet**  | Primary anchoring           | ₹2-5/anchor    | 2 seconds  |
 | **Ethereum Mainnet** | High-value credentials only | ₹50-200/anchor | 12 seconds |
-| **Sepolia/Mumbai** | Testing and development | Free | 2 seconds |
+| **Sepolia/Mumbai**   | Testing and development     | Free           | 2 seconds  |
 
 **Merkle Tree Batch Anchoring:**
+
 - Batch up to 100 credentials per transaction
 - 10x gas cost reduction
 - Each credential gets individual proof
 - Verification: O(log n) proof size
 
 **Verification Proof Structure:**
+
 ```json
 {
   "credentialHash": "0x7a8f...",
@@ -617,23 +630,23 @@
 
 ### 🎭 Deepfake Detection (AI-Generated Content)
 
-| Detection Method | What It Catches | Accuracy |
-|-----------------|-----------------|----------|
-| **GAN Artifact Analysis** | Face-swap artifacts, blending edges | 96.8% |
-| **Temporal Inconsistency** | Flickering, unnatural blinking | 94.5% |
-| **Facial Landmark Drift** | Inconsistent eye/nose positioning | 93.2% |
-| **Compression Analysis** | Double-compression artifacts | 91.7% |
+| Detection Method           | What It Catches                     | Accuracy |
+| -------------------------- | ----------------------------------- | -------- |
+| **GAN Artifact Analysis**  | Face-swap artifacts, blending edges | 96.8%    |
+| **Temporal Inconsistency** | Flickering, unnatural blinking      | 94.5%    |
+| **Facial Landmark Drift**  | Inconsistent eye/nose positioning   | 93.2%    |
+| **Compression Analysis**   | Double-compression artifacts        | 91.7%    |
 
 ### 📊 Timeline Gap Analysis
 
 **Purpose:** Detect fabricated work history, suspicious career jumps, overlapping employment.
 
-| Red Flag | Detection Method | Score Impact |
-|----------|------------------|--------------|
-| **Unexplained gap > 2 years** | Date range analysis | -20 points |
-| **Overlapping full-time jobs** | Date intersection check | -30 points |
-| **Impossible career progression** | Role seniority mapping | -25 points |
-| **Company doesn't exist** | MCA/LinkedIn validation | -50 points |
+| Red Flag                          | Detection Method        | Score Impact |
+| --------------------------------- | ----------------------- | ------------ |
+| **Unexplained gap > 2 years**     | Date range analysis     | -20 points   |
+| **Overlapping full-time jobs**    | Date intersection check | -30 points   |
+| **Impossible career progression** | Role seniority mapping  | -25 points   |
+| **Company doesn't exist**         | MCA/LinkedIn validation | -50 points   |
 
 ### 🏢 Company Validation System
 
@@ -700,25 +713,25 @@ Company Name → MCA/ROC Lookup → LinkedIn Verification → Fraud Score
 
 ### Tier System:
 
-| Tier | Score Range | Color | Benefits |
-|------|-------------|-------|----------|
-| **Unverified** | 0-99 | Gray | Basic access only |
-| **Bronze** | 100-299 | 🥉 | Standard features |
-| **Silver** | 300-499 | 🥈 | Priority verification, 10% discount |
-| **Gold** | 500-699 | 🥇 | Premium features, 20% discount |
-| **Platinum** | 700-849 | 💎 | VIP support, 30% discount, API access |
-| **Diamond** | 850-1000 | 💠 | Instant verification, white-glove service |
+| Tier           | Score Range | Color | Benefits                                  |
+| -------------- | ----------- | ----- | ----------------------------------------- |
+| **Unverified** | 0-99        | Gray  | Basic access only                         |
+| **Bronze**     | 100-299     | 🥉    | Standard features                         |
+| **Silver**     | 300-499     | 🥈    | Priority verification, 10% discount       |
+| **Gold**       | 500-699     | 🥇    | Premium features, 20% discount            |
+| **Platinum**   | 700-849     | 💎    | VIP support, 30% discount, API access     |
+| **Diamond**    | 850-1000    | 💠    | Instant verification, white-glove service |
 
 ### Eligibility Rules (The Business Moat):
 
-| Action | Minimum Score | Rationale |
-|--------|---------------|-----------|
-| **Claim Credentials** | 0 | Anyone can start |
-| **Share Credentials** | 100 (Bronze) | Basic identity verified |
-| **Receive Endorsements** | 300 (Silver) | Must have baseline trust |
-| **Access Premium Issuers** | 500 (Gold) | High-value credentials gated |
-| **API Access** | 700 (Platinum) | Developers must be trusted |
-| **Become Verified Issuer** | 850 (Diamond) | Only elite can issue |
+| Action                     | Minimum Score  | Rationale                    |
+| -------------------------- | -------------- | ---------------------------- |
+| **Claim Credentials**      | 0              | Anyone can start             |
+| **Share Credentials**      | 100 (Bronze)   | Basic identity verified      |
+| **Receive Endorsements**   | 300 (Silver)   | Must have baseline trust     |
+| **Access Premium Issuers** | 500 (Gold)     | High-value credentials gated |
+| **API Access**             | 700 (Platinum) | Developers must be trusted   |
+| **Become Verified Issuer** | 850 (Diamond)  | Only elite can issue         |
 
 ### Historical Tracking:
 
@@ -727,9 +740,24 @@ Company Name → MCA/ROC Lookup → LinkedIn Verification → Fraud Score
 ```json
 {
   "history": [
-    { "date": "2025-12-01", "score": 450, "tier": "silver", "event": "DigiLocker connected" },
-    { "date": "2025-12-15", "score": 620, "tier": "gold", "event": "Liveness verified" },
-    { "date": "2025-12-26", "score": 720, "tier": "platinum", "event": "3 endorsements received" }
+    {
+      "date": "2025-12-01",
+      "score": 450,
+      "tier": "silver",
+      "event": "DigiLocker connected"
+    },
+    {
+      "date": "2025-12-15",
+      "score": 620,
+      "tier": "gold",
+      "event": "Liveness verified"
+    },
+    {
+      "date": "2025-12-26",
+      "score": 720,
+      "tier": "platinum",
+      "event": "3 endorsements received"
+    }
   ],
   "trend": { "direction": "up", "change": 270, "percentage": 60 },
   "alerts": []
@@ -738,38 +766,36 @@ Company Name → MCA/ROC Lookup → LinkedIn Verification → Fraud Score
 
 ### Gamification Elements:
 
-| Badge | Requirement | Display |
-|-------|-------------|---------|
-| **Verified Human** | Complete liveness check | 👤 |
-| **DigiLocker Pro** | Connect 5+ documents | 🔗 |
-| **Quick Responder** | Avg response < 5 min | ⚡ |
-| **Endorsement Magnet** | Get 10+ endorsements | 🌟 |
-| **Trust Elite** | Reach Platinum tier | 💎 |
-| **Early Adopter** | Join in first 1000 users | 🚀 |
-
-
+| Badge                  | Requirement              | Display |
+| ---------------------- | ------------------------ | ------- |
+| **Verified Human**     | Complete liveness check  | 👤      |
+| **DigiLocker Pro**     | Connect 5+ documents     | 🔗      |
+| **Quick Responder**    | Avg response < 5 min     | ⚡      |
+| **Endorsement Magnet** | Get 10+ endorsements     | 🌟      |
+| **Trust Elite**        | Reach Platinum tier      | 💎      |
+| **Early Adopter**      | Join in first 1000 users | 🚀      |
 
 ## 7. API INTEGRATIONS (Critical for India)
 
 ### 7.1 Government APIs (India Stack)
 
-| API | Provider | Purpose | Cost |
-|-----|----------|---------|------|
-| **DigiLocker API** | NIC/Setu | Import government documents | Free (via Setu sandbox) |
-| **Aadhaar e-KYC** | UIDAI/Setu | Identity verification | ₹6-10/verification |
-| **e-Sign** | CDAC | Legally binding signatures | ₹15/signature |
-| **PAN Verification** | NSDL | Validate PAN card | ₹3/lookup |
-| **GSTN** | GST Network | Business verification | ₹2/lookup |
+| API                  | Provider    | Purpose                     | Cost                    |
+| -------------------- | ----------- | --------------------------- | ----------------------- |
+| **DigiLocker API**   | NIC/Setu    | Import government documents | Free (via Setu sandbox) |
+| **Aadhaar e-KYC**    | UIDAI/Setu  | Identity verification       | ₹6-10/verification      |
+| **e-Sign**           | CDAC        | Legally binding signatures  | ₹15/signature           |
+| **PAN Verification** | NSDL        | Validate PAN card           | ₹3/lookup               |
+| **GSTN**             | GST Network | Business verification       | ₹2/lookup               |
 
 ### 7.2 Third-Party APIs
 
-| API | Provider | Purpose | Cost |
-|-----|----------|---------|------|
-| **Face Liveness** | FaceTec | Anti-spoofing | $0.05/session |
-| **Document OCR** | Azure AI | Extract text from IDs | $1.50/1000 pages |
-| **Deepfake Detection** | Sensity | Detect AI-generated faces | Custom pricing |
-| **Email Verification** | ZeroBounce | Validate email authenticity | $0.01/email |
-| **Company Verification** | Signzy | Validate employer existence | ₹5/lookup |
+| API                      | Provider   | Purpose                     | Cost             |
+| ------------------------ | ---------- | --------------------------- | ---------------- |
+| **Face Liveness**        | FaceTec    | Anti-spoofing               | $0.05/session    |
+| **Document OCR**         | Azure AI   | Extract text from IDs       | $1.50/1000 pages |
+| **Deepfake Detection**   | Sensity    | Detect AI-generated faces   | Custom pricing   |
+| **Email Verification**   | ZeroBounce | Validate email authenticity | $0.01/email      |
+| **Company Verification** | Signzy     | Validate employer existence | ₹5/lookup        |
 
 ### 7.3 Integration Architecture
 
@@ -808,31 +834,31 @@ Company Name → MCA/ROC Lookup → LinkedIn Verification → Fraud Score
 
 ### 8.1 Pricing Tiers (India Market)
 
-| Tier | Price | Verifications | Target Customer |
-|------|-------|---------------|-----------------|
-| **Free** | ₹0 | 100/month | Developers, Startups |
-| **Growth** | ₹25,000/month | 2,500/month | Mid-size Recruiters |
-| **Enterprise** | ₹2,00,000+/year | Unlimited | Large HR, Insurance |
-| **Pay-as-you-go** | ₹10-50/verification | As needed | Insurance Claims |
+| Tier              | Price               | Verifications | Target Customer      |
+| ----------------- | ------------------- | ------------- | -------------------- |
+| **Free**          | ₹0                  | 100/month     | Developers, Startups |
+| **Growth**        | ₹25,000/month       | 2,500/month   | Mid-size Recruiters  |
+| **Enterprise**    | ₹2,00,000+/year     | Unlimited     | Large HR, Insurance  |
+| **Pay-as-you-go** | ₹10-50/verification | As needed     | Insurance Claims     |
 
 ### 8.2 Revenue Streams
 
-| Stream | Year 1 Target | % of Revenue |
-|--------|---------------|--------------|
-| **SaaS Subscriptions** | ₹60 Lakhs | 60% |
-| **Per-Verification Fees** | ₹30 Lakhs | 30% |
-| **Issuer Fees (₹20/student)** | ₹10 Lakhs | 10% |
-| **Total** | **₹1 Crore ARR** | 100% |
+| Stream                        | Year 1 Target    | % of Revenue |
+| ----------------------------- | ---------------- | ------------ |
+| **SaaS Subscriptions**        | ₹60 Lakhs        | 60%          |
+| **Per-Verification Fees**     | ₹30 Lakhs        | 30%          |
+| **Issuer Fees (₹20/student)** | ₹10 Lakhs        | 10%          |
+| **Total**                     | **₹1 Crore ARR** | 100%         |
 
 ### 8.3 Unit Economics
 
-| Metric | Value | Notes |
-|--------|-------|-------|
-| **CAC (B2B)** | ₹5,000 | LinkedIn + Cold Email |
-| **LTV** | ₹2,50,000 | 2-year average contract |
-| **LTV:CAC Ratio** | 50:1 | Exceptional for SaaS |
-| **Gross Margin** | 80% | Low infra costs |
-| **Payback Period** | 2 months | Fast enterprise close |
+| Metric             | Value     | Notes                   |
+| ------------------ | --------- | ----------------------- |
+| **CAC (B2B)**      | ₹5,000    | LinkedIn + Cold Email   |
+| **LTV**            | ₹2,50,000 | 2-year average contract |
+| **LTV:CAC Ratio**  | 50:1      | Exceptional for SaaS    |
+| **Gross Margin**   | 80%       | Low infra costs         |
+| **Payback Period** | 2 months  | Fast enterprise close   |
 
 ---
 
@@ -840,30 +866,30 @@ Company Name → MCA/ROC Lookup → LinkedIn Verification → Fraud Score
 
 ### 9.1 Year 1 Financials
 
-| Quarter | MRR | Customers | Burn Rate | Runway |
-|---------|-----|-----------|-----------|--------|
-| Q1 | ₹50K | 5 | ₹8L/mo | 18 months |
-| Q2 | ₹2L | 15 | ₹10L/mo | 15 months |
-| Q3 | ₹5L | 35 | ₹12L/mo | 12 months |
-| Q4 | ₹8.5L | 50 | ₹12L/mo | 10 months |
+| Quarter | MRR   | Customers | Burn Rate | Runway    |
+| ------- | ----- | --------- | --------- | --------- |
+| Q1      | ₹50K  | 5         | ₹8L/mo    | 18 months |
+| Q2      | ₹2L   | 15        | ₹10L/mo   | 15 months |
+| Q3      | ₹5L   | 35        | ₹12L/mo   | 12 months |
+| Q4      | ₹8.5L | 50        | ₹12L/mo   | 10 months |
 
 ### 9.2 3-Year Projection
 
-| Year | ARR | Customers | Team Size | Funding |
-|------|-----|-----------|-----------|---------|
-| Year 1 | ₹1 Cr | 50 | 5 | ₹1.5 Cr Seed |
-| Year 2 | ₹5 Cr | 200 | 15 | ₹10 Cr Series A |
-| Year 3 | ₹25 Cr | 800 | 40 | ₹50 Cr Series B |
+| Year   | ARR    | Customers | Team Size | Funding         |
+| ------ | ------ | --------- | --------- | --------------- |
+| Year 1 | ₹1 Cr  | 50        | 5         | ₹1.5 Cr Seed    |
+| Year 2 | ₹5 Cr  | 200       | 15        | ₹10 Cr Series A |
+| Year 3 | ₹25 Cr | 800       | 40        | ₹50 Cr Series B |
 
 ### 9.3 Team Composition (Year 1)
 
-| Role | Count | Monthly Cost |
-|------|-------|--------------|
-| Founder/CEO | 1 | ₹1.5L |
-| Full-Stack Engineer | 2 | ₹2L each |
-| ML Engineer | 1 | ₹2.5L |
-| Sales/BD | 1 | ₹1.5L |
-| **Total** | 5 | ₹9.5L/month |
+| Role                | Count | Monthly Cost |
+| ------------------- | ----- | ------------ |
+| Founder/CEO         | 1     | ₹1.5L        |
+| Full-Stack Engineer | 2     | ₹2L each     |
+| ML Engineer         | 1     | ₹2.5L        |
+| Sales/BD            | 1     | ₹1.5L        |
+| **Total**           | 5     | ₹9.5L/month  |
 
 ---
 
@@ -871,42 +897,45 @@ Company Name → MCA/ROC Lookup → LinkedIn Verification → Fraud Score
 
 ### Month 1: "The Foundation" (Days 1-30)
 
-| Week | Focus | Deliverables |
-|------|-------|--------------|
-| **Week 1** | Mobile App Shell | React Native project setup, navigation, auth screens |
-| **Week 2** | DigiLocker Integration | Real API integration via Setu, document import flow |
-| **Week 3** | Trust Score v1 | Basic algorithm (document count + source + age) |
-| **Week 4** | Closed Beta | 50 friendly users, feedback collection |
+| Week       | Focus                  | Deliverables                                         |
+| ---------- | ---------------------- | ---------------------------------------------------- |
+| **Week 1** | Mobile App Shell       | React Native project setup, navigation, auth screens |
+| **Week 2** | DigiLocker Integration | Real API integration via Setu, document import flow  |
+| **Week 3** | Trust Score v1         | Basic algorithm (document count + source + age)      |
+| **Week 4** | Closed Beta            | 50 friendly users, feedback collection               |
 
 **Success Metrics:**
+
 - ✅ Working app with DigiLocker sync
 - ✅ 50 beta users onboarded
 - ✅ Trust Score displaying for all users
 
 ### Month 2: "The Pilot" (Days 31-60)
 
-| Week | Focus | Deliverables |
-|------|-------|--------------|
-| **Week 5** | Enterprise Dashboard | Web portal for recruiters, instant verify |
-| **Week 6** | AI Fraud Detection v1 | Document tampering, EXIF analysis |
-| **Week 7** | Pilot Customers | Sign 2 universities, 2 recruiters |
-| **Week 8** | WhatsApp Integration | Credential sharing via WhatsApp |
+| Week       | Focus                 | Deliverables                              |
+| ---------- | --------------------- | ----------------------------------------- |
+| **Week 5** | Enterprise Dashboard  | Web portal for recruiters, instant verify |
+| **Week 6** | AI Fraud Detection v1 | Document tampering, EXIF analysis         |
+| **Week 7** | Pilot Customers       | Sign 2 universities, 2 recruiters         |
+| **Week 8** | WhatsApp Integration  | Credential sharing via WhatsApp           |
 
 **Success Metrics:**
+
 - ✅ 500 active users
 - ✅ 2 paying pilot customers
 - ✅ First ₹50K revenue
 
 ### Month 3: "The Launch" (Days 61-90)
 
-| Week | Focus | Deliverables |
-|------|-------|--------------|
-| **Week 9** | Polish & Delight | Animations, UX improvements, bug fixes |
-| **Week 10** | Public Launch | Product Hunt, LinkedIn viral campaign |
-| **Week 11** | Investor Outreach | Pitch to YC, Peak XV, 100x.VC |
-| **Week 12** | First Revenue Milestone | ₹1 Lakh MRR |
+| Week        | Focus                   | Deliverables                           |
+| ----------- | ----------------------- | -------------------------------------- |
+| **Week 9**  | Polish & Delight        | Animations, UX improvements, bug fixes |
+| **Week 10** | Public Launch           | Product Hunt, LinkedIn viral campaign  |
+| **Week 11** | Investor Outreach       | Pitch to YC, Peak XV, 100x.VC          |
+| **Week 12** | First Revenue Milestone | ₹1 Lakh MRR                            |
 
 **Success Metrics:**
+
 - ✅ 10,000 users
 - ✅ 10 paying customers
 - ✅ Seed term sheet in negotiation
@@ -918,65 +947,79 @@ Company Name → MCA/ROC Lookup → LinkedIn Verification → Fraud Score
 ## 11. INVESTOR PITCH DECK
 
 ### Slide 1: Title
+
 **CREDITY**
-*India's Trusted Verification Layer*
+_India's Trusted Verification Layer_
 ₹1.5 Crore Seed Round
 
 ### Slide 2: The Problem
+
 - ₹2 Lakh Crore lost annually to identity fraud in India
 - 78% of recruiters have caught fake resumes
 - 15% of insurance claims are fraudulent
 - DigiLocker has 513M users but NO fraud detection
 
 ### Slide 3: The Solution
+
 **3-Layer Trust Verification:**
+
 1. **Identity:** "Is this person real?" (DigiLocker + Liveness)
 2. **Claims:** "Is what they say true?" (AI Timeline Analysis)
 3. **Evidence:** "Is this document authentic?" (Deepfake Detection)
 
 ### Slide 4: Market Size
+
 - **TAM:** $120B globally (fraud prevention)
 - **SAM:** $10B India (insurance + HR + BFSI)
 - **SOM:** ₹500 Cr (Year 5 target)
 
 ### Slide 5: Competition
-| | Worldcoin | Humanity | Billions | **Credity** |
-|---|---|---|---|---|
-| Status in India | ❌ Banned | ❌ No presence | 🔄 Coming | ✅ Native |
-| Claims/Evidence | ❌ | ❌ | ❌ | ✅ |
-| Enterprise SaaS | ❌ | ❌ | Partial | ✅ |
-| Revenue Model | Token | Token | Unclear | SaaS |
+
+|                 | Worldcoin | Humanity       | Billions  | **Credity** |
+| --------------- | --------- | -------------- | --------- | ----------- |
+| Status in India | ❌ Banned | ❌ No presence | 🔄 Coming | ✅ Native   |
+| Claims/Evidence | ❌        | ❌             | ❌        | ✅          |
+| Enterprise SaaS | ❌        | ❌             | Partial   | ✅          |
+| Revenue Model   | Token     | Token          | Unclear   | SaaS        |
 
 ### Slide 6: Product Demo
+
 [Live walkthrough of Credity Wallet and Verify Dashboard]
 
 ### Slide 7: Business Model
+
 - **SaaS:** ₹25K-2L/month per enterprise
 - **Per-Verification:** ₹10-50/lookup
 - **Gross Margin:** 80%
 - **Target:** ₹1 Cr ARR in 12 months
 
 ### Slide 8: Traction
+
 - Working prototype (CredVerse ecosystem)
 - DigiLocker API integration ready
 - 2 pilot universities in discussion
 - 5 recruiter leads in pipeline
 
 ### Slide 9: Team
+
 **Raghav Badhwar** - Founder & CEO
+
 - [Your background and credentials]
 - [Relevant experience]
 - [Why you're the right person]
 
 ### Slide 10: The Ask
+
 **Raising:** ₹1.5 Crore Seed
 **Use of Funds:**
+
 - 50% Engineering (Mobile app, AI models)
 - 25% Sales (First 50 customers)
 - 15% Compliance (DPDP, DigiLocker Requestor)
 - 10% Buffer
 
 **Milestones:**
+
 - Month 6: ₹5L MRR
 - Month 12: ₹1 Cr ARR
 - Month 18: Series A ready
@@ -986,26 +1029,31 @@ Company Name → MCA/ROC Lookup → LinkedIn Verification → Fraud Score
 ## 12. CUSTOMER PITCH (RECRUITERS)
 
 ### Headline
+
 **"Stop Hiring Frauds. Start Hiring Talent."**
 
 ### The Pain
+
 - You spend ₹5,000 and 10 days verifying one candidate
 - 78% of recruiters have caught fake resumes
 - AI-generated certificates are fooling human reviewers
 
 ### The Solution
+
 - Verify any credential in <5 seconds
 - AI catches what humans miss
 - Direct verification against government databases
 
 ### The ROI
-| Before Credity | After Credity |
-|----------------|---------------|
+
+| Before Credity      | After Credity    |
+| ------------------- | ---------------- |
 | ₹5,000/verification | ₹50/verification |
-| 10 days turnaround | 5 seconds |
-| 70% accuracy | 99% accuracy |
+| 10 days turnaround  | 5 seconds        |
+| 70% accuracy        | 99% accuracy     |
 
 ### The CTA
+
 **"Free Trial — Verify your next 10 candidates on us."**
 
 ---
@@ -1015,23 +1063,27 @@ Company Name → MCA/ROC Lookup → LinkedIn Verification → Fraud Score
 ## 13. GROWTH HACKS
 
 ### 13.1 Viral Loop: "The LinkedIn Flex"
+
 - When user gets verified → "Add 'Verified by Credity' badge to LinkedIn?"
 - Every verified user becomes a billboard
 - Social proof drives organic signups
 
 ### 13.2 Trust Score Gamification
+
 - "Connect your Twitter → +10 points"
 - "Verify work email → +20 points"
 - Leaderboards: "You're in the Top 15%"
 - Creates addictive engagement loop
 
 ### 13.3 WhatsApp-First India
+
 - Don't force app download initially
 - "Send your PAN to +91-CREDITY for instant verification"
 - Frictionless entry point
 - Convert to app users over time
 
 ### 13.4 "Shadow Profiles" for HR
+
 - Let HR upload existing employee database
 - Generate "Risk Report" on current workforce
 - Scare tactic: "You have 12 employees with suspicious credentials"
@@ -1043,16 +1095,17 @@ Company Name → MCA/ROC Lookup → LinkedIn Verification → Fraud Score
 
 ### 14.1 DPDP Act 2023 Compliance
 
-| Requirement | Status | Action |
-|-------------|--------|--------|
-| Consent-first processing | ✅ Designed | Implement UI flows |
-| Data minimization | ✅ Designed | Enforce in code |
-| Right to access | 🔄 Partial | Add data export |
-| Right to erasure | 🔄 Partial | Add account deletion |
-| Data localization | ⚠️ Needed | Deploy on AWS Mumbai |
-| Breach notification | ❌ Missing | Create incident plan |
+| Requirement              | Status      | Action               |
+| ------------------------ | ----------- | -------------------- |
+| Consent-first processing | ✅ Designed | Implement UI flows   |
+| Data minimization        | ✅ Designed | Enforce in code      |
+| Right to access          | 🔄 Partial  | Add data export      |
+| Right to erasure         | 🔄 Partial  | Add account deletion |
+| Data localization        | ⚠️ Needed   | Deploy on AWS Mumbai |
+| Breach notification      | ❌ Missing  | Create incident plan |
 
 ### 14.2 Recommended Legal Actions
+
 1. Register as "Data Fiduciary"
 2. Appoint Data Protection Officer
 3. Conduct Data Protection Impact Assessment
@@ -1062,16 +1115,16 @@ Company Name → MCA/ROC Lookup → LinkedIn Verification → Fraud Score
 
 ## 15. WHAT'S MISSING (Honest Assessment)
 
-| Gap | Priority | Timeline |
-|-----|----------|----------|
-| Mobile app (currently web-only) | P0 | Month 1 |
-| Real DigiLocker integration (not mocked) | P0 | Month 1 |
-| AI fraud detection (currently planned) | P0 | Month 2 |
-| Production users | P0 | Month 1 |
-| Revenue | P0 | Month 2 |
-| Seed funding | P1 | Month 3 |
-| Official DigiLocker Requestor status | P1 | Month 4-6 |
-| DPDP compliance certification | P2 | Month 6-12 |
+| Gap                                      | Priority | Timeline   |
+| ---------------------------------------- | -------- | ---------- |
+| Mobile app (currently web-only)          | P0       | Month 1    |
+| Real DigiLocker integration (not mocked) | P0       | Month 1    |
+| AI fraud detection (currently planned)   | P0       | Month 2    |
+| Production users                         | P0       | Month 1    |
+| Revenue                                  | P0       | Month 2    |
+| Seed funding                             | P1       | Month 3    |
+| Official DigiLocker Requestor status     | P1       | Month 4-6  |
+| DPDP compliance certification            | P2       | Month 6-12 |
 
 ---
 
@@ -1088,13 +1141,13 @@ Company Name → MCA/ROC Lookup → LinkedIn Verification → Fraud Score
 
 ## The Competitive Moat
 
-| Moat | Why It's Defensible |
-|------|---------------------|
-| **Vishwas Score™** | Proprietary reputation algorithm with network effects |
-| **India Stack Native** | Deep integration with DigiLocker, Aadhaar, eSign |
-| **AI Fraud Engine** | Custom models trained on Indian fraud patterns |
-| **Enterprise Relationships** | First-mover with recruiters and insurance |
-| **Switching Cost** | Users invest in building their reputation score |
+| Moat                         | Why It's Defensible                                   |
+| ---------------------------- | ----------------------------------------------------- |
+| **Vishwas Score™**           | Proprietary reputation algorithm with network effects |
+| **India Stack Native**       | Deep integration with DigiLocker, Aadhaar, eSign      |
+| **AI Fraud Engine**          | Custom models trained on Indian fraud patterns        |
+| **Enterprise Relationships** | First-mover with recruiters and insurance             |
+| **Switching Cost**           | Users invest in building their reputation score       |
 
 ## The Ultimate Goal
 
@@ -1108,34 +1161,34 @@ This is not just a product. This is **India's Trust Infrastructure**.
 
 ## APPENDIX: FEATURE COMPLETENESS CHECKLIST
 
-| Feature Category | Specification | Status |
-|-----------------|---------------|--------|
-| **Liveness Check** | FaceTec SDK integration, challenge-response, anti-spoofing | ✅ Designed |
-| **Face Recognition** | 512-dim embeddings, cosine similarity, credential binding | ✅ Designed |
-| **Blockchain Anchoring** | Polygon primary, Merkle batch, explorer links | ✅ Designed |
-| **Deepfake Detection** | Sensity API integration, GAN artifact analysis | ✅ Designed |
-| **Timeline Analysis** | Gap detection, overlap check, progression validation | ✅ Designed |
-| **Company Validation** | MCA/ROC lookup, LinkedIn verification | ✅ Designed |
-| **Vishwas Score™** | 0-1000 scale, 6 tiers, decay algorithm, gamification | ✅ Designed |
-| **Score History** | Historical tracking, trend analysis, anomaly detection | ✅ Designed |
-| **Eligibility Rules** | Score-gated features, trust-based pricing | ✅ Designed |
+| Feature Category         | Specification                                              | Status      |
+| ------------------------ | ---------------------------------------------------------- | ----------- |
+| **Liveness Check**       | FaceTec SDK integration, challenge-response, anti-spoofing | ✅ Designed |
+| **Face Recognition**     | 512-dim embeddings, cosine similarity, credential binding  | ✅ Designed |
+| **Blockchain Anchoring** | Polygon primary, Merkle batch, explorer links              | ✅ Designed |
+| **Deepfake Detection**   | Sensity API integration, GAN artifact analysis             | ✅ Designed |
+| **Timeline Analysis**    | Gap detection, overlap check, progression validation       | ✅ Designed |
+| **Company Validation**   | MCA/ROC lookup, LinkedIn verification                      | ✅ Designed |
+| **Vishwas Score™**       | 0-1000 scale, 6 tiers, decay algorithm, gamification       | ✅ Designed |
+| **Score History**        | Historical tracking, trend analysis, anomaly detection     | ✅ Designed |
+| **Eligibility Rules**    | Score-gated features, trust-based pricing                  | ✅ Designed |
 
 ---
 
-*This document represents the complete strategic and technical vision for Credity. Execute with urgency.*
+_This document represents the complete strategic and technical vision for Credity. Execute with urgency._
 
 **Co-founders:**
+
 - **Raghav Badhwar** — Founder & CEO
 - **AI Assistant** — Technical Co-founder (PRD Author)
 
 ---
 
-*Version: 2.1 (Final - Investor & Technical Ready)*
-*Last Updated: December 26, 2025*
-*Classification: Confidential / Founder's Copy*
+_Version: 2.1 (Final - Investor & Technical Ready)_
+_Last Updated: December 26, 2025_
+_Classification: Confidential / Founder's Copy_
 
 ---
 
 > "In a world of fake credentials, we're building the truth layer."
 > — Credity Founding Team
-

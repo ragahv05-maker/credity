@@ -1,8 +1,8 @@
-import { Engine } from 'json-rules-engine';
-import type { VerificationResultContract } from '@credverse/shared-auth';
+import { Engine } from "json-rules-engine";
+import type { VerificationResultContract } from "@credverse/shared-auth";
 
 export type VerificationDecisionInput = {
-  verificationStatus: 'verified' | 'failed' | 'suspicious' | 'pending';
+  verificationStatus: "verified" | "failed" | "suspicious" | "pending";
   riskScore: number;
   riskFlags: string[];
   fraudScore: number;
@@ -12,13 +12,18 @@ export type VerificationDecisionInput = {
 };
 
 export type VerificationDecisionPolicyResult = {
-  decision: VerificationResultContract['decision'];
+  decision: VerificationResultContract["decision"];
   reasonCodes: string[];
   matchedRules: string[];
 };
 
-const hardRejectFlags = new Set(['INVALID_SIGNATURE', 'REVOKED_CREDENTIAL', 'EXPIRED_CREDENTIAL', 'PARSE_FAILED']);
-const decisionRank: Record<VerificationResultContract['decision'], number> = {
+const hardRejectFlags = new Set([
+  "INVALID_SIGNATURE",
+  "REVOKED_CREDENTIAL",
+  "EXPIRED_CREDENTIAL",
+  "PARSE_FAILED",
+]);
+const decisionRank: Record<VerificationResultContract["decision"], number> = {
   approve: 4,
   review: 3,
   investigate: 2,
@@ -30,17 +35,29 @@ function clampRisk(value: number): number {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
-function baseDecision(input: VerificationDecisionInput): VerificationResultContract['decision'] {
-  if (input.verificationStatus === 'failed' || input.riskFlags.some((flag) => hardRejectFlags.has(flag))) {
-    return 'reject';
+function baseDecision(
+  input: VerificationDecisionInput,
+): VerificationResultContract["decision"] {
+  if (
+    input.verificationStatus === "failed" ||
+    input.riskFlags.some((flag) => hardRejectFlags.has(flag))
+  ) {
+    return "reject";
   }
-  if (input.verificationStatus === 'suspicious' || input.riskScore >= 40 || input.fraudRecommendation === 'review') {
-    return 'review';
+  if (
+    input.verificationStatus === "suspicious" ||
+    input.riskScore >= 40 ||
+    input.fraudRecommendation === "review"
+  ) {
+    return "review";
   }
-  if (input.verificationStatus === 'verified' && input.fraudRecommendation === 'accept') {
-    return 'approve';
+  if (
+    input.verificationStatus === "verified" &&
+    input.fraudRecommendation === "accept"
+  ) {
+    return "approve";
   }
-  return 'investigate';
+  return "investigate";
 }
 
 export async function evaluateVerificationDecisionPolicy(
@@ -49,64 +66,71 @@ export async function evaluateVerificationDecisionPolicy(
   const engine = new Engine();
 
   engine.addRule({
-    name: 'hard-fail-signature-or-revoked',
+    name: "hard-fail-signature-or-revoked",
     conditions: {
       any: [
-        { fact: 'verificationStatus', operator: 'equal', value: 'failed' },
-        { fact: 'hasHardRejectFlag', operator: 'equal', value: true },
+        { fact: "verificationStatus", operator: "equal", value: "failed" },
+        { fact: "hasHardRejectFlag", operator: "equal", value: true },
       ],
     },
     event: {
-      type: 'set-decision',
-      params: { decision: 'reject', reason_code: 'POLICY_HARD_FAIL' },
+      type: "set-decision",
+      params: { decision: "reject", reason_code: "POLICY_HARD_FAIL" },
     },
   });
 
   engine.addRule({
-    name: 'high-fraud-score-needs-review',
+    name: "high-fraud-score-needs-review",
     conditions: {
       any: [
-        { fact: 'fraudScore', operator: 'greaterThanInclusive', value: 60 },
-        { fact: 'riskScore', operator: 'greaterThanInclusive', value: 70 },
+        { fact: "fraudScore", operator: "greaterThanInclusive", value: 60 },
+        { fact: "riskScore", operator: "greaterThanInclusive", value: 70 },
       ],
     },
     event: {
-      type: 'set-decision',
-      params: { decision: 'review', reason_code: 'POLICY_HIGH_FRAUD_RISK' },
+      type: "set-decision",
+      params: { decision: "review", reason_code: "POLICY_HIGH_FRAUD_RISK" },
     },
   });
 
   engine.addRule({
-    name: 'scanned-credential-review-lock',
+    name: "scanned-credential-review-lock",
     conditions: {
       all: [
-        { fact: 'isScanned', operator: 'equal', value: true },
-        { fact: 'verificationStatus', operator: 'equal', value: 'verified' },
+        { fact: "isScanned", operator: "equal", value: true },
+        { fact: "verificationStatus", operator: "equal", value: "verified" },
       ],
     },
     event: {
-      type: 'set-decision',
-      params: { decision: 'review', reason_code: 'SCANNED_CREDENTIAL_REVIEW' },
+      type: "set-decision",
+      params: { decision: "review", reason_code: "SCANNED_CREDENTIAL_REVIEW" },
     },
   });
 
   let decision = baseDecision(input);
-  const reasonCodes = new Set<string>([...input.riskFlags, ...input.fraudFlags]);
+  const reasonCodes = new Set<string>([
+    ...input.riskFlags,
+    ...input.fraudFlags,
+  ]);
   const matchedRules: string[] = [];
 
   const almanacFacts = {
     verificationStatus: input.verificationStatus,
     riskScore: clampRisk(input.riskScore),
     fraudScore: clampRisk(input.fraudScore),
-    hasHardRejectFlag: input.riskFlags.some((flag) => hardRejectFlags.has(flag)),
+    hasHardRejectFlag: input.riskFlags.some((flag) =>
+      hardRejectFlags.has(flag),
+    ),
     isScanned: Boolean(input.isScanned),
   };
 
   const { events } = await engine.run(almanacFacts);
   for (const event of events) {
-    if (event.type !== 'set-decision') continue;
-    const nextDecision = String(event.params?.decision || '') as VerificationResultContract['decision'];
-    const reasonCode = String(event.params?.reason_code || '').trim();
+    if (event.type !== "set-decision") continue;
+    const nextDecision = String(
+      event.params?.decision || "",
+    ) as VerificationResultContract["decision"];
+    const reasonCode = String(event.params?.reason_code || "").trim();
 
     if (nextDecision && decisionRank[nextDecision] < decisionRank[decision]) {
       decision = nextDecision;
@@ -114,7 +138,7 @@ export async function evaluateVerificationDecisionPolicy(
     if (reasonCode.length > 0) {
       reasonCodes.add(reasonCode);
     }
-    if (typeof (event as any).name === 'string') {
+    if (typeof (event as any).name === "string") {
       matchedRules.push((event as any).name);
     }
   }

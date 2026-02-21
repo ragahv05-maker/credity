@@ -1,4 +1,4 @@
-import { retry } from '../utils/retry';
+import { retry } from "../utils/retry";
 
 export interface ConfidenceScoringInput {
   claimType: string;
@@ -9,14 +9,14 @@ export interface ConfidenceScoringInput {
 }
 
 export interface ConfidenceScoringResult {
-  version: 'confidence-v1';
-  provider: 'deepseek' | 'gemini' | 'openai' | 'deterministic';
+  version: "confidence-v1";
+  provider: "deepseek" | "gemini" | "openai" | "deterministic";
   confidence: number;
   reason: string;
 }
 
 interface ConfidenceProvider {
-  name: 'deepseek' | 'gemini' | 'openai';
+  name: "deepseek" | "gemini" | "openai";
   score(input: ConfidenceScoringInput, signal: AbortSignal): Promise<number>;
 }
 
@@ -55,7 +55,7 @@ async function fetchJson(url: string, init: RequestInit): Promise<any> {
 
 function parseConfidenceFromText(text: string): number {
   const match = text.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error('provider_unparseable_response');
+  if (!match) throw new Error("provider_unparseable_response");
   const parsed = JSON.parse(match[0]);
   return clamp01(Number(parsed.confidence));
 }
@@ -63,13 +63,13 @@ function parseConfidenceFromText(text: string): number {
 function buildPrompt(input: ConfidenceScoringInput): string {
   return [
     'Return ONLY JSON: {"confidence": number}.',
-    'Estimate authenticity confidence (0..1) for this claim description.',
+    "Estimate authenticity confidence (0..1) for this claim description.",
     `claimType=${input.claimType}`,
     `claimAmount=${input.claimAmount ?? 0}`,
     `timelineCount=${input.timelineCount}`,
     `evidenceCount=${input.evidenceCount}`,
     `description=${input.description}`,
-  ].join('\n');
+  ].join("\n");
 }
 
 function getProviderFromEnv(): ConfidenceProvider | undefined {
@@ -77,33 +77,48 @@ function getProviderFromEnv(): ConfidenceProvider | undefined {
 
   if (process.env.DEEPSEEK_API_KEY) {
     return {
-      name: 'deepseek',
+      name: "deepseek",
       async score(input, signal) {
-        const data = await fetchJson('https://api.deepseek.com/v1/chat/completions', {
-          method: 'POST',
-          signal,
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+        const data = await fetchJson(
+          "https://api.deepseek.com/v1/chat/completions",
+          {
+            method: "POST",
+            signal,
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+            },
+            body: JSON.stringify({
+              model: "deepseek-chat",
+              messages: [{ role: "user", content: promptFor(input) }],
+              temperature: 0,
+            }),
           },
-          body: JSON.stringify({ model: 'deepseek-chat', messages: [{ role: 'user', content: promptFor(input) }], temperature: 0 }),
-        });
-        return parseConfidenceFromText(data?.choices?.[0]?.message?.content ?? '{}');
+        );
+        return parseConfidenceFromText(
+          data?.choices?.[0]?.message?.content ?? "{}",
+        );
       },
     };
   }
 
   if (process.env.GEMINI_API_KEY) {
     return {
-      name: 'gemini',
+      name: "gemini",
       async score(input, signal) {
-        const data = await fetchJson(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
-          method: 'POST',
-          signal,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: promptFor(input) }] }], generationConfig: { temperature: 0 } }),
-        });
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}';
+        const data = await fetchJson(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+          {
+            method: "POST",
+            signal,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: promptFor(input) }] }],
+              generationConfig: { temperature: 0 },
+            }),
+          },
+        );
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
         return parseConfidenceFromText(text);
       },
     };
@@ -111,18 +126,27 @@ function getProviderFromEnv(): ConfidenceProvider | undefined {
 
   if (process.env.OPENAI_API_KEY) {
     return {
-      name: 'openai',
+      name: "openai",
       async score(input, signal) {
-        const data = await fetchJson('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          signal,
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        const data = await fetchJson(
+          "https://api.openai.com/v1/chat/completions",
+          {
+            method: "POST",
+            signal,
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+            },
+            body: JSON.stringify({
+              model: "gpt-4o-mini",
+              messages: [{ role: "user", content: promptFor(input) }],
+              temperature: 0,
+            }),
           },
-          body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: promptFor(input) }], temperature: 0 }),
-        });
-        return parseConfidenceFromText(data?.choices?.[0]?.message?.content ?? '{}');
+        );
+        return parseConfidenceFromText(
+          data?.choices?.[0]?.message?.content ?? "{}",
+        );
       },
     };
   }
@@ -130,9 +154,15 @@ function getProviderFromEnv(): ConfidenceProvider | undefined {
   return undefined;
 }
 
-export async function scoreClaimConfidence(input: ConfidenceScoringInput, options: ScoreOptions = {}): Promise<ConfidenceScoringResult> {
-  const timeoutMs = options.timeoutMs ?? Number(process.env.CONFIDENCE_PROVIDER_TIMEOUT_MS || 3500);
-  const retries = options.retries ?? Number(process.env.CONFIDENCE_PROVIDER_RETRIES || 1);
+export async function scoreClaimConfidence(
+  input: ConfidenceScoringInput,
+  options: ScoreOptions = {},
+): Promise<ConfidenceScoringResult> {
+  const timeoutMs =
+    options.timeoutMs ??
+    Number(process.env.CONFIDENCE_PROVIDER_TIMEOUT_MS || 3500);
+  const retries =
+    options.retries ?? Number(process.env.CONFIDENCE_PROVIDER_RETRIES || 1);
   const provider = options.provider ?? getProviderFromEnv();
 
   if (provider) {
@@ -143,25 +173,29 @@ export async function scoreClaimConfidence(input: ConfidenceScoringInput, option
           maxRetries: retries,
           initialDelayMs: 100,
           maxDelayMs: 500,
-          retryCondition: (error) => /provider_http_5|abort|timeout|fetch|network/i.test(error.message),
-        }
+          retryCondition: (error) =>
+            /provider_http_5|abort|timeout|fetch|network/i.test(error.message),
+        },
       );
 
       return {
-        version: 'confidence-v1',
+        version: "confidence-v1",
         provider: provider.name,
         confidence: clamp01(confidence),
-        reason: 'provider_scored',
+        reason: "provider_scored",
       };
     } catch (error) {
-      console.warn('[ConfidenceScoring] Provider failed, using deterministic fallback:', (error as Error).message);
+      console.warn(
+        "[ConfidenceScoring] Provider failed, using deterministic fallback:",
+        (error as Error).message,
+      );
     }
   }
 
   return {
-    version: 'confidence-v1',
-    provider: 'deterministic',
+    version: "confidence-v1",
+    provider: "deterministic",
     confidence: deterministicConfidence(input),
-    reason: 'deterministic_fallback',
+    reason: "deterministic_fallback",
   };
 }

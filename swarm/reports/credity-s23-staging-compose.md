@@ -152,8 +152,8 @@ services:
       SENTRY_DSN: ${RECRUITER_SENTRY_DSN:-}
       LOG_LEVEL: ${LOG_LEVEL:-info}
 
-# Optional local backing services for staging-in-a-box (disable if managed services are used)
-# Start with: docker compose --profile local-deps up -d
+  # Optional local backing services for staging-in-a-box (disable if managed services are used)
+  # Start with: docker compose --profile local-deps up -d
   postgres:
     profiles: ["local-deps"]
     image: postgres:16-alpine

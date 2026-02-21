@@ -64,12 +64,14 @@ type ComplianceState = {
 const router = Router();
 router.use(apiKeyOrAuthMiddleware);
 
-const hasDatabase = typeof process.env.DATABASE_URL === "string" && process.env.DATABASE_URL.length > 0;
+const hasDatabase =
+  typeof process.env.DATABASE_URL === "string" &&
+  process.env.DATABASE_URL.length > 0;
 const stateStore = hasDatabase
   ? new PostgresStateStore<ComplianceState>({
-    databaseUrl: process.env.DATABASE_URL as string,
-    serviceKey: "issuer-compliance",
-  })
+      databaseUrl: process.env.DATABASE_URL as string,
+      serviceKey: "issuer-compliance",
+    })
   : null;
 
 const state: ComplianceState = {
@@ -121,18 +123,42 @@ function actorFromRequest(req: any): string {
 }
 
 function hashPayload(payload: unknown): string {
-  return createHash('sha256').update(JSON.stringify(payload || null)).digest('hex');
+  return createHash("sha256")
+    .update(JSON.stringify(payload || null))
+    .digest("hex");
 }
 
-function lookupIdempotency(req: any, actorId: string): IdempotencyRecord | null {
-  const key = typeof req.get('Idempotency-Key') === 'string' ? req.get('Idempotency-Key').trim() : '';
+function lookupIdempotency(
+  req: any,
+  actorId: string,
+): IdempotencyRecord | null {
+  const key =
+    typeof req.get("Idempotency-Key") === "string"
+      ? req.get("Idempotency-Key").trim()
+      : "";
   if (!key) return null;
   const bodyHash = hashPayload(req.body);
-  return state.idempotency.find((entry) => entry.key === key && entry.endpoint === req.path && entry.actor === actorId && entry.body_hash === bodyHash) || null;
+  return (
+    state.idempotency.find(
+      (entry) =>
+        entry.key === key &&
+        entry.endpoint === req.path &&
+        entry.actor === actorId &&
+        entry.body_hash === bodyHash,
+    ) || null
+  );
 }
 
-async function storeIdempotency(req: any, actorId: string, statusCode: number, response: Record<string, unknown>): Promise<void> {
-  const key = typeof req.get('Idempotency-Key') === 'string' ? req.get('Idempotency-Key').trim() : '';
+async function storeIdempotency(
+  req: any,
+  actorId: string,
+  statusCode: number,
+  response: Record<string, unknown>,
+): Promise<void> {
+  const key =
+    typeof req.get("Idempotency-Key") === "string"
+      ? req.get("Idempotency-Key").trim()
+      : "";
   if (!key) return;
   state.idempotency.unshift({
     key,
@@ -180,23 +206,39 @@ router.post("/compliance/consents", async (req, res) => {
   if (cached) {
     return res.status(cached.status_code).json(cached.response);
   }
-  const subjectId = typeof req.body?.subject_id === "string" ? req.body.subject_id.trim() : "";
-  const verifierId = typeof req.body?.verifier_id === "string" ? req.body.verifier_id.trim() : "";
-  const purpose = typeof req.body?.purpose === "string" ? req.body.purpose.trim() : "";
+  const subjectId =
+    typeof req.body?.subject_id === "string" ? req.body.subject_id.trim() : "";
+  const verifierId =
+    typeof req.body?.verifier_id === "string"
+      ? req.body.verifier_id.trim()
+      : "";
+  const purpose =
+    typeof req.body?.purpose === "string" ? req.body.purpose.trim() : "";
   const dataElements = Array.isArray(req.body?.data_elements)
-    ? req.body.data_elements.filter((entry: unknown) => typeof entry === "string")
+    ? req.body.data_elements.filter(
+        (entry: unknown) => typeof entry === "string",
+      )
     : [];
   const expiry = typeof req.body?.expiry === "string" ? req.body.expiry : "";
 
-  if (!subjectId || !verifierId || !purpose || dataElements.length === 0 || !expiry) {
+  if (
+    !subjectId ||
+    !verifierId ||
+    !purpose ||
+    dataElements.length === 0 ||
+    !expiry
+  ) {
     return res.status(400).json({
-      error: "subject_id, verifier_id, purpose, data_elements[], and expiry are required",
+      error:
+        "subject_id, verifier_id, purpose, data_elements[], and expiry are required",
     });
   }
 
   const parsedExpiry = new Date(expiry);
   if (Number.isNaN(parsedExpiry.getTime())) {
-    return res.status(400).json({ error: "expiry must be a valid ISO datetime" });
+    return res
+      .status(400)
+      .json({ error: "expiry must be a valid ISO datetime" });
   }
 
   const consent: ConsentRecord = {
@@ -207,33 +249,52 @@ router.post("/compliance/consents", async (req, res) => {
     data_elements: dataElements,
     expiry: parsedExpiry.toISOString(),
     revocation_ts: null,
-    consent_proof: typeof req.body?.consent_proof === "object" && req.body?.consent_proof
-      ? req.body.consent_proof
-      : {
-        issued_by: "credverse-issuer",
-        issued_at: new Date().toISOString(),
-      },
+    consent_proof:
+      typeof req.body?.consent_proof === "object" && req.body?.consent_proof
+        ? req.body.consent_proof
+        : {
+            issued_by: "credverse-issuer",
+            issued_at: new Date().toISOString(),
+          },
     created_at: new Date().toISOString(),
   };
 
   state.consents.unshift(consent);
-  await recordAudit("consent.created", actorId, {
-    consent_id: consent.id,
-    subject_id: consent.subject_id,
-    verifier_id: consent.verifier_id,
-    purpose: consent.purpose,
-  }, {
-    requestId: typeof req.get('X-Request-Id') === 'string' ? req.get('X-Request-Id') : undefined,
-    idempotencyKey: typeof req.get('Idempotency-Key') === 'string' ? req.get('Idempotency-Key') : undefined,
-  });
+  await recordAudit(
+    "consent.created",
+    actorId,
+    {
+      consent_id: consent.id,
+      subject_id: consent.subject_id,
+      verifier_id: consent.verifier_id,
+      purpose: consent.purpose,
+    },
+    {
+      requestId:
+        typeof req.get("X-Request-Id") === "string"
+          ? req.get("X-Request-Id")
+          : undefined,
+      idempotencyKey:
+        typeof req.get("Idempotency-Key") === "string"
+          ? req.get("Idempotency-Key")
+          : undefined,
+    },
+  );
 
-  await storeIdempotency(req, actorId, 201, consent as unknown as Record<string, unknown>);
+  await storeIdempotency(
+    req,
+    actorId,
+    201,
+    consent as unknown as Record<string, unknown>,
+  );
   return res.status(201).json(consent);
 });
 
 router.post("/compliance/consents/:consentId/revoke", async (req, res) => {
   await ensureHydrated();
-  const consent = state.consents.find((item) => item.id === req.params.consentId);
+  const consent = state.consents.find(
+    (item) => item.id === req.params.consentId,
+  );
   if (!consent) {
     return res.status(404).json({ error: "consent not found" });
   }
@@ -250,12 +311,16 @@ router.post("/compliance/consents/:consentId/revoke", async (req, res) => {
 
 router.get("/compliance/data-requests", async (_req, res) => {
   await ensureHydrated();
-  res.json({ count: state.data_requests.length, requests: state.data_requests });
+  res.json({
+    count: state.data_requests.length,
+    requests: state.data_requests,
+  });
 });
 
 router.post("/compliance/data-requests/export", async (req, res) => {
   await ensureHydrated();
-  const subjectId = typeof req.body?.subject_id === "string" ? req.body.subject_id.trim() : "";
+  const subjectId =
+    typeof req.body?.subject_id === "string" ? req.body.subject_id.trim() : "";
   if (!subjectId) {
     return res.status(400).json({ error: "subject_id is required" });
   }
@@ -269,8 +334,13 @@ router.post("/compliance/data-requests/export", async (req, res) => {
     created_at: new Date().toISOString(),
     completed_at: new Date().toISOString(),
     result: {
-      consents: state.consents.filter((consent) => consent.subject_id === subjectId),
-      incidents: state.incidents.filter((incident) => (incident.metadata?.subject_id as string | undefined) === subjectId),
+      consents: state.consents.filter(
+        (consent) => consent.subject_id === subjectId,
+      ),
+      incidents: state.incidents.filter(
+        (incident) =>
+          (incident.metadata?.subject_id as string | undefined) === subjectId,
+      ),
     },
   };
   state.data_requests.unshift(record);
@@ -284,7 +354,8 @@ router.post("/compliance/data-requests/export", async (req, res) => {
 
 router.post("/compliance/data-requests/delete", async (req, res) => {
   await ensureHydrated();
-  const subjectId = typeof req.body?.subject_id === "string" ? req.body.subject_id.trim() : "";
+  const subjectId =
+    typeof req.body?.subject_id === "string" ? req.body.subject_id.trim() : "";
   if (!subjectId) {
     return res.status(400).json({ error: "subject_id is required" });
   }
@@ -293,7 +364,9 @@ router.post("/compliance/data-requests/delete", async (req, res) => {
   }
 
   const beforeCount = state.consents.length;
-  state.consents = state.consents.filter((consent) => consent.subject_id !== subjectId);
+  state.consents = state.consents.filter(
+    (consent) => consent.subject_id !== subjectId,
+  );
 
   const record: DataRequestRecord = {
     id: randomUUID(),
@@ -322,23 +395,37 @@ router.get("/compliance/certin/incidents", async (_req, res) => {
   const now = Date.now();
   const incidents = state.incidents.map((incident) => ({
     ...incident,
-    seconds_to_report_due: Math.max(0, Math.floor((new Date(incident.report_due_at).getTime() - now) / 1000)),
+    seconds_to_report_due: Math.max(
+      0,
+      Math.floor((new Date(incident.report_due_at).getTime() - now) / 1000),
+    ),
   }));
   res.json({ count: incidents.length, incidents });
 });
 
 router.post("/compliance/certin/incidents", async (req, res) => {
   await ensureHydrated();
-  const category = typeof req.body?.category === "string" ? req.body.category.trim() : "";
-  const severity = typeof req.body?.severity === "string" ? req.body.severity.toLowerCase() : "";
+  const category =
+    typeof req.body?.category === "string" ? req.body.category.trim() : "";
+  const severity =
+    typeof req.body?.severity === "string"
+      ? req.body.severity.toLowerCase()
+      : "";
   if (!category || !["low", "medium", "high", "critical"].includes(severity)) {
-    return res.status(400).json({ error: "category and severity are required" });
+    return res
+      .status(400)
+      .json({ error: "category and severity are required" });
   }
 
-  const detectedAt = typeof req.body?.detected_at === "string" ? req.body.detected_at : new Date().toISOString();
+  const detectedAt =
+    typeof req.body?.detected_at === "string"
+      ? req.body.detected_at
+      : new Date().toISOString();
   const detectedDate = new Date(detectedAt);
   if (Number.isNaN(detectedDate.getTime())) {
-    return res.status(400).json({ error: "detected_at must be valid ISO datetime" });
+    return res
+      .status(400)
+      .json({ error: "detected_at must be valid ISO datetime" });
   }
 
   const incident: IncidentRecord = {
@@ -346,10 +433,15 @@ router.post("/compliance/certin/incidents", async (req, res) => {
     category,
     severity: severity as IncidentRecord["severity"],
     detected_at: detectedDate.toISOString(),
-    report_due_at: new Date(detectedDate.getTime() + 6 * 60 * 60 * 1000).toISOString(),
+    report_due_at: new Date(
+      detectedDate.getTime() + 6 * 60 * 60 * 1000,
+    ).toISOString(),
     status: "open",
     log_retention_days: 180,
-    metadata: typeof req.body?.metadata === "object" && req.body?.metadata ? req.body.metadata : {},
+    metadata:
+      typeof req.body?.metadata === "object" && req.body?.metadata
+        ? req.body.metadata
+        : {},
     created_at: new Date().toISOString(),
   };
   state.incidents.unshift(incident);
@@ -365,7 +457,8 @@ router.post("/compliance/certin/incidents", async (req, res) => {
 router.get("/compliance/audit-log/export", async (req, res) => {
   await ensureHydrated();
   const integrity = verifyAuditChain(state.audit_log);
-  const format = typeof req.query?.format === "string" ? req.query.format : "json";
+  const format =
+    typeof req.query?.format === "string" ? req.query.format : "json";
 
   if (format === "ndjson") {
     const lines = state.audit_log.map((event) => JSON.stringify(event));

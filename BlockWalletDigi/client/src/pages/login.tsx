@@ -20,18 +20,22 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-8 text-center">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tighter">Welcome Back</h1>
-          <p className="text-muted-foreground">Authenticate to access your secure wallet.</p>
+          <p className="text-muted-foreground">
+            Authenticate to access your secure wallet.
+          </p>
         </div>
 
-        <motion.div 
+        <motion.div
           className="py-12 flex justify-center"
-          animate={isAuthenticating ? { scale: [1, 1.1, 1], opacity: [1, 0.5, 1] } : {}}
+          animate={
+            isAuthenticating ? { scale: [1, 1.1, 1], opacity: [1, 0.5, 1] } : {}
+          }
           transition={{ repeat: Infinity, duration: 1.5 }}
         >
           <div className="relative">
             <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full" />
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-24 h-24 rounded-full border-2 border-primary/20 hover:border-primary hover:bg-primary/5 transition-all"
               onClick={handleBiometricLogin}
             >
@@ -41,7 +45,10 @@ export default function LoginPage() {
         </motion.div>
 
         <div className="space-y-4">
-          <Button className="w-full h-12 text-lg" onClick={handleBiometricLogin}>
+          <Button
+            className="w-full h-12 text-lg"
+            onClick={handleBiometricLogin}
+          >
             <Fingerprint className="mr-2 h-5 w-5" />
             Unlock with Biometrics
           </Button>

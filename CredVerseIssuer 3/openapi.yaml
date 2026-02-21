@@ -31,23 +31,23 @@ paths:
             type: string
           description: The DID of the issuer (e.g. did:web:credverse.io)
       responses:
-        '200':
+        "200":
           description: Issuer Profile
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  id: 
+                  id:
                     type: string
-                  name: 
+                  name:
                     type: string
                   did:
                     type: string
                   trustStatus:
                     type: string
                     enum: [trusted, verified, unknown, revoked]
-        '404':
+        "404":
           description: Issuer not found
 
   /public/registry/issuers/{id}:
@@ -61,7 +61,7 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Issuer details
 
   /public/issuance/offer/consume:
@@ -75,7 +75,7 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Returns the Credential and VC-JWT
           content:
             application/json:
@@ -104,10 +104,10 @@ paths:
                   type: string
                 email:
                   type: string
-                role: 
+                role:
                   type: string
       responses:
-        '201':
+        "201":
           description: User created
 
   /auth/login:
@@ -126,7 +126,7 @@ paths:
                 password:
                   type: string
       responses:
-        '200':
+        "200":
           description: JWT Tokens
 
   /issuance/credentials/issue:
@@ -146,7 +146,7 @@ paths:
                 recipient:
                   type: object
                   properties:
-                    id: 
+                    id:
                       type: string
                     name:
                       type: string
@@ -155,7 +155,7 @@ paths:
                 credentialData:
                   type: object
       responses:
-        '201':
+        "201":
           description: Credential Created
 
   /issuance/credentials/{id}/offer:
@@ -168,7 +168,7 @@ paths:
           schema:
             type: number
       responses:
-        '200':
+        "200":
           description: Offer Link and QR Data
           content:
             application/json:

@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
 export interface Record {
   id: string;
@@ -6,7 +6,7 @@ export interface Record {
   name: string;
   credential: string;
   date: string;
-  status: 'Issued' | 'Revoked' | 'Pending';
+  status: "Issued" | "Revoked" | "Pending";
   issuer: string;
   department?: string;
   txHash?: string;
@@ -20,8 +20,12 @@ interface AppState {
 
 export const useStore = create<AppState>((set) => ({
   records: [], // No mock data - real credentials come from API
-  addRecord: (record: Record) => set((state: AppState) => ({ records: [record, ...state.records] })),
-  revokeRecord: (id: string) => set((state: AppState) => ({
-    records: state.records.map((r: Record) => r.id === id ? { ...r, status: 'Revoked' } : r)
-  })),
+  addRecord: (record: Record) =>
+    set((state: AppState) => ({ records: [record, ...state.records] })),
+  revokeRecord: (id: string) =>
+    set((state: AppState) => ({
+      records: state.records.map((r: Record) =>
+        r.id === id ? { ...r, status: "Revoked" } : r,
+      ),
+    })),
 }));

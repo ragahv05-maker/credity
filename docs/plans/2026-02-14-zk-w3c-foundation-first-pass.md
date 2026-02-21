@@ -6,6 +6,7 @@ Scope: `/CredVerseIssuer 3`, `/CredVerseRecruiter`, `/BlockWalletDigi`, `/packag
 ## 1) Current Flow Mapping vs W3C DID Core + VC Data Model
 
 ### A. DID lifecycle
+
 - **Current implementation**
   - DID usage is present (`did:key`, `did:web`) in issuance and verification flows.
   - Issuer registry lookup by DID exists (`CredVerseIssuer 3/server/routes/public.ts`, `registry.ts`).
@@ -16,6 +17,7 @@ Scope: `/CredVerseIssuer 3`, `/CredVerseRecruiter`, `/BlockWalletDigi`, `/packag
   - ⚠️ `authentication` / `assertionMethod` relationships are not fully validated against resolved DID Docs.
 
 ### B. VC issuance and representation
+
 - **Current implementation**
   - VC issuance supports `vc+jwt` and `sd-jwt-vc` flows via OID4VCI route surface (`CredVerseIssuer 3/server/routes/standards.ts`).
   - VC payload includes W3C context/type/credentialSubject fields in issuance service (`server/services/issuance.ts`).
@@ -27,6 +29,7 @@ Scope: `/CredVerseIssuer 3`, `/CredVerseRecruiter`, `/BlockWalletDigi`, `/packag
   - ⚠️ Credential status URLs and status method metadata are implementation-defined and need stricter VC DM profile documentation.
 
 ### C. Verification + trust decisioning
+
 - **Current implementation**
   - Verification pipeline runs signature checks, issuer checks, revocation checks, blockchain anchor checks, DID-format checks.
   - V1 contract response is available (`VerificationResultContract`) and used in recruiter routes.
@@ -36,6 +39,7 @@ Scope: `/CredVerseIssuer 3`, `/CredVerseRecruiter`, `/BlockWalletDigi`, `/packag
   - ⚠️ Revocation witness composition is available in parts (status list + anchor proof) but not unified as one contract response for verifier re-use.
 
 ### D. Reputation rail
+
 - **Current implementation**
   - Reputation event ingestion and score computation by DID/user exists (`CredVerseIssuer 3/server/routes/reputation.ts`).
 - **W3C alignment**
@@ -47,6 +51,7 @@ Scope: `/CredVerseIssuer 3`, `/CredVerseRecruiter`, `/BlockWalletDigi`, `/packag
 ## 2) Concrete Implementation Blueprint (Module-Level)
 
 ## Proof generation path
+
 - **Issuer API contract**
   - `POST /api/v1/proofs/generate` in `CredVerseIssuer 3/server/routes/standards.ts`
   - Request/response shared contracts in `packages/shared-auth/src/contracts.ts`
@@ -56,6 +61,7 @@ Scope: `/CredVerseIssuer 3`, `/CredVerseRecruiter`, `/BlockWalletDigi`, `/packag
   - Plug adapters for SD-JWT derivation and ZK backends (circom/snarkjs/plonk)
 
 ## Proof verification path
+
 - **Verifier API contract**
   - `POST /v1/proofs/verify` in `CredVerseRecruiter/server/routes/verification.ts`
   - Uses shared contract: `ProofVerificationRequestContract` / `ProofVerificationResultContract`
@@ -65,6 +71,7 @@ Scope: `/CredVerseIssuer 3`, `/CredVerseRecruiter`, `/BlockWalletDigi`, `/packag
   - Should call envelope-specific verifier (JWT VP / SD-JWT VC / ZK proof verifier)
 
 ## Revocation witness path
+
 - **Unified witness endpoint**
   - `GET /api/v1/proofs/revocation-witness/:credentialId` in `CredVerseIssuer 3/server/routes/standards.ts`
   - Composes:
@@ -72,6 +79,7 @@ Scope: `/CredVerseIssuer 3`, `/CredVerseRecruiter`, `/BlockWalletDigi`, `/packag
     - anchor inclusion proof (`anchor-batch-service.ts`)
 
 ## Selective disclosure path
+
 - **Wallet-side selective disclosure exists**
   - `BlockWalletDigi/server/services/selective-disclosure.ts`
   - `BlockWalletDigi/server/routes/sharing.ts`

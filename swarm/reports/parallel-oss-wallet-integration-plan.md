@@ -1,6 +1,7 @@
 # Parallel OSS Wallet Integration Plan (Track B, Non-Blocking)
 
 ## Objective
+
 Stand up a **separate prototype track** for selective OSS wallet interoperability without blocking Track A delivery. Scope is intentionally surgical: use OSS references (Veramo / OID4VC ecosystem) only for standards-compliance modules and keep existing CredVerse issuance/verification logic as source-of-truth.
 
 ---
@@ -15,6 +16,7 @@ Stand up a **separate prototype track** for selective OSS wallet interoperabilit
   3. Optional canary in non-prod
 
 **Flags (new):**
+
 - `OSS_WALLET_INTEROP_ENABLED=false` (master gate)
 - `OSS_WALLET_INTEROP_MODE=shadow|active` (default `shadow`)
 - `OID4VC_STRICT_CONFORMANCE=false` (tight validation gate)
@@ -40,12 +42,15 @@ Implication: we should **augment adapters/conformance checks**, not replace core
 ## Architecture Decision (selective OSS use only)
 
 ### What OSS is allowed for Track B
+
 Use Veramo/OID4VC references **only** for:
+
 1. Parsing/validation helpers for OID4VCI and OID4VP request/response structures
 2. DID resolution and JOSE/JWT verification abstraction points
 3. Conformance test vectors and interoperability fixtures
 
 ### What stays proprietary/current
+
 1. Credential issuance business rules (tenant/template/issuer policy)
 2. Risk/fraud decisioning
 3. Persistence and activity/audit chain behavior
@@ -56,9 +61,11 @@ Use Veramo/OID4VC references **only** for:
 ## Surgical Module Plan
 
 ### New package (prototype-only)
+
 `packages/oss-wallet-interop/`
 
 Suggested files:
+
 - `packages/oss-wallet-interop/package.json`
 - `packages/oss-wallet-interop/src/index.ts`
 - `packages/oss-wallet-interop/src/types.ts`
@@ -71,6 +78,7 @@ Suggested files:
 - `packages/oss-wallet-interop/tests/*.test.ts`
 
 ### Integration touchpoints (small, flag-protected)
+
 1. **Issuer**
    - `CredVerseIssuer 3/server/routes/standards.ts`
    - Insert optional pre-validation of offer/token/credential payload shapes before issuance.
@@ -89,29 +97,34 @@ Suggested files:
 ## Phased Task Plan
 
 ### Phase 0 — Guardrails (0.5 day)
+
 - Add feature flags and no-op wiring.
 - Add ADR note under `docs/` explaining selective OSS boundary.
 - Exit: zero behavior change with flags off.
 
 ### Phase 1 — Standards Adapter Skeleton (1 day)
+
 - Create `packages/oss-wallet-interop` with strict TypeScript interfaces.
 - Implement pure validators for OID4VCI/OID4VP payload conformance.
 - No external network calls; no key material handling yet.
 - Exit: unit tests for valid/invalid vectors.
 
 ### Phase 2 — Shadow Validation Integration (1–1.5 days)
+
 - Wire adapter in Issuer/Recruiter/Wallet under `OSS_WALLET_INTEROP_MODE=shadow`.
 - Log adapter verdicts but do not block existing flow.
 - Emit counters: `interop_validation_pass`, `interop_validation_fail`, reason codes.
 - Exit: no regression in existing tests.
 
 ### Phase 3 — Active Mode Pilot (1 day)
+
 - Enable blocking only in non-prod for selected endpoints.
 - Enforce strict checks for malformed OID4 payloads.
 - Keep instant rollback via env flag.
 - Exit: conformance + integration suite green.
 
 ### Phase 4 — Hardening (optional)
+
 - Add DID resolution caching policy and replay protections.
 - Add perf budget checks under load.
 
@@ -138,11 +151,14 @@ Suggested files:
 ## Minimal Spike Implementation Path (do now, low blast radius)
 
 ### Spike goal
+
 Prove adapter seam and shadow verdict logging on one endpoint each:
+
 - Issuer: `POST /api/v1/oid4vci/token`
 - Recruiter: `POST /v1/oid4vp/responses`
 
 ### Spike steps
+
 1. Create `packages/oss-wallet-interop` with:
    - `validateOid4vciTokenRequest(body)`
    - `validateOid4vpResponse(body, expectedNonce, expectedState?)`
@@ -156,6 +172,7 @@ Prove adapter seam and shadow verdict logging on one endpoint each:
    - unsupported grant/format fail
 
 ### Expected output from spike
+
 - Demonstrated compatibility with existing flow
 - Objective error taxonomy for future strict mode
 - No changes required to credential model/storage

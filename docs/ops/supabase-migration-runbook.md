@@ -10,7 +10,9 @@
 ## 1.1 Relational schemas (Drizzle)
 
 ### A) `BlockWalletDigi/shared/schema.ts`
+
 Tables:
+
 - `users`
 - `credentials`
 - `activities`
@@ -26,13 +28,17 @@ Tables:
 - `safedate_scores`
 
 Migration currently present:
+
 - `BlockWalletDigi/migrations/0000_fuzzy_cammi.sql`
 
 ### B) `CredVerseIssuer 3/shared/schema.ts`
+
 Enums:
+
 - `trust_status`, `student_status`, `team_role`, `team_status`, `verification_status`, `reputation_category`, `reputation_vertical`, `platform_authority_status`
 
 Tables:
+
 - `tenants`
 - `api_keys`
 - `issuers`
@@ -53,7 +59,9 @@ Tables:
 - `template_designs`
 
 ### C) `CredVerseRecruiter/shared/schema.ts`
+
 Tables:
+
 - `users`
 
 ---
@@ -61,9 +69,11 @@ Tables:
 ## 1.2 JSON state-store persistence (`packages/shared-auth/src/postgres-state-store.ts`)
 
 A generic table is auto-created:
+
 - `credverse_state_store(service_key text primary key, payload jsonb, updated_at timestamptz)`
 
 Known `service_key` values in code:
+
 - `wallet-storage`
 - `issuer-storage`
 - `recruiter-storage`
@@ -82,6 +92,7 @@ Known `service_key` values in code:
 ## 1.3 Runtime fallback behavior (important risk)
 
 Current services can run in-memory if DB is absent unless strict mode enabled:
+
 - `REQUIRE_DATABASE=true` (or `NODE_ENV=production`) enforces DB presence.
 
 This means migration must ensure strict mode is ON in all prod environments before cutover.
@@ -118,6 +129,7 @@ DB_APPLICATION_NAME=credity-<service>
 ```
 
 Per existing app contract (already in repo):
+
 - `REDIS_URL` (issuer/gateway queue/session)
 - `JWT_SECRET`, `JWT_REFRESH_SECRET`
 - `ALLOWED_ORIGINS`
@@ -153,6 +165,7 @@ Per existing app contract (already in repo):
 Use **expand → dual-write → verify → cutover → contract**.
 
 ### Phase A — Preflight
+
 1. Freeze schema changes on main for migration window.
 2. Enable strict persistence in all environments:
    - `REQUIRE_DATABASE=true`
@@ -160,26 +173,31 @@ Use **expand → dual-write → verify → cutover → contract**.
 4. Take source backup.
 
 ### Phase B — Provision + Baseline Schema on Supabase
+
 1. Create Supabase project.
 2. Apply schema in safe order (Section 6).
 3. Create required extensions and enums first.
 
 ### Phase C — Initial Data Backfill
+
 1. Copy relational tables from source -> Supabase.
 2. Copy `credverse_state_store` rows.
 3. Run rowcount/hash verification (Section 7).
 
 ### Phase D — Dual-write window (no downtime)
+
 1. Deploy app update to write to **both source and Supabase** (feature flag).
 2. Read path remains source primary.
 3. Continuously reconcile drift from source->target.
 
 ### Phase E — Cutover
+
 1. Flip read path to Supabase (single feature flag or env switch).
 2. Keep dual-write ON for soak period (24–72h).
 3. Watch SLOs, error rates, DB metrics.
 
 ### Phase F — Finalize
+
 1. Disable writes to source.
 2. Keep source snapshot for rollback window.
 3. Remove dual-write code after stability sign-off.
@@ -216,7 +234,9 @@ Run in this sequence:
    - unique keys, additional operational indexes
 
 ### Namespace collision decision
+
 Because all apps use `public` by default and multiple define `users`, pick one:
+
 - **Preferred:** separate schemas (`wallet.users`, `issuer.users`, `recruiter.users`) and set `search_path` per service.
 - **Minimal-change fallback:** keep current shared `public.users` only if data model compatibility is guaranteed (not recommended).
 
@@ -280,6 +300,7 @@ FROM users;
 ```
 
 Acceptance criteria:
+
 - rowcount deltas = 0 (or documented expected drift)
 - all `service_key` rows present
 - auth/session/token flows pass smoke tests
@@ -290,17 +311,20 @@ Acceptance criteria:
 ## 8) Rollback Plan
 
 Rollback trigger examples:
+
 - p95 latency regression > 30%
 - sustained 5xx increase
 - data mismatch in critical tables
 
 Rollback steps (<= 15 min target):
+
 1. Switch read path back to source DB (feature flag/env rollback).
 2. Keep dual-write ON temporarily to avoid data loss.
 3. Validate critical endpoints.
 4. Announce incident + start reconciliation diff from Supabase back to source.
 
 Post-rollback:
+
 - run diff report (rowcount + key-level comparison)
 - patch source from Supabase writes during failed window if required
 

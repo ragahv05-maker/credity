@@ -6,7 +6,7 @@
  * Step 2: Enter reset code + new password → POST /auth/reset-password
  * On success: navigate back to Auth screen with a toast
  */
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -18,34 +18,34 @@ import {
   Text,
   TextInput,
   View,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { sendForgotPasswordEmail, resetPassword } from '../lib/api-client';
-import { useTheme } from '../theme/ThemeContext';
-import type { ColorPalette } from '../theme/tokens';
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { sendForgotPasswordEmail, resetPassword } from "../lib/api-client";
+import { useTheme } from "../theme/ThemeContext";
+import type { ColorPalette } from "../theme/tokens";
 
 export function ForgotPasswordScreen() {
   const navigation = useNavigation();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
-  const [step, setStep] = useState<'email' | 'reset'>('email');
-  const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
-  const [newPassword, setNewPassword] = useState('');
+  const [step, setStep] = useState<"email" | "reset">("email");
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function onSendCode() {
     if (!email.trim()) {
-      Alert.alert('Missing field', 'Please enter your email address.');
+      Alert.alert("Missing field", "Please enter your email address.");
       return;
     }
     setLoading(true);
     try {
       await sendForgotPasswordEmail(email.trim());
-      setStep('reset');
+      setStep("reset");
     } catch (err: any) {
-      Alert.alert('Error', err?.message || 'Failed to send reset code.');
+      Alert.alert("Error", err?.message || "Failed to send reset code.");
     } finally {
       setLoading(false);
     }
@@ -53,20 +53,23 @@ export function ForgotPasswordScreen() {
 
   async function onResetPassword() {
     if (!code.trim() || !newPassword) {
-      Alert.alert('Missing fields', 'Please fill in both the reset code and your new password.');
+      Alert.alert(
+        "Missing fields",
+        "Please fill in both the reset code and your new password.",
+      );
       return;
     }
     setLoading(true);
     try {
       await resetPassword(email.trim(), code.trim(), newPassword);
-      Alert.alert('Success', 'Your password has been reset. Please sign in.', [
+      Alert.alert("Success", "Your password has been reset. Please sign in.", [
         {
-          text: 'Sign In',
+          text: "Sign In",
           onPress: () => navigation.goBack(),
         },
       ]);
     } catch (err: any) {
-      Alert.alert('Error', err?.message || 'Failed to reset password.');
+      Alert.alert("Error", err?.message || "Failed to reset password.");
     } finally {
       setLoading(false);
     }
@@ -75,9 +78,12 @@ export function ForgotPasswordScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
         <Pressable onPress={() => navigation.goBack()} style={styles.backRow}>
           <Text style={styles.backText}>← Back</Text>
         </Pressable>
@@ -85,10 +91,11 @@ export function ForgotPasswordScreen() {
         <Text style={styles.kicker}>Account recovery</Text>
         <Text style={styles.title}>Reset Password</Text>
 
-        {step === 'email' ? (
+        {step === "email" ? (
           <>
             <Text style={styles.hint}>
-              Enter the email address associated with your account. We'll send a reset code.
+              Enter the email address associated with your account. We'll send a
+              reset code.
             </Text>
             <View style={styles.formCard}>
               <TextInput
@@ -100,7 +107,11 @@ export function ForgotPasswordScreen() {
                 autoCapitalize="none"
                 style={styles.input}
               />
-              <Pressable onPress={onSendCode} style={styles.primaryButton} disabled={loading}>
+              <Pressable
+                onPress={onSendCode}
+                style={styles.primaryButton}
+                disabled={loading}
+              >
                 {loading ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
@@ -112,7 +123,9 @@ export function ForgotPasswordScreen() {
         ) : (
           <>
             <Text style={styles.hint}>
-              A 6-digit code was sent to <Text style={styles.bold}>{email}</Text>. Enter it below along with your new password.
+              A 6-digit code was sent to{" "}
+              <Text style={styles.bold}>{email}</Text>. Enter it below along
+              with your new password.
             </Text>
             <View style={styles.formCard}>
               <TextInput
@@ -132,15 +145,21 @@ export function ForgotPasswordScreen() {
                 secureTextEntry
                 style={styles.input}
               />
-              <Pressable onPress={onResetPassword} style={styles.primaryButton} disabled={loading}>
+              <Pressable
+                onPress={onResetPassword}
+                style={styles.primaryButton}
+                disabled={loading}
+              >
                 {loading ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
                   <Text style={styles.primaryText}>Reset Password</Text>
                 )}
               </Pressable>
-              <Pressable onPress={() => setStep('email')}>
-                <Text style={styles.linkText}>Didn't receive a code? Go back</Text>
+              <Pressable onPress={() => setStep("email")}>
+                <Text style={styles.linkText}>
+                  Didn't receive a code? Go back
+                </Text>
               </Pressable>
             </View>
           </>
@@ -160,29 +179,37 @@ function makeStyles(colors: ColorPalette) {
       gap: 10,
     },
     backRow: { marginBottom: 8 },
-    backText: { color: colors.muted, fontSize: 14, fontFamily: 'Inter_400Regular' },
+    backText: {
+      color: colors.muted,
+      fontSize: 14,
+      fontFamily: "Inter_400Regular",
+    },
     kicker: {
       color: colors.muted,
       fontSize: 12,
-      fontWeight: '700',
-      fontFamily: 'Inter_700Bold',
+      fontWeight: "700",
+      fontFamily: "Inter_700Bold",
       letterSpacing: 0.6,
-      textTransform: 'uppercase',
+      textTransform: "uppercase",
     },
     title: {
       color: colors.text,
       fontSize: 24,
-      fontWeight: '800',
-      fontFamily: 'Inter_800ExtraBold',
+      fontWeight: "800",
+      fontFamily: "Inter_800ExtraBold",
       marginBottom: 4,
     },
     hint: {
       color: colors.muted,
       lineHeight: 20,
-      fontFamily: 'Inter_400Regular',
+      fontFamily: "Inter_400Regular",
       marginBottom: 8,
     },
-    bold: { fontWeight: '700', fontFamily: 'Inter_700Bold', color: colors.text },
+    bold: {
+      fontWeight: "700",
+      fontFamily: "Inter_700Bold",
+      color: colors.text,
+    },
     formCard: {
       backgroundColor: colors.card,
       borderRadius: 16,
@@ -201,7 +228,7 @@ function makeStyles(colors: ColorPalette) {
       borderWidth: 1,
       borderRadius: 12,
       color: colors.text,
-      fontFamily: 'Inter_400Regular',
+      fontFamily: "Inter_400Regular",
       paddingHorizontal: 12,
       paddingVertical: 10,
     },
@@ -210,9 +237,18 @@ function makeStyles(colors: ColorPalette) {
       backgroundColor: colors.primary,
       borderRadius: 12,
       paddingVertical: 12,
-      alignItems: 'center',
+      alignItems: "center",
     },
-    primaryText: { color: '#fff', fontWeight: '700', fontFamily: 'Inter_700Bold' },
-    linkText: { color: colors.muted, textAlign: 'center', fontFamily: 'Inter_400Regular', marginTop: 8 },
+    primaryText: {
+      color: "#fff",
+      fontWeight: "700",
+      fontFamily: "Inter_700Bold",
+    },
+    linkText: {
+      color: colors.muted,
+      textAlign: "center",
+      fontFamily: "Inter_400Regular",
+      marginTop: 8,
+    },
   });
 }

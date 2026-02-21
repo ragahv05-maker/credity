@@ -28,8 +28,8 @@ export const MOCK_CREDENTIALS: Credential[] = [
       standard: "W3C VC v1.1",
       network: "Ethereum",
       contract: "0x123...abc",
-      hash: "0x882...112"
-    }
+      hash: "0x882...112",
+    },
   },
   {
     id: "vc-11234",
@@ -43,8 +43,8 @@ export const MOCK_CREDENTIALS: Credential[] = [
       standard: "Smart Health Card",
       network: "Polygon",
       contract: "0x456...def",
-      hash: "0x776...332"
-    }
+      hash: "0x776...332",
+    },
   },
   {
     id: "vc-00921",
@@ -58,8 +58,8 @@ export const MOCK_CREDENTIALS: Credential[] = [
       standard: "W3C VC v2.0",
       network: "Hyperledger Indy",
       contract: "N/A",
-      hash: "0x991...223"
-    }
+      hash: "0x991...223",
+    },
   },
   {
     id: "vc-33211",
@@ -74,7 +74,7 @@ export const MOCK_CREDENTIALS: Credential[] = [
       standard: "Verifiable Insurance Policy",
       network: "Avalanche",
       contract: "0x789...ghi",
-      hash: "0x445...667"
-    }
-  }
+      hash: "0x445...667",
+    },
+  },
 ];

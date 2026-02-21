@@ -17,9 +17,11 @@ Implemented the CI/CD quality + developer experience upgrade lane requested from
 ## Code and workflow changes
 
 ### 1) Quality gates upgrade (GitHub Actions)
+
 **Updated:** `.github/workflows/quality-gates-ci.yml`
 
 Enhancements:
+
 - Expanded trigger paths to include:
   - `packages/policy-rules/**`
   - `packages/workflows-temporal/**`
@@ -34,7 +36,9 @@ Enhancements:
   - updated release-board mapping line items.
 
 ### 2) Reproducible execution scripts
+
 **Added:** `scripts/ci-quality-lane.mjs`
+
 - Provides deterministic local quality lane orchestration:
   - `npm ci`
   - `npm run lint`
@@ -45,30 +49,37 @@ Enhancements:
   - `ci-evidence/local-quality-lane-summary.md`
 
 **Added:** `scripts/oss-readiness-gate.mjs`
+
 - Implements staged OSS-plan readiness checks.
 - Executes suites only if present; otherwise marks them **skip** (non-failing during staged rollout).
 - Writes evidence summary:
   - `ci-evidence/oss-readiness-summary.md`
 
 ### 3) Root npm workflow upgrades
+
 **Updated:** `package.json`
 
 New scripts:
+
 - `ci:lane:quality`
 - `ci:lane:quality:quick`
 - `ci:oss:readiness`
 
 ### 4) Docs / DevEx improvements
+
 **Added:** `docs/devex/ci-quality-devex-lane.md`
+
 - Documents local commands, CI wiring, and PR workflow recommendations.
 
 **Updated:** `docs/gates/ci-quality-gates.md`
+
 - Expanded gate policy to include:
   - lint gate
   - OSS readiness gate
 - Updated numbering and local-run operator notes.
 
 **Updated:** `README.md`
+
 - Added “CI Quality Lane (local, reproducible)” section and references to the new DevEx doc.
 
 ---
@@ -76,11 +87,13 @@ New scripts:
 ## Validation run performed
 
 Executed:
+
 ```bash
 node scripts/oss-readiness-gate.mjs
 ```
 
 Result:
+
 - Script completed successfully.
 - Generated `ci-evidence/oss-readiness-summary.md`.
 - Current state shows all staged OSS suites as **skip** (expected; packages/tests not yet landed in repo).

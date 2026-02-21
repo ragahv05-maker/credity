@@ -254,53 +254,53 @@ PHASE 3: FRAUD DETECTION & CLAIMS ANALYSIS
 
 ### 2.1 Worldcoin
 
-| Aspect | Details | Credity Implication |
-|--------|---------|---------------------|
-| **Technology** | Iris scanning via custom "Orb" hardware | Hardware-dependent = limited scale |
-| **User Base** | 2M+ World IDs across 40+ countries | Large, but facing global pushback |
-| **Token** | WLD token launched, highly volatile | Token model creates regulatory risk |
-| **Bans** | Kenya, Spain, Portugal, Hong Kong, Brazil, Indonesia, Germany fines | **Banned in India since Feb 2024** |
-| **Business Model** | No revenue; token-based ecosystem | Unsustainable for enterprise |
-| **Privacy** | Biometric database = major concerns | Creates opportunity for privacy-first alternative |
+| Aspect             | Details                                                             | Credity Implication                               |
+| ------------------ | ------------------------------------------------------------------- | ------------------------------------------------- |
+| **Technology**     | Iris scanning via custom "Orb" hardware                             | Hardware-dependent = limited scale                |
+| **User Base**      | 2M+ World IDs across 40+ countries                                  | Large, but facing global pushback                 |
+| **Token**          | WLD token launched, highly volatile                                 | Token model creates regulatory risk               |
+| **Bans**           | Kenya, Spain, Portugal, Hong Kong, Brazil, Indonesia, Germany fines | **Banned in India since Feb 2024**                |
+| **Business Model** | No revenue; token-based ecosystem                                   | Unsustainable for enterprise                      |
+| **Privacy**        | Biometric database = major concerns                                 | Creates opportunity for privacy-first alternative |
 
 **Critical Insight:** Worldcoin's hardware dependency and privacy concerns have led to bans in 9+ countries, including India. Their $250M+ funding hasn't translated to a viable business model. **India is lost to them.**
 
 ### 2.2 Humanity Protocol
 
-| Aspect | Details | Credity Implication |
-|--------|---------|---------------------|
-| **Technology** | Palm-scan via smartphone camera | Software-only = better than Worldcoin |
-| **Funding** | $50M at $1.1B valuation | Well-funded competitor |
-| **User Base** | 5M+ Human IDs | Growing but Web3-focused |
-| **Token** | $H token launched; **crashed 85% in 48 hours** | Token volatility kills trust |
-| **Focus** | Web3 identity, NOT enterprise fraud | No overlap with Credity's B2B focus |
-| **Partnerships** | Mastercard (Q1 2026), Polygon | Strong but crypto-adjacent |
+| Aspect           | Details                                        | Credity Implication                   |
+| ---------------- | ---------------------------------------------- | ------------------------------------- |
+| **Technology**   | Palm-scan via smartphone camera                | Software-only = better than Worldcoin |
+| **Funding**      | $50M at $1.1B valuation                        | Well-funded competitor                |
+| **User Base**    | 5M+ Human IDs                                  | Growing but Web3-focused              |
+| **Token**        | $H token launched; **crashed 85% in 48 hours** | Token volatility kills trust          |
+| **Focus**        | Web3 identity, NOT enterprise fraud            | No overlap with Credity's B2B focus   |
+| **Partnerships** | Mastercard (Q1 2026), Polygon                  | Strong but crypto-adjacent            |
 
 **Critical Insight:** Humanity Protocol is the closest competitor technically, but their Web3/token focus ignores the $120B enterprise fraud market. Their token crash severely damaged credibility. **We should NOT follow their token model.**
 
 ### 2.3 Polygon ID / Billions Network
 
-| Aspect | Details | Credity Implication |
-|--------|---------|---------------------|
-| **Technology** | zkProofs for identity verification | Most advanced privacy tech |
-| **Evolution** | Polygon ID → Privado ID → Billions Network (Feb 2025) | Brand confusion |
-| **Funding** | $30M (Aug 2025), backed by Polychain, Coinbase | Well-funded but niche |
-| **User Base** | 1.1M verified users; 9,000+ integrations | Enterprise-focused = DIRECT competitor |
-| **Partnerships** | Deutsche Bank, HSBC, TikTok, **Aadhaar integration** | **Key threat: They're already integrating with India Stack** |
-| **Differentiator** | No biometrics, no hardware—passport + phone | Most user-friendly approach |
+| Aspect             | Details                                               | Credity Implication                                          |
+| ------------------ | ----------------------------------------------------- | ------------------------------------------------------------ |
+| **Technology**     | zkProofs for identity verification                    | Most advanced privacy tech                                   |
+| **Evolution**      | Polygon ID → Privado ID → Billions Network (Feb 2025) | Brand confusion                                              |
+| **Funding**        | $30M (Aug 2025), backed by Polychain, Coinbase        | Well-funded but niche                                        |
+| **User Base**      | 1.1M verified users; 9,000+ integrations              | Enterprise-focused = DIRECT competitor                       |
+| **Partnerships**   | Deutsche Bank, HSBC, TikTok, **Aadhaar integration**  | **Key threat: They're already integrating with India Stack** |
+| **Differentiator** | No biometrics, no hardware—passport + phone           | Most user-friendly approach                                  |
 
 **Critical Insight:** Billions Network is the most sophisticated competitor and is **already integrating with Aadhaar**. This is a direct threat to Credity in India. However, they are still blockchain-heavy and haven't yet solved the "claims validation" and "evidence authentication" layers.
 
 ### 2.4 DigiLocker
 
-| Aspect | Details | Credity Implication |
-|--------|---------|---------------------|
-| **Adoption** | 513M+ users (40% of India's population) | **Massive installed base** |
-| **Documents** | Government-issued only (verifiable) | Only "issued" docs are legal |
-| **Limitations** | Low trust, usability issues, no fraud detection | **Major opportunity** |
-| **API** | OAuth 2.0 API available for integration | We MUST integrate, not compete |
-| **Cost** | Free for users, free for government issuers | Zero revenue model |
-| **Security** | OTP-based; SIM vulnerabilities reported | Security gaps we can address |
+| Aspect          | Details                                         | Credity Implication            |
+| --------------- | ----------------------------------------------- | ------------------------------ |
+| **Adoption**    | 513M+ users (40% of India's population)         | **Massive installed base**     |
+| **Documents**   | Government-issued only (verifiable)             | Only "issued" docs are legal   |
+| **Limitations** | Low trust, usability issues, no fraud detection | **Major opportunity**          |
+| **API**         | OAuth 2.0 API available for integration         | We MUST integrate, not compete |
+| **Cost**        | Free for users, free for government issuers     | Zero revenue model             |
+| **Security**    | OTP-based; SIM vulnerabilities reported         | Security gaps we can address   |
 
 **Critical Insight:** DigiLocker is NOT a competitor—it's **infrastructure** we must build on top of. It has the users but lacks trust scoring, fraud detection, and verifiable credential portability. **Credity should be the "intelligent layer" on top of DigiLocker.**
 
@@ -310,16 +310,16 @@ PHASE 3: FRAUD DETECTION & CLAIMS ANALYSIS
 
 ### 3.1 What Competitors DON'T Do
 
-| Capability |           Worldcoin | Humanity | Billions | DigiLocker | **Credity** |
-|------------|-----------|----------|----------|------------|-------------|
-| Identity Verification | ✅ |        ✅ |         ✅ |       ✅ |         ✅ |
-| Claims Validation | ❌ | ❌ | ❌ | ❌ | **✅** |
-| Evidence Authentication | ❌ | ❌ | ❌ | ❌ | **✅** |
-| Fraud Detection AI | ❌ | ❌ | Partial | ❌ | **✅** |
-| Trust Score | ❌ | Partial | Partial | ❌ | **✅** |
-| India Stack Native | ❌ (Banned) | ❌ | Partial | Core | **✅** |
-| Enterprise SaaS Revenue | ❌ | ❌ | Partial | ❌ | **✅** |
-| Works Without Blockchain | ❌ | ❌ | ❌ | ✅ | **✅** |
+| Capability               | Worldcoin   | Humanity | Billions | DigiLocker | **Credity** |
+| ------------------------ | ----------- | -------- | -------- | ---------- | ----------- |
+| Identity Verification    | ✅          | ✅       | ✅       | ✅         | ✅          |
+| Claims Validation        | ❌          | ❌       | ❌       | ❌         | **✅**      |
+| Evidence Authentication  | ❌          | ❌       | ❌       | ❌         | **✅**      |
+| Fraud Detection AI       | ❌          | ❌       | Partial  | ❌         | **✅**      |
+| Trust Score              | ❌          | Partial  | Partial  | ❌         | **✅**      |
+| India Stack Native       | ❌ (Banned) | ❌       | Partial  | Core       | **✅**      |
+| Enterprise SaaS Revenue  | ❌          | ❌       | Partial  | ❌         | **✅**      |
+| Works Without Blockchain | ❌          | ❌       | ❌       | ✅         | **✅**      |
 
 ### 3.2 The Unclaimed Opportunity
 
@@ -380,27 +380,30 @@ PHASE 3: FRAUD DETECTION & CLAIMS ANALYSIS
 
 ### Recommendation 1: DROP the Blockchain Narrative
 
-| Current State | Proposed Change | Rationale |
-|---------------|-----------------|-----------|
+| Current State                     | Proposed Change                         | Rationale                                                                         |
+| --------------------------------- | --------------------------------------- | --------------------------------------------------------------------------------- |
 | "Blockchain-anchored credentials" | "Cryptographically-secured credentials" | Blockchain adds complexity, scares enterprises, and isn't required for core value |
-| Polygon dependency | Optional anchoring | Keep blockchain as premium feature, not core requirement |
-| Web3 wallet metaphors | "Digital Locker" metaphors | Align with DigiLocker mental model |
+| Polygon dependency                | Optional anchoring                      | Keep blockchain as premium feature, not core requirement                          |
+| Web3 wallet metaphors             | "Digital Locker" metaphors              | Align with DigiLocker mental model                                                |
 
 **Why:** Every Web3 identity project (Worldcoin, Humanity) is struggling. Enterprise buyers don't care about blockchain—they care about fraud reduction and compliance. Billions Network is the only zkProof player gaining traction, and they're succeeding despite blockchain, not because of it.
 
 ### Recommendation 2: DigiLocker-FIRST Integration
 
 **Phase 1 (Immediate):**
+
 - Implement full DigiLocker API integration
 - Allow users to import ALL documents, not just simulation
 - Display DigiLocker-imported documents prominently
 
 **Phase 2:**
+
 - Become a "DigiLocker Requestor" (official government partnership)
 - Allow enterprises to request documents via Credity (we become the trusted intermediary)
 - Add value DigiLocker can't: Trust Score, Fraud Detection, Cross-validation
 
 **Phase 3:**
+
 - Push issuers (universities) to issue directly to DigiLocker
 - Credity focuses purely on verification layer, not credential storage
 
@@ -409,12 +412,14 @@ PHASE 3: FRAUD DETECTION & CLAIMS ANALYSIS
 Current state: "AI-powered" is marketing, not reality.
 
 **Immediate Actions:**
+
 1. Deploy document tampering detection (OpenCV + EXIF analysis)
 2. Implement face-matching between ID and liveness
 3. Build timeline analysis for claims (detect impossible sequences)
 4. Train fraud pattern classifier on public datasets
 
 **Medium-term:**
+
 1. LLM-powered "Evidence Analyzer" for insurance claims
 2. Resume fraud detection (fake companies, inflated titles)
 3. Deepfake detection for video KYC
@@ -424,6 +429,7 @@ Current state: "AI-powered" is marketing, not reality.
 **Problem:** BlockWallet Digi is web-only. In India, 90% of internet users are mobile-first.
 
 **Solution:**
+
 - Prioritize React Native mobile app
 - Biometric auth (fingerprint/face) is native to mobile
 - Push notifications for credential requests
@@ -435,18 +441,19 @@ Current state: "AI-powered" is marketing, not reality.
 
 **Proposed Pricing (India Market):**
 
-| Tier | Price | Usage | Target |
-|------|-------|-------|--------|
-| **Starter** | Free | 100 verifications/month | Developers, startups |
-| **Growth** | ₹25,000/month | 2,500 verifications | Mid-size recruiters |
-| **Enterprise** | Custom (₹2L+/year) | Unlimited | Insurance, large HR |
-| **Per-Verification** | ₹10-50/verification | Pay-as-you-go | Insurance claims |
+| Tier                 | Price               | Usage                   | Target               |
+| -------------------- | ------------------- | ----------------------- | -------------------- |
+| **Starter**          | Free                | 100 verifications/month | Developers, startups |
+| **Growth**           | ₹25,000/month       | 2,500 verifications     | Mid-size recruiters  |
+| **Enterprise**       | Custom (₹2L+/year)  | Unlimited               | Insurance, large HR  |
+| **Per-Verification** | ₹10-50/verification | Pay-as-you-go           | Insurance claims     |
 
 **Revenue Target:** ₹1 crore ARR in 12 months with 50 paying customers
 
 ### Recommendation 6: Regulatory Proactive Compliance
 
 **DPDP Act 2023 Requirements:**
+
 - Explicit consent for all data processing ✅ (Already in design)
 - Data minimization ✅ (Zero-knowledge sharing)
 - Right to erasure ✅ (Credential deletion)
@@ -460,14 +467,14 @@ Current state: "AI-powered" is marketing, not reality.
 
 ### 6.1 Leverage India Stack Fully
 
-| India Stack Component | How Credity Integrates |
-|----------------------|------------------------|
-| **Aadhaar** | e-KYC for user identity verification (₹6/verification) |
-| **DigiLocker** | Import government documents; request as Requestor |
-| **UPI** | Payment for enterprise subscriptions |
-| **ONDC** | Identity verification for sellers/buyers on open network |
-| **Account Aggregator** | Financial data for trust scoring (with consent) |
-| **e-Sign** | Legally binding credential issuance |
+| India Stack Component  | How Credity Integrates                                   |
+| ---------------------- | -------------------------------------------------------- |
+| **Aadhaar**            | e-KYC for user identity verification (₹6/verification)   |
+| **DigiLocker**         | Import government documents; request as Requestor        |
+| **UPI**                | Payment for enterprise subscriptions                     |
+| **ONDC**               | Identity verification for sellers/buyers on open network |
+| **Account Aggregator** | Financial data for trust scoring (with consent)          |
+| **e-Sign**             | Legally binding credential issuance                      |
 
 ### 6.2 India-Specific Use Cases
 
@@ -489,15 +496,15 @@ Current state: "AI-powered" is marketing, not reality.
 
 ### 7.1 Compliance Roadmap
 
-| Requirement | Status | Action Needed |
-|-------------|--------|---------------|
-| Consent-first processing | ✅ Designed | Implement UI consent flows |
-| Data minimization | ✅ Designed | Enforce granular sharing |
-| Right to access | 🔄 Partial | Add data export feature |
-| Right to erasure | 🔄 Partial | Add delete account flow |
-| Data localization | ⚠️ Not addressed | Host on Indian servers (AWS Mumbai / Azure India) |
-| Breach notification | ❌ Missing | Create incident response plan |
-| Children's data | ❌ Missing | Implement age gating (if applicable) |
+| Requirement              | Status           | Action Needed                                     |
+| ------------------------ | ---------------- | ------------------------------------------------- |
+| Consent-first processing | ✅ Designed      | Implement UI consent flows                        |
+| Data minimization        | ✅ Designed      | Enforce granular sharing                          |
+| Right to access          | 🔄 Partial       | Add data export feature                           |
+| Right to erasure         | 🔄 Partial       | Add delete account flow                           |
+| Data localization        | ⚠️ Not addressed | Host on Indian servers (AWS Mumbai / Azure India) |
+| Breach notification      | ❌ Missing       | Create incident response plan                     |
+| Children's data          | ❌ Missing       | Implement age gating (if applicable)              |
 
 ### 7.2 Recommended Legal Structure
 
@@ -541,18 +548,21 @@ Current state: "AI-powered" is marketing, not reality.
 **Answer:** Partially. The core insight—"trust verification is broken"—remains valid. However:
 
 ### What to KEEP:
+
 - Three-pillar model (Identity + Claims + Evidence)
 - Trust Score concept
 - Enterprise B2B focus
 - India-first strategy
 
 ### What to CHANGE:
+
 - De-emphasize blockchain (make optional, not core)
 - Deep DigiLocker integration (build on government infrastructure)
 - Mobile-first wallet
 - Real AI/ML fraud detection (not just marketing)
 
 ### What to KILL:
+
 - Any token plans (don't repeat Humanity Protocol's mistake)
 - Hardware dependency (don't become Worldcoin)
 - "Web3 wallet" branding (confuses Indian users)
@@ -566,6 +576,7 @@ Current state: "AI-powered" is marketing, not reality.
 This is NOT a pivot away from your vision. It's a **strategic refinement** to leverage India's unique digital infrastructure while avoiding the mistakes of Web3 identity projects.
 
 **Next Steps:**
+
 1. Implement full DigiLocker integration (not mock)
 2. Build mobile app
 3. Deploy basic AI fraud detection
@@ -575,4 +586,4 @@ This is NOT a pivot away from your vision. It's a **strategic refinement** to le
 
 ---
 
-*Document prepared for strategic review. Recommendations are based on competitive research conducted December 2025.*
+_Document prepared for strategic review. Recommendations are based on competitive research conducted December 2025._

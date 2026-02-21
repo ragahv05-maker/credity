@@ -5,6 +5,7 @@ Repo: `/Users/raghav/Desktop/credity`
 Owner lane: Agent 4 (`automation-workflows`, `architecture-decision-records`, `production-code-audit`)
 
 ## Scope completed
+
 1. Validated staged runner + method gate scripts.
 2. Prepared exact operator command sequence for staging, then production cutover.
 3. Validated rollback rehearsal checklist and artifacts format.
@@ -15,6 +16,7 @@ Owner lane: Agent 4 (`automation-workflows`, `architecture-decision-records`, `p
 ## 1) Validation — staged runner + method gates
 
 ### Files reviewed
+
 - `scripts/db-migration/run-staged.sh`
 - `scripts/db-migration/00-preflight.sh`
 - `scripts/db-migration/01-schema-baseline.sh`
@@ -25,11 +27,13 @@ Owner lane: Agent 4 (`automation-workflows`, `architecture-decision-records`, `p
 - `scripts/db-migration/env/.env.db-migration.example`
 
 ### Checks executed
+
 - Shell syntax: `bash -n` on all migration shell scripts ✅
 - Executable bits present on all scripts ✅
 - DB migration safety audit: `node scripts/db-migration-safety-check.mjs` ✅ (with warnings)
 
 ### Findings
+
 - **Runner works as deterministic stage orchestrator** (`preflight|schema|backfill|verify|gate|all`).
 - **Method gate is hard-fail capable** on:
   - source/target rowcount mismatch (when `ROWCOUNT_TOLERANCE=0`)
@@ -128,13 +132,16 @@ ls -la scripts/db-migration/artifacts/verify
 Reviewed: `scripts/db-migration/ROLLBACK_REHEARSAL_CHECKLIST.md`.
 
 ### Checklist quality
+
 - Covers timed rollback target (`<=15 min`).
 - Enforces read-path reversal + dual-write grace period.
 - Includes critical smoke path validation.
 - Includes reconciliation drill and exit criteria.
 
 ### Artifact format validation
+
 Expected artifact paths (consistent with scripts):
+
 - `scripts/db-migration/artifacts/credity-full.dump`
 - `scripts/db-migration/artifacts/verify/src-rowcounts-<ts>.txt`
 - `scripts/db-migration/artifacts/verify/tgt-rowcounts-<ts>.txt`
@@ -152,6 +159,7 @@ Result: artifact naming and location are operationally usable for release eviden
 ## 4) Secrets-ready checklist + missing credentials map
 
 ## 4.1 DB cutover required secret/env set
+
 - `SRC_DB_URL` (source direct)
 - `TGT_DB_URL` (supabase direct)
 - `DATABASE_URL` (pooler runtime)
@@ -159,6 +167,7 @@ Result: artifact naming and location are operationally usable for release eviden
 - `REQUIRE_DATABASE=true`
 
 ## 4.2 Runtime hardening/env set (launch gate strict)
+
 - `JWT_SECRET`, `JWT_REFRESH_SECRET`
 - `REDIS_URL`
 - `SENTRY_DSN` or `GATEWAY_SENTRY_DSN`
@@ -171,6 +180,7 @@ Result: artifact naming and location are operationally usable for release eviden
 - chain RPC: one of `SEPOLIA_RPC_URL | CHAIN_RPC_URL | RPC_URL`
 
 ## 4.3 Missing credentials/config map (repo-local observed)
+
 - `scripts/db-migration/env/.env.db-migration.local` → **missing** (must be created per environment).
 - Launch strict gate run against current `.env.launch.local` failed these required checks:
   - `NODE_ENV=production` missing/wrong
@@ -187,6 +197,7 @@ No secret values are included in this report.
 ## 5) Go/No-Go recommendation
 
 Current state: **NO-GO for production cutover** until below are closed:
+
 1. Add and validate `scripts/db-migration/env/.env.db-migration.local` with real prod values.
 2. Pass `LAUNCH_GATE_STRICT=1 node scripts/launch-gate-check.mjs` with production env.
 3. Commit/verify issuer + recruiter SQL migration histories (or formally waive with rollback owner sign-off).

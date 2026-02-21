@@ -3,6 +3,7 @@
 **Date:** 2026-02-21 (IST)  
 **Repo:** `/Users/raghav/Desktop/credity`  
 **Inputs used:**
+
 - `swarm/reports/prod-phase-lane5-oss-benchmark.md`
 - `swarm/reports/prd-gap-matrix-credity12.md`
 - Current code scan of Wallet / Recruiter / Issuer routes, services, and tests
@@ -23,14 +24,17 @@ From the strict gap matrix + current route inventory, the highest-value unresolv
 ## 2) OSS component → concrete Credity service/endpoint mapping
 
 ## A) Temporal (ADOPT runtime)
+
 **Role:** durable orchestration, timers, retries, idempotent long-running workflows
 
 **Credity target modules:**
+
 - F5A dispute SLA timers and escalation
 - F8 verification deadline orchestration (<=5 min)
 - F7 onboarding fast-track orchestration (<=5 min)
 
 **Concrete implementation targets**
+
 - New package: `packages/workflows-temporal/`
   - `src/client.ts` (Temporal connection/bootstrap)
   - `src/workers/dispute-worker.ts`
@@ -46,6 +50,7 @@ From the strict gap matrix + current route inventory, the highest-value unresolv
   - optional `scripts/` worker launch script (for local/staging split)
 
 **API surfaces to wire**
+
 - `POST /api/v1/reputation/disputes`
 - `GET /api/v1/reputation/disputes/:id`
 - `POST /api/v1/reputation/disputes/:id/resolve`
@@ -55,14 +60,17 @@ From the strict gap matrix + current route inventory, the highest-value unresolv
 ---
 
 ## B) json-rules-engine (ADOPT runtime)
+
 **Role:** deterministic policy decisions with explainable reason paths
 
 **Credity target modules:**
+
 - F7 fast-track decisioning (`APPROVE|REVIEW|REJECT`)
 - F5A dispute triage/severity routing
 - F8 verification fallback policy (manual review vs pass)
 
 **Concrete implementation targets**
+
 - New package: `packages/policy-rules/`
   - `src/engine.ts`
   - `src/rules/gig-fasttrack.v1.json`
@@ -77,12 +85,15 @@ From the strict gap matrix + current route inventory, the highest-value unresolv
 ---
 
 ## C) tap-greenhouse patterns (ADOPT pattern, first-party implementation)
+
 **Role:** ATS schema/auth/pagination baseline; no direct embedded Singer runtime required
 
 **Credity target modules:**
+
 - F8 ATS ingestion and normalization
 
 **Concrete implementation targets**
+
 - `CredVerseRecruiter/server/integrations/ats/providers/greenhouse.ts`
 - `CredVerseRecruiter/server/integrations/ats/providers/lever.ts`
 - `CredVerseRecruiter/server/integrations/ats/normalizers/{candidate,application,employment}.ts`
@@ -258,6 +269,7 @@ From the strict gap matrix + current route inventory, the highest-value unresolv
 ## 6) Automation workflow updates (to make execution stick)
 
 Add CI jobs in `.github/workflows/quality-gates-ci.yml` for:
+
 - `packages/policy-rules` tests
 - `packages/workflows-temporal` tests (with Temporal test server/mocks)
 - targeted module SLA contract suites:
@@ -272,6 +284,7 @@ Add artifact upload of SLA timing summaries for regression diffing.
 ## 7) Definition of done for this OSS implementation lane
 
 This lane is complete when:
+
 1. F5A, F7, F8, and F5B endpoints exist and are wired under canonical API prefixes.
 2. Temporal-backed orchestration is running in staging with canary tenants.
 3. json-rules-engine decisions produce auditable reason codes.

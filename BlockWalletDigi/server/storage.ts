@@ -1,10 +1,15 @@
 import {
-  type User, type InsertUser,
-  type Credential, type InsertCredential,
-  type Activity, type InsertActivity,
-  type OtpCode, type InsertOtpCode,
+  type User,
+  type InsertUser,
+  type Credential,
+  type InsertCredential,
+  type Activity,
+  type InsertActivity,
+  type OtpCode,
+  type InsertOtpCode,
   type DeviceFingerprint,
-  type ReputationEvent, type NewReputationEvent,
+  type ReputationEvent,
+  type NewReputationEvent,
   type ReputationScore,
   type SafeDateScore,
 } from "@shared/schema";
@@ -28,13 +33,27 @@ export interface IStorage {
 
   // OTP codes
   createOtpCode(otp: InsertOtpCode): Promise<OtpCode>;
-  getLatestOtpCode(identifier: string, purpose: string): Promise<OtpCode | undefined>;
+  getLatestOtpCode(
+    identifier: string,
+    purpose: string,
+  ): Promise<OtpCode | undefined>;
   markOtpUsed(id: number): Promise<void>;
-  countRecentOtps(identifier: string, purpose: string, windowMs: number): Promise<number>;
+  countRecentOtps(
+    identifier: string,
+    purpose: string,
+    windowMs: number,
+  ): Promise<number>;
 
   // Device fingerprints
-  storeDeviceFingerprint(userId: number, fingerprint: string, ipAddress?: string, userAgent?: string): Promise<void>;
-  getDeviceFingerprint(fingerprint: string): Promise<DeviceFingerprint | undefined>;
+  storeDeviceFingerprint(
+    userId: number,
+    fingerprint: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<void>;
+  getDeviceFingerprint(
+    fingerprint: string,
+  ): Promise<DeviceFingerprint | undefined>;
 
   // User helpers
   getUserByEmail(email: string): Promise<User | undefined>;
@@ -42,15 +61,23 @@ export interface IStorage {
   // Reputation Events
   upsertReputationEvent(event: NewReputationEvent): Promise<ReputationEvent>;
   getReputationEventsByUserId(userId: number): Promise<ReputationEvent[]>;
-  getReputationEventByEventId(eventId: string): Promise<ReputationEvent | undefined>;
+  getReputationEventByEventId(
+    eventId: string,
+  ): Promise<ReputationEvent | undefined>;
 
   // Reputation Scores
   getReputationScore(userId: number): Promise<ReputationScore | undefined>;
-  upsertReputationScore(userId: number, data: Partial<ReputationScore>): Promise<ReputationScore>;
+  upsertReputationScore(
+    userId: number,
+    data: Partial<ReputationScore>,
+  ): Promise<ReputationScore>;
 
   // SafeDate Scores
   getSafeDateScore(userId: number): Promise<SafeDateScore | undefined>;
-  upsertSafeDateScore(userId: number, data: Partial<SafeDateScore>): Promise<SafeDateScore>;
+  upsertSafeDateScore(
+    userId: number,
+    data: Partial<SafeDateScore>,
+  ): Promise<SafeDateScore>;
 
   // Test helpers
   clearReputationData(): Promise<void>;
@@ -166,17 +193,19 @@ export class MemStorage implements IStorage {
 
   async listCredentials(userId: number): Promise<Credential[]> {
     return Array.from(this.credentials.values()).filter(
-      (c) => c.userId === userId && !c.isArchived
+      (c) => c.userId === userId && !c.isArchived,
     );
   }
 
-  async createCredential(insertCredential: InsertCredential): Promise<Credential> {
+  async createCredential(
+    insertCredential: InsertCredential,
+  ): Promise<Credential> {
     const id = this.currentCredentialId++;
     const credential: Credential = {
       ...insertCredential,
       id,
       jwt: insertCredential.jwt ?? null,
-      isArchived: insertCredential.isArchived ?? false
+      isArchived: insertCredential.isArchived ?? false,
     };
     this.credentials.set(id, credential);
     return credential;
@@ -186,7 +215,9 @@ export class MemStorage implements IStorage {
   async listActivities(userId: number): Promise<Activity[]> {
     return Array.from(this.activities.values())
       .filter((a) => a.userId === userId)
-      .sort((a, b) => (b.timestamp?.getTime() ?? 0) - (a.timestamp?.getTime() ?? 0));
+      .sort(
+        (a, b) => (b.timestamp?.getTime() ?? 0) - (a.timestamp?.getTime() ?? 0),
+      );
   }
 
   async createActivity(insertActivity: InsertActivity): Promise<Activity> {
@@ -194,7 +225,7 @@ export class MemStorage implements IStorage {
     const activity: Activity = {
       ...insertActivity,
       id,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
     this.activities.set(id, activity);
     return activity;
@@ -217,11 +248,18 @@ export class MemStorage implements IStorage {
     return record;
   }
 
-  async getLatestOtpCode(identifier: string, purpose: string): Promise<OtpCode | undefined> {
+  async getLatestOtpCode(
+    identifier: string,
+    purpose: string,
+  ): Promise<OtpCode | undefined> {
     return Array.from(this.otpCodes.values())
-      .filter((o) => o.identifier === identifier && o.purpose === purpose && !o.usedAt)
-      .sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0))
-      [0];
+      .filter(
+        (o) =>
+          o.identifier === identifier && o.purpose === purpose && !o.usedAt,
+      )
+      .sort(
+        (a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0),
+      )[0];
   }
 
   async markOtpUsed(id: number): Promise<void> {
@@ -229,7 +267,11 @@ export class MemStorage implements IStorage {
     if (rec) this.otpCodes.set(id, { ...rec, usedAt: new Date() });
   }
 
-  async countRecentOtps(identifier: string, purpose: string, windowMs: number): Promise<number> {
+  async countRecentOtps(
+    identifier: string,
+    purpose: string,
+    windowMs: number,
+  ): Promise<number> {
     const cutoff = new Date(Date.now() - windowMs);
     return Array.from(this.otpCodes.values()).filter(
       (o) =>
@@ -247,7 +289,9 @@ export class MemStorage implements IStorage {
     ipAddress?: string,
     userAgent?: string,
   ): Promise<void> {
-    const existing = Array.from(this.deviceFPs.values()).find((f) => f.fingerprint === fingerprint);
+    const existing = Array.from(this.deviceFPs.values()).find(
+      (f) => f.fingerprint === fingerprint,
+    );
     if (existing) {
       this.deviceFPs.set(existing.id, { ...existing, lastSeenAt: new Date() });
       return;
@@ -264,8 +308,12 @@ export class MemStorage implements IStorage {
     });
   }
 
-  async getDeviceFingerprint(fingerprint: string): Promise<DeviceFingerprint | undefined> {
-    return Array.from(this.deviceFPs.values()).find((f) => f.fingerprint === fingerprint);
+  async getDeviceFingerprint(
+    fingerprint: string,
+  ): Promise<DeviceFingerprint | undefined> {
+    return Array.from(this.deviceFPs.values()).find(
+      (f) => f.fingerprint === fingerprint,
+    );
   }
 
   // User helpers
@@ -274,11 +322,20 @@ export class MemStorage implements IStorage {
   }
 
   // Reputation Events
-  async upsertReputationEvent(event: NewReputationEvent): Promise<ReputationEvent> {
+  async upsertReputationEvent(
+    event: NewReputationEvent,
+  ): Promise<ReputationEvent> {
     // Check if event with this eventId (dedup key) already exists
-    const existing = Array.from(this.repEvents.values()).find((e) => e.eventId === event.eventId);
+    const existing = Array.from(this.repEvents.values()).find(
+      (e) => e.eventId === event.eventId,
+    );
     if (existing) {
-      const updated: ReputationEvent = { ...existing, ...event, id: existing.id, createdAt: existing.createdAt };
+      const updated: ReputationEvent = {
+        ...existing,
+        ...event,
+        id: existing.id,
+        createdAt: existing.createdAt,
+      };
       this.repEvents.set(existing.id, updated);
       return updated;
     }
@@ -301,23 +358,44 @@ export class MemStorage implements IStorage {
     return record;
   }
 
-  async getReputationEventsByUserId(userId: number): Promise<ReputationEvent[]> {
-    return Array.from(this.repEvents.values()).filter((e) => e.userId === userId);
+  async getReputationEventsByUserId(
+    userId: number,
+  ): Promise<ReputationEvent[]> {
+    return Array.from(this.repEvents.values()).filter(
+      (e) => e.userId === userId,
+    );
   }
 
-  async getReputationEventByEventId(eventId: string): Promise<ReputationEvent | undefined> {
-    return Array.from(this.repEvents.values()).find((e) => e.eventId === eventId);
+  async getReputationEventByEventId(
+    eventId: string,
+  ): Promise<ReputationEvent | undefined> {
+    return Array.from(this.repEvents.values()).find(
+      (e) => e.eventId === eventId,
+    );
   }
 
   // Reputation Scores
-  async getReputationScore(userId: number): Promise<ReputationScore | undefined> {
+  async getReputationScore(
+    userId: number,
+  ): Promise<ReputationScore | undefined> {
     return Array.from(this.repScores.values()).find((s) => s.userId === userId);
   }
 
-  async upsertReputationScore(userId: number, data: Partial<ReputationScore>): Promise<ReputationScore> {
-    const existing = Array.from(this.repScores.values()).find((s) => s.userId === userId);
+  async upsertReputationScore(
+    userId: number,
+    data: Partial<ReputationScore>,
+  ): Promise<ReputationScore> {
+    const existing = Array.from(this.repScores.values()).find(
+      (s) => s.userId === userId,
+    );
     if (existing) {
-      const updated: ReputationScore = { ...existing, ...data, id: existing.id, userId, updatedAt: new Date() };
+      const updated: ReputationScore = {
+        ...existing,
+        ...data,
+        id: existing.id,
+        userId,
+        updatedAt: new Date(),
+      };
       this.repScores.set(existing.id, updated);
       return updated;
     }
@@ -341,10 +419,21 @@ export class MemStorage implements IStorage {
     return Array.from(this.sdScores.values()).find((s) => s.userId === userId);
   }
 
-  async upsertSafeDateScore(userId: number, data: Partial<SafeDateScore>): Promise<SafeDateScore> {
-    const existing = Array.from(this.sdScores.values()).find((s) => s.userId === userId);
+  async upsertSafeDateScore(
+    userId: number,
+    data: Partial<SafeDateScore>,
+  ): Promise<SafeDateScore> {
+    const existing = Array.from(this.sdScores.values()).find(
+      (s) => s.userId === userId,
+    );
     if (existing) {
-      const updated: SafeDateScore = { ...existing, ...data, id: existing.id, userId, calculatedAt: new Date() };
+      const updated: SafeDateScore = {
+        ...existing,
+        ...data,
+        id: existing.id,
+        userId,
+        calculatedAt: new Date(),
+      };
       this.sdScores.set(existing.id, updated);
       return updated;
     }
@@ -390,36 +479,80 @@ export class MemStorage implements IStorage {
   }
 
   importState(state: WalletStorageState): void {
-    this.users = new Map((state.users || []).map(([key, value]) => [key, value]));
-    this.credentials = new Map((state.credentials || []).map(([key, value]) => [key, {
-      ...value,
-      issuanceDate: parseDate((value as any).issuanceDate),
-    }]));
-    this.activities = new Map((state.activities || []).map(([key, value]) => [key, {
-      ...value,
-      timestamp: parseDate((value as any).timestamp),
-    }]));
-    this.otpCodes = new Map((state.otpCodes || []).map(([key, value]) => [key, {
-      ...value,
-      expiresAt: parseDate((value as any).expiresAt),
-      createdAt: value.createdAt ? parseDate((value as any).createdAt) : null,
-      usedAt: value.usedAt ? parseDate((value as any).usedAt) : null,
-    }]));
-    this.deviceFPs = new Map((state.deviceFingerprints || []).map(([key, value]) => [key, value]));
-    this.repEvents = new Map((state.reputationEvents || []).map(([key, value]) => [key, {
-      ...value,
-      eventDate: parseDate((value as any).eventDate),
-      createdAt: value.createdAt ? parseDate((value as any).createdAt) : null,
-    }]));
-    this.repScores = new Map((state.reputationScores || []).map(([key, value]) => [key, {
-      ...value,
-      lastCalculatedAt: value.lastCalculatedAt ? parseDate((value as any).lastCalculatedAt) : null,
-      updatedAt: value.updatedAt ? parseDate((value as any).updatedAt) : null,
-    }]));
-    this.sdScores = new Map((state.safeDateScores || []).map(([key, value]) => [key, {
-      ...value,
-      calculatedAt: value.calculatedAt ? parseDate((value as any).calculatedAt) : null,
-    }]));
+    this.users = new Map(
+      (state.users || []).map(([key, value]) => [key, value]),
+    );
+    this.credentials = new Map(
+      (state.credentials || []).map(([key, value]) => [
+        key,
+        {
+          ...value,
+          issuanceDate: parseDate((value as any).issuanceDate),
+        },
+      ]),
+    );
+    this.activities = new Map(
+      (state.activities || []).map(([key, value]) => [
+        key,
+        {
+          ...value,
+          timestamp: parseDate((value as any).timestamp),
+        },
+      ]),
+    );
+    this.otpCodes = new Map(
+      (state.otpCodes || []).map(([key, value]) => [
+        key,
+        {
+          ...value,
+          expiresAt: parseDate((value as any).expiresAt),
+          createdAt: value.createdAt
+            ? parseDate((value as any).createdAt)
+            : null,
+          usedAt: value.usedAt ? parseDate((value as any).usedAt) : null,
+        },
+      ]),
+    );
+    this.deviceFPs = new Map(
+      (state.deviceFingerprints || []).map(([key, value]) => [key, value]),
+    );
+    this.repEvents = new Map(
+      (state.reputationEvents || []).map(([key, value]) => [
+        key,
+        {
+          ...value,
+          eventDate: parseDate((value as any).eventDate),
+          createdAt: value.createdAt
+            ? parseDate((value as any).createdAt)
+            : null,
+        },
+      ]),
+    );
+    this.repScores = new Map(
+      (state.reputationScores || []).map(([key, value]) => [
+        key,
+        {
+          ...value,
+          lastCalculatedAt: value.lastCalculatedAt
+            ? parseDate((value as any).lastCalculatedAt)
+            : null,
+          updatedAt: value.updatedAt
+            ? parseDate((value as any).updatedAt)
+            : null,
+        },
+      ]),
+    );
+    this.sdScores = new Map(
+      (state.safeDateScores || []).map(([key, value]) => [
+        key,
+        {
+          ...value,
+          calculatedAt: value.calculatedAt
+            ? parseDate((value as any).calculatedAt)
+            : null,
+        },
+      ]),
+    );
     this.currentUserId = state.currentUserId || 1;
     this.currentCredentialId = state.currentCredentialId || 1;
     this.currentActivityId = state.currentActivityId || 1;
@@ -432,12 +565,13 @@ export class MemStorage implements IStorage {
 }
 
 const requirePersistentStorage =
-  process.env.NODE_ENV === "production" || process.env.REQUIRE_DATABASE === "true";
+  process.env.NODE_ENV === "production" ||
+  process.env.REQUIRE_DATABASE === "true";
 const databaseUrl = process.env.DATABASE_URL;
 
 if (requirePersistentStorage && !databaseUrl) {
   throw new Error(
-    "[Storage] REQUIRE_DATABASE policy is enabled but DATABASE_URL is missing."
+    "[Storage] REQUIRE_DATABASE policy is enabled but DATABASE_URL is missing.",
   );
 }
 
@@ -454,7 +588,17 @@ function createPersistedStorage(base: MemStorage, dbUrl?: string): MemStorage {
   let hydrated = false;
   let hydrationPromise: Promise<void> | null = null;
   let persistChain = Promise.resolve();
-  const mutatingPrefixes = ["create", "update", "delete", "revoke", "bulk", "store", "mark", "upsert", "clear"];
+  const mutatingPrefixes = [
+    "create",
+    "update",
+    "delete",
+    "revoke",
+    "bulk",
+    "store",
+    "mark",
+    "upsert",
+    "clear",
+  ];
 
   const ensureHydrated = async () => {
     if (hydrated) return;

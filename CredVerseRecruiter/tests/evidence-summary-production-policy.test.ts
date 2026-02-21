@@ -1,16 +1,16 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import { evaluateSafeDate } from '../server/services/safedate';
-import { evaluateWorkScore } from '../server/services/workscore';
+import { afterEach, describe, expect, it } from "vitest";
+import { evaluateSafeDate } from "../server/services/safedate";
+import { evaluateWorkScore } from "../server/services/workscore";
 
-describe('production evidence summary policy', () => {
+describe("production evidence summary policy", () => {
   const originalNodeEnv = process.env.NODE_ENV;
 
   afterEach(() => {
     process.env.NODE_ENV = originalNodeEnv;
   });
 
-  it('requires SafeDate evidence summary in production', () => {
-    process.env.NODE_ENV = 'production';
+  it("requires SafeDate evidence summary in production", () => {
+    process.env.NODE_ENV = "production";
     expect(() =>
       evaluateSafeDate({
         factors: {
@@ -21,11 +21,11 @@ describe('production evidence summary policy', () => {
           risk_checks: 1,
         },
       }),
-    ).toThrow('SafeDate evidence.summary is required in production');
+    ).toThrow("SafeDate evidence.summary is required in production");
   });
 
-  it('requires WorkScore evidence summary in production', () => {
-    process.env.NODE_ENV = 'production';
+  it("requires WorkScore evidence summary in production", () => {
+    process.env.NODE_ENV = "production";
     expect(() =>
       evaluateWorkScore({
         components: {
@@ -37,6 +37,6 @@ describe('production evidence summary policy', () => {
           crossTrust: 1,
         },
       }),
-    ).toThrow('WorkScore evidence.summary is required in production');
+    ).toThrow("WorkScore evidence.summary is required in production");
   });
 });

@@ -1,11 +1,13 @@
 # S18 — Key-management hardening & rotation hooks (CredVerse Issuer)
 
 ## Scope completed
+
 Hardened issuer signing/encryption key handling in `CredVerseIssuer 3` with explicit rotation hooks, safer defaults/warnings, and tests/docs updates while preserving local development behavior.
 
 ## Changes made
 
 ### 1) Hardened VC signer key-management defaults
+
 **File:** `CredVerseIssuer 3/server/services/vc-signer.ts`
 
 - Replaced single-key static behavior with structured in-memory key store per issuer:
@@ -22,6 +24,7 @@ Hardened issuer signing/encryption key handling in `CredVerseIssuer 3` with expl
   - decrypt attempts active key first, then fallback keys.
 
 ### 2) Added rotation hooks
+
 **File:** `CredVerseIssuer 3/server/services/vc-signer.ts`
 
 - `rotateIssuerSigningKey(issuerId)`
@@ -32,7 +35,9 @@ Hardened issuer signing/encryption key handling in `CredVerseIssuer 3` with expl
   - `getKeyManagementStatus(issuerId)`.
 
 ### 3) JWT `kid` behavior improved for rotation
+
 **Files:**
+
 - `CredVerseIssuer 3/server/services/vc-signer.ts`
 - `CredVerseIssuer 3/server/routes/verify.ts`
 
@@ -40,22 +45,28 @@ Hardened issuer signing/encryption key handling in `CredVerseIssuer 3` with expl
 - Verification route now decodes JWT header and resolves issuer public key by `kid` (`getIssuerPublicKey(iss, kid)`), allowing old JWTs to remain verifiable after signer rotation.
 
 ### 4) Tests added
+
 **File:** `CredVerseIssuer 3/tests/vc-signer-key-management.test.ts`
 
 Added coverage for:
+
 - signer-key rotation preserving verification for previously issued JWTs via `kid` lookup.
 - encryption-key rotation hook re-encrypting keys without breaking issuer key retrieval.
 
 Test run:
+
 - `npm test -- tests/vc-signer-key-management.test.ts` ✅ (2 tests passed)
 
 ### 5) Docs / env templates updated
+
 **Files:**
+
 - `DEPLOYMENT.md`
 - `.env.launch.example`
 - `infra/gcp/cloudrun/env.example.yaml`
 
 Updates include:
+
 - documenting `ISSUER_KEY_ENCRYPTION_PREVIOUS` for staged key rotation.
 - explicit `RELAYER_PRIVATE_KEY` requirement/format note.
 - adding issuer encryption secrets to Cloud Run secret examples.

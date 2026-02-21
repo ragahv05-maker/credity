@@ -1,6 +1,6 @@
 // Initialize Sentry BEFORE importing anything else
 import { initSentry, sentryErrorHandler } from "./services/sentry";
-initSentry('credverse-recruiter');
+initSentry("credverse-recruiter");
 
 // Initialize PostHog Analytics
 import { initAnalytics } from "./services/analytics";
@@ -19,19 +19,23 @@ import { metricsHandler, telemetryMiddleware } from "./middleware/telemetry";
 const app = express();
 const httpServer = createServer(app);
 
-const requireDatabase = process.env.NODE_ENV === 'production' || process.env.REQUIRE_DATABASE === 'true';
+const requireDatabase =
+  process.env.NODE_ENV === "production" ||
+  process.env.REQUIRE_DATABASE === "true";
 if (requireDatabase && !process.env.DATABASE_URL) {
-  console.error('[Startup] REQUIRE_DATABASE policy is enabled but DATABASE_URL is missing.');
+  console.error(
+    "[Startup] REQUIRE_DATABASE policy is enabled but DATABASE_URL is missing.",
+  );
   process.exit(1);
 }
 if (requireDatabase) {
-  console.log('[Startup] Database persistence policy is enforced.');
+  console.log("[Startup] Database persistence policy is enforced.");
 }
 
 initAuth({
-  jwtSecret: process.env.JWT_SECRET || '',
-  jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || '',
-  app: 'recruiter',
+  jwtSecret: process.env.JWT_SECRET || "",
+  jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || "",
+  app: "recruiter",
 });
 
 declare module "http" {
@@ -41,29 +45,29 @@ declare module "http" {
 }
 
 // Setup shared security
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
-  'http://localhost:5000',
-  'http://localhost:5001',
-  'http://localhost:5002',
-  'http://localhost:5003',
-  'http://localhost:5173',
-  'http://localhost:3000'
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [
+  "http://localhost:5000",
+  "http://localhost:5001",
+  "http://localhost:5002",
+  "http://localhost:5003",
+  "http://localhost:5173",
+  "http://localhost:3000",
 ];
 
 setupSecurity(app, { allowedOrigins });
 
 app.use(
   express.json({
-    limit: '10mb',
+    limit: "10mb",
     verify: (req, _res, buf) => {
       req.rawBody = buf;
     },
   }),
 );
 
-app.use(express.urlencoded({ extended: false, limit: '10mb' }));
-app.use(telemetryMiddleware('credverse-recruiter'));
-app.get('/api/metrics', metricsHandler('credverse-recruiter'));
+app.use(express.urlencoded({ extended: false, limit: "10mb" }));
+app.use(telemetryMiddleware("credverse-recruiter"));
+app.get("/api/metrics", metricsHandler("credverse-recruiter"));
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {

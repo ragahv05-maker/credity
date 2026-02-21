@@ -3,6 +3,7 @@
 **Scope:** `/Users/raghav/Desktop/credity/CredVerseIssuer 3/contracts`
 
 **Target areas:**
+
 - Emergency revoke flow
 - Idempotency
 - Event integrity
@@ -29,12 +30,15 @@ Current implementation is generally sound for the requested areas: role boundari
 ## What was audited
 
 ### Contract reviewed
+
 - `contracts/CredVerseRegistry.sol`
 
 ### Existing + extended test suite
+
 - `test/CredentialRegistry.test.js`
 
 Extended tests were added to cover:
+
 1. **Event integrity**
    - `IssuerRegistered` payload validation
    - `AnchorSubmitted` timestamp and submitter correctness
@@ -61,6 +65,7 @@ Extended tests were added to cover:
 Both `revokeCredential` (issuer path) and `adminRevokeCredential` (emergency admin path) emit the same event signature. While `revoker` identifies caller, downstream indexers may still benefit from explicit reason/source typing for analytics/compliance.
 
 **Recommendation (optional):**
+
 - Add dedicated event for emergency path, e.g. `CredentialRevokedByAdmin`, or
 - Add an enum/flag argument to current event indicating revocation source.
 
@@ -75,6 +80,7 @@ Both `revokeCredential` (issuer path) and `adminRevokeCredential` (emergency adm
 `whenNotPaused` from OpenZeppelin already enforces pause semantics via `EnforcedPause`/`ExpectedPause`. `ContractPaused` is never used.
 
 **Recommendation (optional):**
+
 - Remove dead custom error to reduce ABI clutter, or
 - Replace OZ pause checks with custom logic only if a project-specific error surface is required.
 

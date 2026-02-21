@@ -345,9 +345,7 @@
         "device_fingerprints_fingerprint_unique": {
           "name": "device_fingerprints_fingerprint_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "fingerprint"
-          ]
+          "columns": ["fingerprint"]
         }
       },
       "policies": {},
@@ -670,9 +668,7 @@
         "subscriptions_razorpay_subscription_id_unique": {
           "name": "subscriptions_razorpay_subscription_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "razorpay_subscription_id"
-          ]
+          "columns": ["razorpay_subscription_id"]
         }
       },
       "policies": {},
@@ -739,9 +735,7 @@
         "users_username_unique": {
           "name": "users_username_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "username"
-          ]
+          "columns": ["username"]
         }
       },
       "policies": {},

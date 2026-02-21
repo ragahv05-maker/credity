@@ -3,12 +3,15 @@
 _Last updated: 2026-02-15 (Asia/Calcutta)_
 
 ## 0) Mission
+
 Move Credity from strict baseline (~5.9/10) to:
+
 - **Tomorrow:** 7.0–7.4/10 (credible ship-quality uplift)
 - **72 hours:** 7.6–8.1/10
 - **10–14 days:** **9.0+/10**
 
 Non-negotiables:
+
 - Preserve **W3C DID/VC** compatibility
 - Preserve **ZK-native** direction
 - No security/quality shortcuts
@@ -19,6 +22,7 @@ Non-negotiables:
 ## 1) 9+/10 Quality Rubric (must pass)
 
 A surface is 9+/10 only if:
+
 1. Weighted score >= 9.0 (task success, speed, recovery, trust clarity, accessibility, reliability)
 2. All global hard gates pass:
    - DID/VC conformance pass
@@ -28,6 +32,7 @@ A surface is 9+/10 only if:
    - Rollback + incident readiness validated
 
 Surface goals:
+
 - Website: message clarity + conversion + lighthouse + accessibility
 - Wallet: high completion for receive/share/prove + recovery UX + crash-free sessions
 - Issuer: reliable issuance/revocation + auditability + schema clarity
@@ -43,6 +48,7 @@ Surface goals:
 - **WS4 QA/Conformance/Evidence**
 
 Cross-cutting SWAT:
+
 - **Dependency SWAT:** any blocker >4h auto-escalates
 - **Evidence Cell:** release artifacts + go/no-go packet
 
@@ -51,6 +57,7 @@ Cross-cutting SWAT:
 ## 3) Critical Path Timeline
 
 ## T+24h (Phase A)
+
 Goal: eliminate weakest points and lock execution controls.
 
 1. Website architecture + visual hierarchy rebuild (highest score lift)
@@ -60,11 +67,13 @@ Goal: eliminate weakest points and lock execution controls.
 5. Latest CI evidence pack refreshed on head
 
 Exit criteria:
+
 - Latest quality-gates CI green
 - Core flows demonstrably stable
 - New score estimate >= 7.0
 
 ## T+72h (Phase B)
+
 Goal: harden reliability and operational confidence.
 
 1. UX consistency pass across all primary flows
@@ -74,10 +83,12 @@ Goal: harden reliability and operational confidence.
 5. Production cutover checklist fully pre-staged
 
 Exit criteria:
+
 - Score estimate >= 7.6
 - Only credential-dependent blockers remain
 
 ## T+10–14d (Phase C)
+
 Goal: premium 9+/10 readiness.
 
 1. Advanced polish (microinteractions, copy precision, mobile excellence)
@@ -86,6 +97,7 @@ Goal: premium 9+/10 readiness.
 4. Controlled pilot feedback loop + last fixes
 
 Exit criteria:
+
 - 9+/10 on rubric
 - Full GO packet approved
 
@@ -94,6 +106,7 @@ Exit criteria:
 ## 4) Master To-Do List (prioritized)
 
 ## P0 (start immediately)
+
 - [ ] Website full hierarchy redesign (not patchwork)
 - [ ] Wallet golden flow: receive -> store -> disclose -> prove
 - [ ] Recruiter decision page clarity + reason-code UX
@@ -102,12 +115,14 @@ Exit criteria:
 - [ ] Release board + CI evidence updated
 
 ## P1
+
 - [ ] Unified design token pass across recruiter/wallet/gateway
 - [ ] Bulk/edge-case UX reliability improvements
 - [ ] Telemetry dashboard for funnel and failures
 - [ ] Alert policy and runbook coverage for top incidents
 
 ## P2
+
 - [ ] Deep polish (motion, content rhythm, doc ergonomics)
 - [ ] Extended ops simulation and drill automation
 - [ ] Secondary integrations and exports refinement
@@ -117,11 +132,13 @@ Exit criteria:
 ## 5) Blocker Matrix (autonomous vs needs user)
 
 Autonomous now:
+
 - Code quality/UX/backend/security hardening
 - CI/test/gate improvements
 - Docs/checklists/evidence generation
 
 Needs user credentials/input:
+
 - Final production secrets and secret manager access
 - Permanent domain/hosting account access and DNS
 - Final chain/wallet approvals for any irreversible cutover
@@ -136,6 +153,7 @@ Needs user credentials/input:
 - **Amber:** over-optimizing one surface hurts end-to-end flow -> prioritize golden-path outcomes
 
 Mitigation:
+
 - Hourly integration checkpoints
 - Merge windows + owner sign-off
 - Evidence-before-claim policy
@@ -153,6 +171,7 @@ Mitigation:
 ## 8) Definition of Done (Program)
 
 Program is done when:
+
 - Quality rubric >=9.0 equivalent achieved and evidenced
 - Hard gates pass consistently
 - Production ops readiness proven (not just documented)
