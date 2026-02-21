@@ -69,7 +69,7 @@ export function validatePasswordStrength(password: string): PasswordValidationRe
     if (!/[0-9]/.test(password)) {
         errors.push('Password must contain at least one number');
     }
-    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    if (!/[!@#$%^&*()_+\-=[\]{};':"\|,.<>/?]/.test(password)) {
         errors.push('Password must contain at least one special character');
     }
 
@@ -122,7 +122,7 @@ export function generateRefreshToken(user: AuthUser): string {
 /**
  * Verify access token
  */
-export function verifyAccessToken(token: string): TokenPayload | null {
+export async function verifyAccessToken(token: string): Promise<TokenPayload | null> {
     try {
         const decoded = jwt.verify(token, EFFECTIVE_JWT_SECRET, { algorithms: [JWT_ALGORITHM] }) as TokenPayload;
         if (decoded.type !== 'access') {
@@ -137,7 +137,7 @@ export function verifyAccessToken(token: string): TokenPayload | null {
 /**
  * Verify refresh token
  */
-export function verifyRefreshToken(token: string): TokenPayload | null {
+export async function verifyRefreshToken(token: string): Promise<TokenPayload | null> {
     try {
         const decoded = jwt.verify(token, EFFECTIVE_JWT_REFRESH_SECRET, { algorithms: [JWT_ALGORITHM] }) as TokenPayload;
         if (decoded.type !== 'refresh') {
@@ -152,28 +152,28 @@ export function verifyRefreshToken(token: string): TokenPayload | null {
 /**
  * Invalidate refresh token (logout)
  */
-export function invalidateRefreshToken(token: string): void {
+export async function invalidateRefreshToken(token: string): Promise<void> {
     void token;
 }
 
 /**
  * Invalidate access token
  */
-export function invalidateAccessToken(token: string): void {
+export async function invalidateAccessToken(token: string): Promise<void> {
     void token;
 }
 
 /**
  * Refresh access token using refresh token
  */
-export function refreshAccessToken(refreshToken: string): { accessToken: string; refreshToken: string } | null {
-    const payload = verifyRefreshToken(refreshToken);
+export async function refreshAccessToken(refreshToken: string): Promise<{ accessToken: string; refreshToken: string } | null> {
+    const payload = await verifyRefreshToken(refreshToken);
     if (!payload) {
         return null;
     }
 
     // Invalidate old refresh token (rotation)
-    invalidateRefreshToken(refreshToken);
+    await invalidateRefreshToken(refreshToken);
 
     const user: AuthUser = {
         id: payload.userId,
@@ -213,7 +213,7 @@ declare global {
 /**
  * JWT Authentication Middleware
  */
-export function authMiddleware(req: Request, res: Response, next: NextFunction): void {
+export async function authMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -222,7 +222,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
     }
 
     const token = authHeader.substring(7);
-    const payload = verifyAccessToken(token);
+    const payload = await verifyAccessToken(token);
 
     if (!payload) {
         res.status(401).json({ error: 'Invalid or expired token' });
@@ -236,12 +236,12 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
 /**
  * Optional auth middleware - doesn't fail if no token
  */
-export function optionalAuthMiddleware(req: Request, res: Response, next: NextFunction): void {
+export async function optionalAuthMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
     const authHeader = req.headers.authorization;
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
         const token = authHeader.substring(7);
-        const payload = verifyAccessToken(token);
+        const payload = await verifyAccessToken(token);
         if (payload) {
             req.user = payload;
         }

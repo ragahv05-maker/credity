@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authMiddleware } from '../services/auth-service';
+import { authMiddleware, TokenPayload } from '../services/auth-service';
 import {
     generateTwoFactorSetup,
     verifyAndEnable,
@@ -17,9 +17,9 @@ const router = Router();
 /**
  * Get 2FA status for current user
  */
-router.get('/2fa/status', authMiddleware, async (req, res) => {
+router.get('/2fa/status', authMiddleware as any, async (req, res) => {
     try {
-        const userId = String(req.user!.userId);
+        const userId = String((req.user as unknown as TokenPayload).userId);
         const status = getTwoFactorStatus(userId);
 
         res.json({
@@ -35,9 +35,9 @@ router.get('/2fa/status', authMiddleware, async (req, res) => {
 /**
  * Begin 2FA setup - generates secret and QR code
  */
-router.post('/2fa/setup', authMiddleware, async (req, res) => {
+router.post('/2fa/setup', authMiddleware as any, async (req, res) => {
     try {
-        const userId = String(req.user!.userId);
+        const userId = String((req.user as unknown as TokenPayload).userId);
         const user = await storage.getUser(userId);
 
         if (!user) {
@@ -67,9 +67,9 @@ router.post('/2fa/setup', authMiddleware, async (req, res) => {
 /**
  * Verify and enable 2FA
  */
-router.post('/2fa/enable', authMiddleware, async (req, res) => {
+router.post('/2fa/enable', authMiddleware as any, async (req, res) => {
     try {
-        const userId = String(req.user!.userId);
+        const userId = String((req.user as unknown as TokenPayload).userId);
         const { token } = req.body;
 
         if (!token || token.length !== 6) {
@@ -172,9 +172,9 @@ router.post('/2fa/verify', async (req, res) => {
 /**
  * Disable 2FA (requires current password)
  */
-router.post('/2fa/disable', authMiddleware, async (req, res) => {
+router.post('/2fa/disable', authMiddleware as any, async (req, res) => {
     try {
-        const userId = String(req.user!.userId);
+        const userId = String((req.user as unknown as TokenPayload).userId);
         const { password, token } = req.body;
 
         if (!password) {
@@ -221,9 +221,9 @@ router.post('/2fa/disable', authMiddleware, async (req, res) => {
 /**
  * Regenerate backup codes
  */
-router.post('/2fa/backup-codes/regenerate', authMiddleware, async (req, res) => {
+router.post('/2fa/backup-codes/regenerate', authMiddleware as any, async (req, res) => {
     try {
-        const userId = String(req.user!.userId);
+        const userId = String((req.user as unknown as TokenPayload).userId);
         const { token } = req.body;
 
         if (!token) {

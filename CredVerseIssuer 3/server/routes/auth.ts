@@ -175,7 +175,7 @@ export { pendingTwoFactorTokens };
 /**
  * Refresh access token
  */
-router.post('/auth/refresh', (req, res) => {
+router.post('/auth/refresh', async (req, res) => {
     try {
         const { refreshToken } = req.body;
 
@@ -183,7 +183,7 @@ router.post('/auth/refresh', (req, res) => {
             return res.status(400).json({ error: 'Refresh token required' });
         }
 
-        const tokens = refreshAccessToken(refreshToken);
+        const tokens = await refreshAccessToken(refreshToken);
         if (!tokens) {
             return res.status(401).json({ error: 'Invalid refresh token' });
         }
@@ -204,18 +204,18 @@ router.post('/auth/refresh', (req, res) => {
 /**
  * Logout - invalidate tokens
  */
-router.post('/auth/logout', authMiddleware as any, (req, res) => {
+router.post('/auth/logout', authMiddleware as any, async (req, res) => {
     try {
         const { refreshToken } = req.body;
         const authHeader = req.headers.authorization;
 
         if (refreshToken) {
-            invalidateRefreshToken(refreshToken);
+            await invalidateRefreshToken(refreshToken);
         }
 
         if (authHeader) {
             const accessToken = authHeader.substring(7);
-            invalidateAccessToken(accessToken);
+            await invalidateAccessToken(accessToken);
         }
 
         res.json({ success: true });
@@ -250,7 +250,7 @@ router.get('/auth/me', authMiddleware as any, async (req, res) => {
  * Verify token - Cross-app token validation endpoint
  * Used by other CredVerse apps to validate tokens from this app
  */
-router.post('/auth/verify-token', (req, res) => {
+router.post('/auth/verify-token', async (req, res) => {
     try {
         const { token } = req.body;
 
@@ -258,7 +258,7 @@ router.post('/auth/verify-token', (req, res) => {
             return res.status(400).json({ valid: false, error: 'Token required' });
         }
 
-        const payload = verifyAccessToken(token);
+        const payload = await verifyAccessToken(token);
 
         if (!payload) {
             return res.status(401).json({ valid: false, error: 'Invalid or expired token' });
