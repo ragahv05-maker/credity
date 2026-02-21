@@ -100,7 +100,8 @@
     "zod-validation-error": "^3.4.0"
   },
   "overrides": {
-    "minimatch": "^10.2.1"
+    "minimatch": "^10.2.1",
+    "@types/node": "$@types/node"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
