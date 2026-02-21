@@ -25,6 +25,8 @@ import {
   History,
   ExternalLink,
   Clipboard,
+  ClipboardPaste,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMutation } from "@tanstack/react-query";
@@ -268,6 +270,23 @@ export default function InstantVerify() {
     setLinkInput("");
   };
 
+  const handlePaste = async (setter: (val: string) => void) => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) {
+        setter(text);
+        toast({ title: "Pasted from clipboard" });
+      }
+    } catch {
+      toast({ title: "Failed to paste", description: "Please allow clipboard access.", variant: "destructive" });
+    }
+  };
+
+  const handleClear = (setter: (val: string) => void) => {
+    setter("");
+    toast({ title: "Cleared input" });
+  };
+
   const getCheckIcon = (status: string) => {
     switch (status) {
       case "passed":
@@ -453,7 +472,30 @@ export default function InstantVerify() {
 
                   <TabsContent value="jwt" className="space-y-4">
                     <div className="space-y-2">
-                      <Label>VC-JWT Token</Label>
+                      <div className="flex items-center justify-between">
+                        <Label>VC-JWT Token</Label>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-xs"
+                            onClick={() => handlePaste(setJwtInput)}
+                            title="Paste from clipboard"
+                          >
+                            <ClipboardPaste className="w-3 h-3 mr-1" /> Paste
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive"
+                            onClick={() => handleClear(setJwtInput)}
+                            disabled={!jwtInput}
+                            title="Clear input"
+                          >
+                            <X className="w-3 h-3 mr-1" /> Clear
+                          </Button>
+                        </div>
+                      </div>
                       <Textarea
                         placeholder="eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9..."
                         className="min-h-[150px] font-mono text-xs"
@@ -468,7 +510,30 @@ export default function InstantVerify() {
 
                   <TabsContent value="link" className="space-y-4">
                     <div className="space-y-2">
-                      <Label>Credential URL</Label>
+                      <div className="flex items-center justify-between">
+                        <Label>Credential URL</Label>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-xs"
+                            onClick={() => handlePaste(setLinkInput)}
+                            title="Paste from clipboard"
+                          >
+                            <ClipboardPaste className="w-3 h-3 mr-1" /> Paste
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive"
+                            onClick={() => handleClear(setLinkInput)}
+                            disabled={!linkInput}
+                            title="Clear input"
+                          >
+                            <X className="w-3 h-3 mr-1" /> Clear
+                          </Button>
+                        </div>
+                      </div>
                       <Input
                         placeholder="https://issuer.example.com/api/v1/public/issuance/offer/consume?token=..."
                         value={linkInput}
