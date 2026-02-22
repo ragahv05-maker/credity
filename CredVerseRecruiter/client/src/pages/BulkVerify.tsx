@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Upload, FileSpreadsheet, Download, CheckCircle2, XCircle, AlertCircle, Loader2, ShieldAlert, Clipboard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Papa from "papaparse";
@@ -275,6 +276,7 @@ export default function BulkVerify() {
                 {isProcessing ? "Processing..." : "Select CSV File"}
               </Button>
               <Button variant="outline" onClick={downloadTemplate}>
+                <Download className="w-4 h-4 mr-2" />
                 Download Template
               </Button>
             </div>
@@ -359,15 +361,26 @@ export default function BulkVerify() {
                       <TableCell className="text-right">
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button size="sm" variant="outline">View</Button>
+                            <Button size="sm" variant="outline" aria-label={`View details for ${row.name}`}>
+                              View
+                            </Button>
                           </DialogTrigger>
                           <DialogContent className="max-w-2xl">
                             <DialogHeader>
                               <DialogTitle className="flex items-center justify-between gap-4">
-                                <span className="truncate">{row.name} — {renderDecisionBadge(row)}</span>
-                                <Button size="sm" variant="ghost" onClick={() => copyToClipboard(row.id)}>
-                                  <Clipboard className="w-4 h-4" />
-                                </Button>
+                                <span className="truncate">
+                                  {row.name} — {renderDecisionBadge(row)}
+                                </span>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button size="sm" variant="ghost" onClick={() => copyToClipboard(row.id)} aria-label="Copy Verification ID">
+                                      <Clipboard className="w-4 h-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Copy Verification ID</p>
+                                  </TooltipContent>
+                                </Tooltip>
                               </DialogTitle>
                             </DialogHeader>
 

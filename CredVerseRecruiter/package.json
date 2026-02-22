@@ -111,7 +111,7 @@
     "@types/express-session": "^1.18.0",
     "@types/hpp": "^0.2.7",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^20.19.0",
+    "@types/node": "^20.19.33",
     "@types/passport": "^1.0.16",
     "@types/passport-local": "^1.0.38",
     "@types/react": "^19.2.0",
@@ -139,5 +139,8 @@
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
+  },
+  "overrides": {
+    "minimatch": "^10.2.1"
   }
 }
