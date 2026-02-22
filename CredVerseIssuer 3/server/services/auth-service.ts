@@ -201,15 +201,6 @@ export function hashApiKey(apiKey: string): string {
     return crypto.createHash('sha256').update(apiKey).digest('hex');
 }
 
-// Express middleware types
-declare global {
-    namespace Express {
-        interface Request {
-            user?: TokenPayload;
-        }
-    }
-}
-
 /**
  * JWT Authentication Middleware
  */

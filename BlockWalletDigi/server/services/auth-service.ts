@@ -33,7 +33,7 @@ const refreshTokens = new Map<string, {
     sessionStartedAt: Date;
     sessionId: string;
 }>();
-const invalidatedTokens = new Set<string>();
+const invalidatedTokens = new Map<string, number>();
 
 export interface AuthUser {
     id: number;
@@ -188,10 +188,37 @@ export function invalidateRefreshToken(token: string): void {
  * Invalidate access token
  */
 export function invalidateAccessToken(token: string): void {
-    invalidatedTokens.add(token);
+    try {
+        // Decode token to get expiration
+        const decoded = jwt.decode(token) as { exp?: number } | null;
+
+        // Optimization: If token is malformed, we don't need to blacklist it
+        // because verifyAccessToken will fail signature/format checks anyway.
+        if (!decoded) return;
+
+        // Default to 1 hour if no exp found
+        const expiry = decoded?.exp ? decoded.exp * 1000 : Date.now() + 60 * 60 * 1000;
+
+        invalidatedTokens.set(token, expiry);
+    } catch {
+        // Ignore invalid tokens
+        return;
+    }
+
     // Clean up old tokens periodically
     if (invalidatedTokens.size > 10000) {
-        invalidatedTokens.clear();
+        const now = Date.now();
+        for (const [t, exp] of invalidatedTokens.entries()) {
+            if (now > exp) {
+                invalidatedTokens.delete(t);
+            }
+        }
+
+        // If still full, evict oldest to prevent memory leak
+        if (invalidatedTokens.size > 10000) {
+            const firstKey = invalidatedTokens.keys().next().value;
+            if (firstKey) invalidatedTokens.delete(firstKey);
+        }
     }
 }
 
