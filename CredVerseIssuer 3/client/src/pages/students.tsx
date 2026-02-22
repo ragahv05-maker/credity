@@ -47,7 +47,7 @@ import {
     Search, Upload, Plus, MoreHorizontal, GraduationCap, User, FileCheck, Download,
     Loader2, Eye, Edit, FileText, Award, Mail, Phone, Calendar, MapPin, Smartphone
 } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
@@ -375,18 +375,22 @@ export default function Students() {
         setIsIssueOpen(true);
     };
 
-    const filteredStudents = students.filter(student =>
-        student.name.toLowerCase().includes(search.toLowerCase()) ||
-        student.studentId.toLowerCase().includes(search.toLowerCase()) ||
-        student.email.toLowerCase().includes(search.toLowerCase())
-    );
+    const filteredStudents = useMemo(() => {
+        const query = search.toLowerCase();
+        if (!query) return students;
+        return students.filter(student =>
+            student.name.toLowerCase().includes(query) ||
+            student.studentId.toLowerCase().includes(query) ||
+            student.email.toLowerCase().includes(query)
+        );
+    }, [students, search]);
 
     // Calculate stats
-    const stats = {
+    const stats = useMemo(() => ({
         total: students.length,
         active: students.filter(s => s.status === 'Active').length,
         alumni: students.filter(s => s.status === 'Alumni').length,
-    };
+    }), [students]);
 
     return (
         <Layout>
