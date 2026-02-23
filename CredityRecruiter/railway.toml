@@ -1,6 +1,6 @@
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "CredityRecruiter/Dockerfile"
+dockerfilePath = "Dockerfile"
 
 [deploy]
 startCommand = "npm run start"
