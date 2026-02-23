@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   QrCode,
@@ -25,6 +26,8 @@ import {
   History,
   ExternalLink,
   Clipboard,
+  ClipboardPaste,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMutation } from "@tanstack/react-query";
@@ -404,6 +407,15 @@ export default function InstantVerify() {
     }
   };
 
+  const handlePaste = async (setter: (val: string) => void) => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) setter(text);
+    } catch {
+      toast({ title: "Paste failed", description: "Please paste manually.", variant: "destructive" });
+    }
+  };
+
   return (
     <DashboardLayout title="Instant Verification">
       <div className="max-w-6xl mx-auto">
@@ -454,12 +466,38 @@ export default function InstantVerify() {
                   <TabsContent value="jwt" className="space-y-4">
                     <div className="space-y-2">
                       <Label>VC-JWT Token</Label>
-                      <Textarea
-                        placeholder="eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9..."
-                        className="min-h-[150px] font-mono text-xs"
-                        value={jwtInput}
-                        onChange={(e) => setJwtInput(e.target.value)}
-                      />
+                      <div className="relative">
+                        <Textarea
+                          placeholder="eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9..."
+                          className="min-h-[150px] font-mono text-xs pr-16"
+                          value={jwtInput}
+                          onChange={(e) => setJwtInput(e.target.value)}
+                        />
+                        <div className="absolute top-2 right-2 flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                            onClick={() => handlePaste(setJwtInput)}
+                            title="Paste"
+                          >
+                            <ClipboardPaste className="h-3 w-3" />
+                            <span className="sr-only">Paste JWT</span>
+                          </Button>
+                          {jwtInput && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                              onClick={() => setJwtInput("")}
+                              title="Clear"
+                            >
+                              <X className="h-3 w-3" />
+                              <span className="sr-only">Clear JWT</span>
+                            </Button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                     <Button className="w-full" onClick={() => handleVerify(jwtInput)} disabled={!jwtInput.trim() || verifyMutation.isPending}>
                       {verifyMutation.isPending ? "Verifying..." : "Verify JWT"}
@@ -469,11 +507,38 @@ export default function InstantVerify() {
                   <TabsContent value="link" className="space-y-4">
                     <div className="space-y-2">
                       <Label>Credential URL</Label>
-                      <Input
-                        placeholder="https://issuer.example.com/api/v1/public/issuance/offer/consume?token=..."
-                        value={linkInput}
-                        onChange={(e) => setLinkInput(e.target.value)}
-                      />
+                      <div className="relative">
+                        <Input
+                          placeholder="https://issuer.example.com/api/v1/public/issuance/offer/consume?token=..."
+                          value={linkInput}
+                          onChange={(e) => setLinkInput(e.target.value)}
+                          className="pr-16"
+                        />
+                        <div className="absolute top-0 right-0 h-full flex items-center pr-2 gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                            onClick={() => handlePaste(setLinkInput)}
+                            title="Paste"
+                          >
+                            <ClipboardPaste className="h-3 w-3" />
+                            <span className="sr-only">Paste Link</span>
+                          </Button>
+                          {linkInput && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                              onClick={() => setLinkInput("")}
+                              title="Clear"
+                            >
+                              <X className="h-3 w-3" />
+                              <span className="sr-only">Clear Link</span>
+                            </Button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                     <Button className="w-full" onClick={handleVerifyLink} disabled={!linkInput.trim() || verifyLinkMutation.isPending}>
                       {verifyLinkMutation.isPending ? "Verifying..." : "Verify Link"}
@@ -771,9 +836,15 @@ export default function InstantVerify() {
                                     {typeof evidence.signature?.details?.issuer === "string" && (
                                       <div className="mt-2 flex items-center justify-between gap-2">
                                         <p className="text-xs font-mono text-muted-foreground truncate">Issuer: {String(evidence.signature.details.issuer)}</p>
-                                        <Button variant="ghost" size="sm" onClick={() => copyToClipboard(String(evidence.signature?.details?.issuer))}>
-                                          <Clipboard className="w-4 h-4" />
-                                        </Button>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Button variant="ghost" size="sm" onClick={() => copyToClipboard(String(evidence.signature?.details?.issuer))}>
+                                              <Clipboard className="w-4 h-4" />
+                                              <span className="sr-only">Copy Issuer DID</span>
+                                            </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent>Copy Issuer DID</TooltipContent>
+                                        </Tooltip>
                                       </div>
                                     )}
                                   </div>
@@ -788,9 +859,15 @@ export default function InstantVerify() {
                                     {typeof evidence.issuer?.details?.did === "string" && (
                                       <div className="mt-2 flex items-center justify-between gap-2">
                                         <p className="text-xs font-mono text-muted-foreground truncate">DID: {String(evidence.issuer.details.did)}</p>
-                                        <Button variant="ghost" size="sm" onClick={() => copyToClipboard(String(evidence.issuer?.details?.did))}>
-                                          <Clipboard className="w-4 h-4" />
-                                        </Button>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Button variant="ghost" size="sm" onClick={() => copyToClipboard(String(evidence.issuer?.details?.did))}>
+                                              <Clipboard className="w-4 h-4" />
+                                              <span className="sr-only">Copy Issuer DID</span>
+                                            </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent>Copy Issuer DID</TooltipContent>
+                                        </Tooltip>
                                       </div>
                                     )}
                                   </div>
@@ -801,9 +878,15 @@ export default function InstantVerify() {
                                     {typeof evidence.anchor?.details?.hash === "string" && (
                                       <div className="mt-2 flex items-center justify-between gap-2">
                                         <p className="text-xs font-mono text-muted-foreground truncate">Hash: {String(evidence.anchor.details.hash)}</p>
-                                        <Button variant="ghost" size="sm" onClick={() => copyToClipboard(String(evidence.anchor?.details?.hash))}>
-                                          <Clipboard className="w-4 h-4" />
-                                        </Button>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Button variant="ghost" size="sm" onClick={() => copyToClipboard(String(evidence.anchor?.details?.hash))}>
+                                              <Clipboard className="w-4 h-4" />
+                                              <span className="sr-only">Copy Anchor Hash</span>
+                                            </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent>Copy Anchor Hash</TooltipContent>
+                                        </Tooltip>
                                       </div>
                                     )}
                                     {typeof evidence.anchor?.details?.issuer === "string" && (
