@@ -11,7 +11,7 @@ RUN npm install && npm run build
 
 # Copy service code
 WORKDIR /app
-COPY "Credityer 3" ./service
+COPY "CredityIssuer 3" ./service
 
 # Install service dependencies (shared-auth resolves via file: link)
 WORKDIR /app/service

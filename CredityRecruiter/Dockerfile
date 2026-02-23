@@ -11,7 +11,7 @@ RUN npm install && npm run build
 
 # Copy service code
 WORKDIR /app
-COPY Credityuiter ./service
+COPY CredityRecruiter ./service
 
 # Install service dependencies (shared-auth resolves via file: link)
 WORKDIR /app/service
