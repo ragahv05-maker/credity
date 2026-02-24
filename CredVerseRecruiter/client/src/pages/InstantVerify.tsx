@@ -2,10 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -25,10 +23,18 @@ import {
   History,
   ExternalLink,
   Clipboard,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+  InputGroupTextarea,
+} from "@/components/ui/input-group";
 
 interface VerificationCheck {
   name: string;
@@ -404,6 +410,22 @@ export default function InstantVerify() {
     }
   };
 
+  const handlePaste = async (setter: (val: string) => void) => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) {
+        setter(text);
+        toast({ title: "Pasted", description: "Content pasted from clipboard." });
+      }
+    } catch {
+      toast({
+        title: "Paste failed",
+        description: "Could not access clipboard. Please paste manually.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <DashboardLayout title="Instant Verification">
       <div className="max-w-6xl mx-auto">
@@ -453,13 +475,38 @@ export default function InstantVerify() {
 
                   <TabsContent value="jwt" className="space-y-4">
                     <div className="space-y-2">
-                      <Label>VC-JWT Token</Label>
-                      <Textarea
-                        placeholder="eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9..."
-                        className="min-h-[150px] font-mono text-xs"
-                        value={jwtInput}
-                        onChange={(e) => setJwtInput(e.target.value)}
-                      />
+                      <Label htmlFor="jwt-input">VC-JWT Token</Label>
+                      <InputGroup className="h-auto flex-col items-stretch">
+                        <InputGroupAddon align="block-start" className="justify-end border-b px-2 py-1 bg-muted/20">
+                          <div className="flex gap-1">
+                            {jwtInput && (
+                              <InputGroupButton
+                                onClick={() => setJwtInput("")}
+                                aria-label="Clear JWT"
+                                title="Clear"
+                              >
+                                <X className="w-4 h-4" />
+                                Clear
+                              </InputGroupButton>
+                            )}
+                            <InputGroupButton
+                              onClick={() => handlePaste(setJwtInput)}
+                              aria-label="Paste JWT"
+                              title="Paste"
+                            >
+                              <Clipboard className="w-4 h-4" />
+                              Paste
+                            </InputGroupButton>
+                          </div>
+                        </InputGroupAddon>
+                        <InputGroupTextarea
+                          id="jwt-input"
+                          placeholder="eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9..."
+                          className="min-h-[150px] font-mono text-xs"
+                          value={jwtInput}
+                          onChange={(e) => setJwtInput(e.target.value)}
+                        />
+                      </InputGroup>
                     </div>
                     <Button className="w-full" onClick={() => handleVerify(jwtInput)} disabled={!jwtInput.trim() || verifyMutation.isPending}>
                       {verifyMutation.isPending ? "Verifying..." : "Verify JWT"}
@@ -468,12 +515,33 @@ export default function InstantVerify() {
 
                   <TabsContent value="link" className="space-y-4">
                     <div className="space-y-2">
-                      <Label>Credential URL</Label>
-                      <Input
-                        placeholder="https://issuer.example.com/api/v1/public/issuance/offer/consume?token=..."
-                        value={linkInput}
-                        onChange={(e) => setLinkInput(e.target.value)}
-                      />
+                      <Label htmlFor="link-input">Credential URL</Label>
+                      <InputGroup>
+                        <InputGroupInput
+                          id="link-input"
+                          placeholder="https://issuer.example.com/api/v1/public/issuance/offer/consume?token=..."
+                          value={linkInput}
+                          onChange={(e) => setLinkInput(e.target.value)}
+                        />
+                        <InputGroupAddon align="inline-end">
+                          {linkInput && (
+                            <InputGroupButton
+                              onClick={() => setLinkInput("")}
+                              aria-label="Clear Link"
+                              title="Clear"
+                            >
+                              <X className="w-4 h-4" />
+                            </InputGroupButton>
+                          )}
+                          <InputGroupButton
+                            onClick={() => handlePaste(setLinkInput)}
+                            aria-label="Paste Link"
+                            title="Paste"
+                          >
+                            <Clipboard className="w-4 h-4" />
+                          </InputGroupButton>
+                        </InputGroupAddon>
+                      </InputGroup>
                     </div>
                     <Button className="w-full" onClick={handleVerifyLink} disabled={!linkInput.trim() || verifyLinkMutation.isPending}>
                       {verifyLinkMutation.isPending ? "Verifying..." : "Verify Link"}
