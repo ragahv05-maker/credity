@@ -276,20 +276,23 @@ router.post('/verify/instant', writeIdempotency, async (req, res) => {
         };
         await storage.addVerification(record);
 
+        const v1 = {
+            credential_validity: verificationResult.status === 'verified' ? 'valid' : 'invalid',
+            status_validity: verificationResult.riskFlags.includes('REVOKED_CREDENTIAL') ? 'revoked' : 'active',
+            anchor_validity: verificationResult.riskFlags.includes('NO_BLOCKCHAIN_ANCHOR') ? 'pending' : 'anchored',
+            fraud_score: fraudAnalysis.score,
+            fraud_explanations: fraudAnalysis.flags,
+            decision: recommendation,
+            decision_reason_codes: verificationResult.riskFlags,
+        };
+
         const responseBody = {
             success: true,
             verification: verificationResult,
             fraud: fraudAnalysis,
             record,
-            v1: {
-                credential_validity: verificationResult.status === 'verified' ? 'valid' : 'invalid',
-                status_validity: verificationResult.riskFlags.includes('REVOKED_CREDENTIAL') ? 'revoked' : 'active',
-                anchor_validity: verificationResult.riskFlags.includes('NO_BLOCKCHAIN_ANCHOR') ? 'pending' : 'anchored',
-                fraud_score: fraudAnalysis.score,
-                fraud_explanations: fraudAnalysis.flags,
-                decision: recommendation,
-                decision_reason_codes: verificationResult.riskFlags,
-            },
+            v1,
+            candidate_summary: v1,
         };
 
         void emitVerificationWebhook('verification.completed', {
@@ -397,7 +400,7 @@ router.get('/verify/bulk/:jobId', async (req, res) => {
 
 
 // New route: Verify credential via link URL
-router.post('/verify/link', writeIdempotency, async (req, res) => {
+router.post('/verify/link', authMiddleware, writeIdempotency, async (req, res) => {
     try {
         const { link } = req.body;
         if (!link) {
