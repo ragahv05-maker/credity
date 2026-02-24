@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Upload, FileSpreadsheet, Download, CheckCircle2, XCircle, AlertCircle, Loader2, ShieldAlert, Clipboard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -59,6 +59,7 @@ function safeJsonParse(value?: string) {
 
 export default function BulkVerify() {
   const [results, setResults] = useState<BulkVerificationResultRow[]>([]);
+  const [selectedVerification, setSelectedVerification] = useState<BulkVerificationResultRow | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -359,96 +360,14 @@ export default function BulkVerify() {
                       </TableCell>
                       <TableCell className="text-right">{row.riskScore}</TableCell>
                       <TableCell className="text-right">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button size="sm" variant="outline" aria-label={`View details for ${row.name}`}>
-                              View
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
-                            <DialogHeader>
-                              <DialogTitle className="flex items-center justify-between gap-4">
-                                <span className="truncate">
-                                  {row.name} — {renderDecisionBadge(row)}
-                                </span>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button size="sm" variant="ghost" onClick={() => copyToClipboard(row.id)} aria-label="Copy Verification ID">
-                                      <Clipboard className="w-4 h-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Copy Verification ID</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </DialogTitle>
-                            </DialogHeader>
-
-                            <div className="grid gap-4 sm:grid-cols-2">
-                              <div className="border rounded-lg p-3 bg-muted/10">
-                                <p className="text-xs font-semibold text-muted-foreground uppercase">Status</p>
-                                <div className="mt-2 flex items-center justify-between">
-                                  {renderStatusBadge(row)}
-                                  <p className="text-sm font-mono text-muted-foreground">Risk {row.riskScore}</p>
-                                </div>
-                                {typeof row.confidence === "number" && (
-                                  <p className="text-xs text-muted-foreground mt-2">Confidence: {Math.round(row.confidence)}%</p>
-                                )}
-                              </div>
-
-                              <div className="border rounded-lg p-3 bg-muted/10">
-                                <p className="text-xs font-semibold text-muted-foreground uppercase">Reason codes</p>
-                                <div className="mt-2 flex flex-wrap gap-1">
-                                  {(row.riskFlags || []).length === 0 ? (
-                                    <span className="text-sm text-muted-foreground">No risk flags</span>
-                                  ) : (
-                                    (row.riskFlags || []).slice(0, 12).map((c, i) => (
-                                      <Badge key={i} variant="secondary" className="text-[10px] font-mono">
-                                        {normalizeReasonCode(c)}
-                                      </Badge>
-                                    ))
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="space-y-2">
-                              <p className="text-xs font-semibold text-muted-foreground uppercase">Evidence (checks)</p>
-                              {(row.checks || []).length === 0 ? (
-                                <div className="text-sm text-muted-foreground border rounded-lg p-3">No check details returned.</div>
-                              ) : (
-                                <div className="space-y-2 max-h-[280px] overflow-auto pr-1">
-                                  {(row.checks || []).map((c, i) => (
-                                    <div key={i} className="border rounded-lg p-3 bg-background">
-                                      <div className="flex items-center justify-between gap-3">
-                                        <p className="text-sm font-medium truncate">{c.name}</p>
-                                        <Badge variant={c.status === "passed" ? "outline" : c.status === "warning" ? "secondary" : c.status === "skipped" ? "secondary" : "destructive"} className="text-xs">
-                                          {c.status}
-                                        </Badge>
-                                      </div>
-                                      <p className="text-xs text-muted-foreground mt-1">{c.message}</p>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="grid gap-3 sm:grid-cols-3">
-                              <div className="border rounded-lg p-3 bg-muted/10">
-                                <p className="text-xs font-semibold text-muted-foreground uppercase">Signature</p>
-                                <p className="text-xs text-muted-foreground mt-2">Proof type: {String(findEvidence(row.checks, "Signature Validation")?.details?.proofType ?? "unknown")}</p>
-                              </div>
-                              <div className="border rounded-lg p-3 bg-muted/10">
-                                <p className="text-xs font-semibold text-muted-foreground uppercase">Issuer</p>
-                                <p className="text-xs text-muted-foreground mt-2">{String(findEvidence(row.checks, "Issuer Verification")?.details?.issuerName ?? row.issuer)}</p>
-                              </div>
-                              <div className="border rounded-lg p-3 bg-muted/10">
-                                <p className="text-xs font-semibold text-muted-foreground uppercase">Anchor hash</p>
-                                <p className="text-xs font-mono text-muted-foreground mt-2 truncate">{String(findEvidence(row.checks, "Blockchain Anchor")?.details?.hash ?? "—")}</p>
-                              </div>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          aria-label={`View details for ${row.name}`}
+                          onClick={() => setSelectedVerification(row)}
+                        >
+                          View
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -458,6 +377,97 @@ export default function BulkVerify() {
           </Card>
         )}
       </div>
+
+      {/* Optimization: Hoist Dialog to reduce DOM nodes and improve performance for large lists */}
+      <Dialog open={!!selectedVerification} onOpenChange={(open) => !open && setSelectedVerification(null)}>
+        <DialogContent className="max-w-2xl">
+          {selectedVerification && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center justify-between gap-4">
+                  <span className="truncate">
+                    {selectedVerification.name} — {renderDecisionBadge(selectedVerification)}
+                  </span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="sm" variant="ghost" onClick={() => copyToClipboard(selectedVerification.id)} aria-label="Copy Verification ID">
+                        <Clipboard className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Copy Verification ID</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="border rounded-lg p-3 bg-muted/10">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase">Status</p>
+                  <div className="mt-2 flex items-center justify-between">
+                    {renderStatusBadge(selectedVerification)}
+                    <p className="text-sm font-mono text-muted-foreground">Risk {selectedVerification.riskScore}</p>
+                  </div>
+                  {typeof selectedVerification.confidence === "number" && (
+                    <p className="text-xs text-muted-foreground mt-2">Confidence: {Math.round(selectedVerification.confidence)}%</p>
+                  )}
+                </div>
+
+                <div className="border rounded-lg p-3 bg-muted/10">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase">Reason codes</p>
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {(selectedVerification.riskFlags || []).length === 0 ? (
+                      <span className="text-sm text-muted-foreground">No risk flags</span>
+                    ) : (
+                      (selectedVerification.riskFlags || []).slice(0, 12).map((c, i) => (
+                        <Badge key={i} variant="secondary" className="text-[10px] font-mono">
+                          {normalizeReasonCode(c)}
+                        </Badge>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase">Evidence (checks)</p>
+                {(selectedVerification.checks || []).length === 0 ? (
+                  <div className="text-sm text-muted-foreground border rounded-lg p-3">No check details returned.</div>
+                ) : (
+                  <div className="space-y-2 max-h-[280px] overflow-auto pr-1">
+                    {(selectedVerification.checks || []).map((c, i) => (
+                      <div key={i} className="border rounded-lg p-3 bg-background">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm font-medium truncate">{c.name}</p>
+                          <Badge variant={c.status === "passed" ? "outline" : c.status === "warning" ? "secondary" : c.status === "skipped" ? "secondary" : "destructive"} className="text-xs">
+                            {c.status}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">{c.message}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="border rounded-lg p-3 bg-muted/10">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase">Signature</p>
+                  <p className="text-xs text-muted-foreground mt-2">Proof type: {String(findEvidence(selectedVerification.checks, "Signature Validation")?.details?.proofType ?? "unknown")}</p>
+                </div>
+                <div className="border rounded-lg p-3 bg-muted/10">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase">Issuer</p>
+                  <p className="text-xs text-muted-foreground mt-2">{String(findEvidence(selectedVerification.checks, "Issuer Verification")?.details?.issuerName ?? selectedVerification.issuer)}</p>
+                </div>
+                <div className="border rounded-lg p-3 bg-muted/10">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase">Anchor hash</p>
+                  <p className="text-xs font-mono text-muted-foreground mt-2 truncate">{String(findEvidence(selectedVerification.checks, "Blockchain Anchor")?.details?.hash ?? "—")}</p>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
