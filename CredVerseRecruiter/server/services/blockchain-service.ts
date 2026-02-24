@@ -7,6 +7,7 @@ import {
     type SupportedChainNetwork,
 } from '@credverse/shared-auth';
 import { deterministicHash } from './proof-lifecycle';
+import { logger } from './logger';
 
 // CredVerseRegistry ABI (aligned with contracts/contracts/CredVerseRegistry.sol)
 const REGISTRY_ABI = [
@@ -69,7 +70,7 @@ export class BlockchainService {
         this.writePolicyReason = writePolicy.reason;
 
         if (!writePolicy.allowWrites) {
-            console.warn(`[Blockchain] Writes disabled for ${this.chain}: ${writePolicy.reason}`);
+            logger.warn(`[Blockchain] Writes disabled for ${this.chain}: ${writePolicy.reason}`);
         }
 
         this.provider = new ethers.JsonRpcProvider(rpcUrl, {
@@ -85,14 +86,13 @@ export class BlockchainService {
                 this.contract = new ethers.Contract(contractAddress, REGISTRY_ABI, this.provider);
             }
             // Don't set isConfigured here - validate contract first
-            console.log(`[Blockchain] Attempting to configure with ${contractAddress} on ${this.chain} (${rpcUrl})`);
 
             // Async validation - check if contract is actually deployed
             this.validateContract(contractAddress, rpcUrl).catch(() => { });
         } else {
             // Create a dummy contract for development
             this.contract = new ethers.Contract(ethers.ZeroAddress, REGISTRY_ABI, this.provider);
-            console.log(`[Blockchain] Running in deferred mode on ${this.chain} (no contract address)`);
+            logger.info(`[Blockchain] Running in deferred mode on ${this.chain} (no contract address)`);
         }
     }
 
@@ -103,14 +103,14 @@ export class BlockchainService {
         try {
             const code = await this.provider.getCode(address);
             if (code === '0x' || code === '') {
-                console.log(`[Blockchain] Contract NOT deployed at ${address} on ${this.chain} - deferred mode active`);
+                logger.info(`[Blockchain] Contract NOT deployed at ${address} on ${this.chain} - deferred mode active`);
                 this.isConfigured = false;
             } else {
-                console.log(`[Blockchain] Contract verified at ${address} on ${this.chain} (${rpcUrl})`);
+                logger.info(`[Blockchain] Contract verified at ${address} on ${this.chain} (${rpcUrl})`);
                 this.isConfigured = true;
             }
         } catch (error: any) {
-            console.log(`[Blockchain] RPC unreachable (${error.message}) on ${this.chain} - deferred mode active`);
+            logger.error(`[Blockchain] RPC unreachable (${error.message}) on ${this.chain} - deferred mode active`);
             this.isConfigured = false;
         }
     }
@@ -148,7 +148,7 @@ export class BlockchainService {
             const tx = await this.contract.anchorCredential(hash);
             const receipt = await tx.wait();
 
-            console.log(`[Blockchain] Anchored credential: ${hash} in tx ${receipt.hash} on ${this.chain}`);
+            logger.info(`[Blockchain] Anchored credential: ${hash} in tx ${receipt.hash} on ${this.chain}`);
 
             return {
                 success: true,
@@ -157,7 +157,7 @@ export class BlockchainService {
                 hash,
             };
         } catch (error: any) {
-            console.error('[Blockchain] Anchor error:', error.message);
+            logger.error('[Blockchain] Anchor error:', error.message);
             return {
                 success: false,
                 hash,
@@ -190,7 +190,7 @@ export class BlockchainService {
             const tx = await this.contract.revokeCredential(credentialHash);
             const receipt = await tx.wait();
 
-            console.log(`[Blockchain] Revoked credential: ${credentialHash} in tx ${receipt.hash} on ${this.chain}`);
+            logger.info(`[Blockchain] Revoked credential: ${credentialHash} in tx ${receipt.hash} on ${this.chain}`);
 
             return {
                 success: true,
@@ -199,7 +199,7 @@ export class BlockchainService {
                 hash: credentialHash,
             };
         } catch (error: any) {
-            console.error('[Blockchain] Revoke error:', error.message);
+            logger.error('[Blockchain] Revoke error:', error.message);
             return {
                 success: false,
                 hash: credentialHash,
@@ -233,7 +233,7 @@ export class BlockchainService {
                 isRevoked,
             };
         } catch (error: any) {
-            console.error('[Blockchain] Verify error:', error.message);
+            logger.error('[Blockchain] Verify error:', error.message);
             return { exists: false, isValid: false };
         }
     }
