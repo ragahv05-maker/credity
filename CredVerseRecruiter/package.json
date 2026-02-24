@@ -9,7 +9,7 @@
     "build": "tsx script/build.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
-    "pretest": "cd ../packages/shared-auth && npm run build",
+    "pretest": "cd ../packages/shared-auth && npm run build && cd ../trust-sdk && npm run build",
     "db:push": "drizzle-kit push",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@credverse/shared-auth": "file:../packages/shared-auth",
+    "@credverse/trust": "file:../packages/trust-sdk",
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
     "@radix-ui/react-accordion": "^1.2.12",

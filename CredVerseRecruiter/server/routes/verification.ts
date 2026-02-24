@@ -281,6 +281,18 @@ router.post('/verify/instant', writeIdempotency, async (req, res) => {
             verification: verificationResult,
             fraud: fraudAnalysis,
             record,
+            reason_codes: verificationResult.riskFlags,
+            risk_signals_version: 'risk-v1',
+            risk_signals: fraudAnalysis.flags.map(f => (typeof f === 'string' ? { id: f, score: 5, severity: 'medium', source: 'rules', reason_codes: [f] } : f)),
+            evidence_links: [],
+            candidate_summary: {
+                candidate_id: record.subject,
+                decision: recommendation,
+                reason_codes: verificationResult.riskFlags,
+                confidence: verificationResult.confidence,
+                risk_score: verificationResult.riskScore,
+                work_score: { score: 0 }
+            },
             v1: {
                 credential_validity: verificationResult.status === 'verified' ? 'valid' : 'invalid',
                 status_validity: verificationResult.riskFlags.includes('REVOKED_CREDENTIAL') ? 'revoked' : 'active',
@@ -289,6 +301,10 @@ router.post('/verify/instant', writeIdempotency, async (req, res) => {
                 fraud_explanations: fraudAnalysis.flags,
                 decision: recommendation,
                 decision_reason_codes: verificationResult.riskFlags,
+                reason_codes: verificationResult.riskFlags,
+                risk_signals_version: 'risk-v1',
+                risk_signals: [],
+                evidence_links: []
             },
         };
 
@@ -512,6 +528,11 @@ router.post('/v1/oid4vp/responses', authMiddleware, writeIdempotency, async (req
         }
 
         const { request_id: requestId, vp_token: vpToken, credential, jwt } = req.body || {};
+
+        if (!requestId) {
+            return res.status(400).json({ error: 'request_id is required' });
+        }
+
         const request = requestId ? vpRequests.get(requestId) : undefined;
         if (requestId && !request) {
             return res.status(400).json({ error: 'unknown request_id' });
@@ -527,12 +548,21 @@ router.post('/v1/oid4vp/responses', authMiddleware, writeIdempotency, async (req
             raw: credential,
         });
 
+        if (verificationResult.status === 'failed') {
+            res.status(400);
+        }
+
+        // Extract error message from failed checks if any
+        const failedCheck = verificationResult.checks.find(c => c.status === 'failed');
+        const errorMsg = failedCheck ? failedCheck.message : (verificationResult.riskFlags.length > 0 ? verificationResult.riskFlags[0].toLowerCase().replace(/_/g, ' ') : undefined);
+
         res.json({
             request_id: requestId || null,
             status: verificationResult.status,
             verification_id: verificationResult.verificationId,
             checks: verificationResult.checks,
             risk_score: verificationResult.riskScore,
+            error: errorMsg,
         });
     } catch (error) {
         console.error('OID4VP response processing failed:', error);
@@ -603,6 +633,7 @@ router.post('/v1/verifications/instant', authMiddleware, writeIdempotency, async
 
         res.json({
             ...contractResult,
+            reason_codes: verificationResult.riskFlags, // For legacy/test compatibility
             verification_id: contractResult.id,
             checks: verificationResult.checks,
         });
