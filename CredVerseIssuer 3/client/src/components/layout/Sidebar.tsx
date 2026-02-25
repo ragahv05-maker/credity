@@ -1,17 +1,18 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/lib/constants";
-import logo from "@assets/ChatGPT_Image_Oct_22,_2025,_12_35_14_AM_1764878404699.png";
+// import logo from "@assets/ChatGPT_Image_Oct_22,_2025,_12_35_14_AM_1764878404699.png";
 import { Smartphone } from "lucide-react";
 
 export function Sidebar() {
   const [location] = useLocation();
+  const logo = ""; // Placeholder
 
   return (
     <div className="w-64 border-r border-border bg-sidebar h-screen flex flex-col fixed left-0 top-0 z-30">
       <div className="h-16 flex items-center px-6 border-b border-sidebar-border">
         <div className="flex items-center gap-2">
-          <img src={logo} alt="CredVerse" className="w-8 h-8 object-contain" />
+          {/* <img src={logo} alt="CredVerse" className="w-8 h-8 object-contain" /> */}
           <span className="font-heading font-bold text-xl tracking-tight text-sidebar-foreground">CredVerse</span>
         </div>
       </div>

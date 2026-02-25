@@ -12,10 +12,11 @@ import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useStore } from "@/lib/store";
 import { format } from "date-fns";
-import logo from "@assets/ChatGPT_Image_Oct_22,_2025,_12_35_14_AM_1764878404699.png";
+// import logo from "@assets/ChatGPT_Image_Oct_22,_2025,_12_35_14_AM_1764878404699.png";
 import { UNIVERSITY_DID } from "@/lib/config";
 
 export default function Issuance() {
+  const logo = ""; // Placeholder to fix missing asset
   const { toast } = useToast();
   const { addRecord } = useStore();
 
@@ -314,7 +315,7 @@ export default function Issuance() {
                       <div className={`absolute top-0 left-0 w-full h-2 ${formData.sector === 'healthcare' ? 'bg-red-500' : formData.sector === 'corporate' ? 'bg-slate-800' : 'bg-primary/80'}`}></div>
                       <div className="mt-8 mb-4">
                         <div className="w-16 h-16 flex items-center justify-center mx-auto mb-2">
-                          <img src={logo} className="w-16 h-16 object-contain" />
+                          {/* <img src={logo} className="w-16 h-16 object-contain" /> */}
                         </div>
                       </div>
                       <h3 className="font-serif text-xl font-bold text-slate-900 mb-1">

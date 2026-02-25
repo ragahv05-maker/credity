@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ShieldCheck, QrCode, Share2, Download, ExternalLink, CheckCircle2, History } from "lucide-react";
-import logo from "@assets/ChatGPT_Image_Oct_22,_2025,_12_35_14_AM_1764878404699.png";
+// import logo from "@assets/ChatGPT_Image_Oct_22,_2025,_12_35_14_AM_1764878404699.png";
 import { cn } from "@/lib/utils";
 import { useStore, type Record } from "@/lib/store";
 import { UNIVERSITY_DID } from "@/lib/config";
@@ -15,12 +15,13 @@ export default function UniPassport() {
   const myRecords = records.filter((r: Record) => r.name === "Aditi Sharma" || r.status === "Issued").slice(0, 3);
   const [activeCredential, setActiveCredential] = useState<Record | null>(myRecords[0] || null);
 
+  const logo = ""; // Placeholder to fix missing asset
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
       {/* Mobile-first header */}
       <header className="bg-background/80 backdrop-blur-md border-b border-border sticky top-0 z-20 px-4 h-16 flex items-center justify-between lg:hidden">
         <div className="flex items-center gap-2">
-          <img src={logo} alt="Logo" className="w-6 h-6" />
+          {/* <img src={logo} alt="Logo" className="w-6 h-6" /> */}
           <span className="font-heading font-bold text-lg">UniPassport</span>
         </div>
         <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -115,12 +116,12 @@ export default function UniPassport() {
                    <CardContent className="p-8 md:p-12 text-center relative">
                       {/* Watermark */}
                       <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
-                         <img src={logo} className="w-96 h-96" />
+                         {/* <img src={logo} className="w-96 h-96" /> */}
                       </div>
                       
                       <div className="relative z-10">
                         <div className="w-20 h-20 mx-auto bg-blue-50 rounded-full flex items-center justify-center mb-6">
-                           <img src={logo} className="w-10 h-10" />
+                           {/* <img src={logo} className="w-10 h-10" /> */}
                         </div>
                         
                         <h1 className="text-3xl md:text-4xl font-serif font-bold text-slate-900 mb-2">University of North</h1>
