@@ -160,18 +160,20 @@ export class IssuanceService {
 
         // Email Notification
         if (recipient.email) {
-            try {
-                const { emailService } = await import('./email');
-                await emailService.sendCredentialNotification({
+            // Fire-and-forget: Don't await email service to improve issuance latency
+            import('./email').then(({ emailService }) => {
+                emailService.sendCredentialNotification({
                     to: recipient.email,
                     recipientName: recipient.name || 'Student',
                     credentialType: template.name,
                     issuerName: issuer.name,
                     viewLink: `${process.env.APP_URL || 'http://localhost:5002'}/credential/${credential.id}`
+                }).catch(e => {
+                    console.error("[Issuance] Email notification failed:", e);
                 });
-            } catch (e) {
-                console.error("[Issuance] Email notification failed:", e);
-            }
+            }).catch(e => {
+                 console.error("[Issuance] Failed to load email service:", e);
+            });
         }
 
         // Attach non-sensitive audit metadata for downstream verifiers/recruiters.
