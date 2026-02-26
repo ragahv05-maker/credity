@@ -44,22 +44,28 @@ export function Sidebar() {
           {sidebarItems.map((item, index) => {
             const isActive = location === item.href;
             return (
-              <Link key={index} href={item.href}>
-                <div
+              <Link
+                key={index}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 cursor-pointer group relative overflow-hidden",
+                  isActive
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md shadow-primary/20"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:pl-4"
+                )}
+                onClick={() => setOpen(false)}
+                aria-current={isActive ? "page" : undefined}
+              >
+                {isActive && (
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-white/20"></div>
+                )}
+                <item.icon
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 cursor-pointer group relative overflow-hidden",
-                    isActive
-                      ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md shadow-primary/20"
-                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:pl-4"
+                    "h-4 w-4 transition-transform duration-200",
+                    isActive ? "scale-110" : "group-hover:scale-110"
                   )}
-                  onClick={() => setOpen(false)}
-                >
-                  {isActive && (
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-white/20"></div>
-                  )}
-                  <item.icon className={cn("h-4 w-4 transition-transform duration-200", isActive ? "scale-110" : "group-hover:scale-110")} />
-                  {item.label}
-                </div>
+                />
+                {item.label}
               </Link>
             );
           })}
