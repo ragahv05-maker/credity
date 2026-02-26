@@ -8,6 +8,7 @@ import {
   replayIssuerDeadLetterEntry,
   submitHolderDataDelete,
   submitHolderDataExport,
+  loginWithApple,
 } from './api-client';
 
 vi.mock('expo-secure-store', () => ({
@@ -62,6 +63,13 @@ describe('mobile api client route wiring', () => {
       if (inputString.includes('/compliance/data-requests/delete')) {
         return jsonResponse({ id: 'delete-1', status: 'completed' }, 202);
       }
+      if (inputString.includes('/auth/apple')) {
+        return jsonResponse({
+          success: true,
+          user: { id: 1, username: 'apple-user' },
+          tokens: { accessToken: 'apple-access', refreshToken: 'apple-refresh' },
+        });
+      }
 
       return jsonResponse({ ok: true });
     }) as unknown as typeof fetch;
@@ -105,5 +113,21 @@ describe('mobile api client route wiring', () => {
     await submitHolderDataDelete(7, 'test_delete');
     expect(fetchCalls[2]?.input).toContain('/api/mobile/wallet/v1/compliance/data-requests/delete');
     expect(fetchCalls[2]?.init?.method).toBe('POST');
+  });
+
+  it('performs apple login via mobile proxy', async () => {
+    await loginWithApple('holder', 'apple-identity-token');
+
+    // Check fetch call
+    expect(fetchCalls[0]?.input).toContain('/api/mobile/wallet/v1/auth/apple');
+    expect(fetchCalls[0]?.init?.method).toBe('POST');
+    const body = JSON.parse(String(fetchCalls[0]?.init?.body));
+    expect(body).toEqual({ identityToken: 'apple-identity-token' });
+
+    // Check session store update
+    const session = useSessionStore.getState().sessions.holder;
+    expect(session.accessToken).toBe('apple-access');
+    expect(session.refreshToken).toBe('apple-refresh');
+    expect(session.user).toEqual({ id: 1, username: 'apple-user' });
   });
 });

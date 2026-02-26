@@ -225,6 +225,28 @@ export async function loginRole(role: AppRole, username: string, password: strin
   });
 }
 
+export async function loginWithApple(role: AppRole, identityToken: string): Promise<void> {
+  const data = await requestRole<any>(role, `${AUTH_PREFIX[role]}/apple`, {
+    method: 'POST',
+    body: { identityToken },
+    skipAuth: true,
+    retryOnAuthFailure: false,
+  });
+
+  const accessToken = data?.tokens?.accessToken as string | undefined;
+  const refreshToken = data?.tokens?.refreshToken as string | undefined;
+  if (!accessToken || !refreshToken) {
+    throw new Error('Apple login succeeded but no tokens were returned');
+  }
+
+  await storeRefreshToken(role, refreshToken);
+  useSessionStore.getState().setSession(role, {
+    accessToken,
+    refreshToken,
+    user: data?.user || null,
+  });
+}
+
 export async function logoutRole(role: AppRole): Promise<void> {
   const session = useSessionStore.getState().sessions[role];
   try {

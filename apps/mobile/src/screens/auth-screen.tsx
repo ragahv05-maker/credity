@@ -21,7 +21,8 @@ import {
   View,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
-import { loginRole, registerRole, restoreRoleSession, sendPhoneOtp, verifyPhoneOtp } from '../lib/api-client';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import { loginRole, registerRole, restoreRoleSession, sendPhoneOtp, verifyPhoneOtp, loginWithApple } from '../lib/api-client';
 import { useSessionStore } from '../store/session-store';
 import { useTheme } from '../theme/ThemeContext';
 import type { ColorPalette } from '../theme/tokens';
@@ -59,6 +60,17 @@ export function AuthScreen() {
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
+  const [isAppleAuthAvailable, setIsAppleAuthAvailable] = useState(false);
+
+  useEffect(() => {
+    async function checkAppleAuth() {
+      if (Platform.OS === 'ios') {
+        const available = await AppleAuthentication.isAvailableAsync();
+        setIsAppleAuthAvailable(available);
+      }
+    }
+    checkAppleAuth();
+  }, []);
 
   const title = useMemo(() => {
     if (!role) return 'Authenticate';
@@ -162,9 +174,31 @@ export function AuthScreen() {
     }
   }
 
-  function onAppleSignIn() {
-    // TODO: Implement with expo-apple-authentication (Sign in with Apple capability required)
-    Alert.alert('Coming soon', 'Apple Sign-In will be available in the next release.');
+  async function onAppleSignIn() {
+    if (!role) return;
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      if (credential.identityToken) {
+        setLoading(true);
+        await loginWithApple(role, credential.identityToken);
+      } else {
+        throw new Error('No identity token received from Apple.');
+      }
+    } catch (e: any) {
+      if (e.code === 'ERR_REQUEST_CANCELED') {
+        // User canceled the sign-in flow
+        return;
+      }
+      Alert.alert('Apple Sign-In failed', e.message || 'Unknown error');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -294,7 +328,7 @@ export function AuthScreen() {
         <Text style={styles.googleButtonText}>🌐  Continue with Google</Text>
       </TouchableOpacity>
 
-      {Platform.OS === 'ios' && (
+      {isAppleAuthAvailable && (
         <TouchableOpacity style={styles.appleButton} onPress={onAppleSignIn} activeOpacity={0.85}>
           <Text style={styles.appleButtonText}> Continue with Apple</Text>
         </TouchableOpacity>
