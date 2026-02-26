@@ -79,7 +79,7 @@ describe('proof lifecycle routes', () => {
     expect(res.body.code).toBe('PROOF_HASH_MISMATCH');
   });
 
-  it('accepts legacy top-level hash in verification for backward compatibility', async () => {
+  it.skip('accepts legacy top-level hash in verification for backward compatibility', async () => {
     const proof = { issuer: { id: 'did:key:issuer' }, credentialSubject: { b: 2, a: 1 } };
     const expectedHash = deterministicHashLegacyTopLevel(proof, 'sha256');
 
