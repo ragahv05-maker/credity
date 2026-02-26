@@ -5,6 +5,8 @@ import { createServer } from 'http';
 import { registerRoutes } from '../server/routes';
 import { generateAccessToken } from '../server/services/auth-service';
 import { deterministicHash, deterministicHashLegacyTopLevel } from '../server/services/proof-lifecycle';
+import { verificationEngine } from '../server/services/verification-engine';
+import { vi } from 'vitest';
 
 const app = express();
 app.use(express.json());
@@ -80,22 +82,37 @@ describe('proof lifecycle routes', () => {
   });
 
   it('accepts legacy top-level hash in verification for backward compatibility', async () => {
+    // Mock the engine to return verified so we focus on hash logic, avoiding network failures
+    const spy = vi.spyOn(verificationEngine, 'verifyCredential').mockResolvedValue({
+      status: 'verified',
+      confidence: 100,
+      checks: [],
+      riskScore: 0,
+      riskFlags: [],
+      timestamp: new Date(),
+      verificationId: 'mock-id'
+    });
+
     const proof = { issuer: { id: 'did:key:issuer' }, credentialSubject: { b: 2, a: 1 } };
     const expectedHash = deterministicHashLegacyTopLevel(proof, 'sha256');
 
-    const res = await request(app)
-      .post('/api/v1/proofs/verify')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        format: 'ldp_vp',
-        proof,
-        expected_hash: expectedHash,
-        hash_algorithm: 'sha256',
-      });
+    try {
+      const res = await request(app)
+        .post('/api/v1/proofs/verify')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          format: 'ldp_vp',
+          proof,
+          expected_hash: expectedHash,
+          hash_algorithm: 'sha256',
+        });
 
-    expect(res.status).toBe(200);
-    expect(res.body.valid).toBe(true);
-    expect(res.body.code).toBe('PROOF_VALID');
+      expect(res.status).toBe(200);
+      expect(res.body.valid).toBe(true);
+      expect(res.body.code).toBe('PROOF_VALID');
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it('rejects invalid expected_issuer_did input', async () => {
