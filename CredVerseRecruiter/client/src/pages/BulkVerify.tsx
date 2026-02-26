@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, memo, useCallback } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -57,12 +57,95 @@ function safeJsonParse(value?: string) {
   }
 }
 
+// Extracted helpers for performance
+const renderStatusBadge = (row: BulkVerificationResultRow) => {
+  if (row.status === "verified")
+    return (
+      <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+        <CheckCircle2 className="w-3 h-3 mr-1" /> Verified
+      </Badge>
+    );
+  if (row.status === "failed")
+    return (
+      <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+        <XCircle className="w-3 h-3 mr-1" /> Failed
+      </Badge>
+    );
+  if (row.status === "suspicious")
+    return (
+      <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+        <AlertCircle className="w-3 h-3 mr-1" /> Suspicious
+      </Badge>
+    );
+  return <Badge variant="secondary">Pending</Badge>;
+};
+
+const renderDecisionBadge = (row: BulkVerificationResultRow) => {
+  const decision = getDecisionTierFromStatus(row.status, row.riskScore);
+  if (decision === "PASS") return <Badge className="bg-emerald-100 text-emerald-700 border-0">PASS</Badge>;
+  if (decision === "FAIL") return <Badge className="bg-red-100 text-red-700 border-0">FAIL</Badge>;
+  return <Badge className="bg-amber-100 text-amber-700 border-0">REVIEW</Badge>;
+};
+
+const findEvidence = (checks: VerificationCheck[] | undefined, name: string) => (checks || []).find((c) => c.name === name);
+
+// Memoized row component to prevent re-renders of the entire list when dialog opens
+const VerificationRow = memo(({ row, onView }: { row: BulkVerificationResultRow; onView: (row: BulkVerificationResultRow) => void }) => {
+  return (
+    <TableRow>
+      <TableCell>
+        <div className="space-y-1">
+          <p className="font-medium leading-tight">{row.name}</p>
+          <p className="text-xs font-mono text-muted-foreground truncate">{row.id}</p>
+        </div>
+      </TableCell>
+      <TableCell>{row.issuer}</TableCell>
+      <TableCell>{renderDecisionBadge(row)}</TableCell>
+      <TableCell>{renderStatusBadge(row)}</TableCell>
+      <TableCell>
+        <div className="flex flex-wrap gap-1">
+          {(row.riskFlags || []).length === 0 ? (
+            <span className="text-xs text-muted-foreground">—</span>
+          ) : (
+            (row.riskFlags || []).slice(0, 3).map((c, i) => (
+              <Badge key={i} variant="secondary" className="text-[10px] font-mono">
+                {normalizeReasonCode(c)}
+              </Badge>
+            ))
+          )}
+          {(row.riskFlags || []).length > 3 && (
+            <Badge variant="outline" className="text-[10px] font-mono">
+              +{(row.riskFlags || []).length - 3}
+            </Badge>
+          )}
+        </div>
+      </TableCell>
+      <TableCell className="text-right">{row.riskScore}</TableCell>
+      <TableCell className="text-right">
+        <Button
+          size="sm"
+          variant="outline"
+          aria-label={`View details for ${row.name}`}
+          onClick={() => onView(row)}
+        >
+          View
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+});
+VerificationRow.displayName = "VerificationRow";
+
 export default function BulkVerify() {
   const [results, setResults] = useState<BulkVerificationResultRow[]>([]);
   const [selectedVerification, setSelectedVerification] = useState<BulkVerificationResultRow | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  const handleView = useCallback((row: BulkVerificationResultRow) => {
+    setSelectedVerification(row);
+  }, []);
 
   const verifyMutation = useMutation({
     mutationFn: async (credentials: unknown[]) => {
@@ -227,37 +310,6 @@ export default function BulkVerify() {
     }
   };
 
-  const renderStatusBadge = (row: BulkVerificationResultRow) => {
-    if (row.status === "verified")
-      return (
-        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-          <CheckCircle2 className="w-3 h-3 mr-1" /> Verified
-        </Badge>
-      );
-    if (row.status === "failed")
-      return (
-        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-          <XCircle className="w-3 h-3 mr-1" /> Failed
-        </Badge>
-      );
-    if (row.status === "suspicious")
-      return (
-        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-          <AlertCircle className="w-3 h-3 mr-1" /> Suspicious
-        </Badge>
-      );
-    return <Badge variant="secondary">Pending</Badge>;
-  };
-
-  const renderDecisionBadge = (row: BulkVerificationResultRow) => {
-    const decision = getDecisionTierFromStatus(row.status, row.riskScore);
-    if (decision === "PASS") return <Badge className="bg-emerald-100 text-emerald-700 border-0">PASS</Badge>;
-    if (decision === "FAIL") return <Badge className="bg-red-100 text-red-700 border-0">FAIL</Badge>;
-    return <Badge className="bg-amber-100 text-amber-700 border-0">REVIEW</Badge>;
-  };
-
-  const findEvidence = (checks: VerificationCheck[] | undefined, name: string) => (checks || []).find((c) => c.name === name);
-
   return (
     <DashboardLayout title="Bulk Verification">
       <div className="space-y-6">
@@ -330,46 +382,7 @@ export default function BulkVerify() {
                 </TableHeader>
                 <TableBody>
                   {results.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <p className="font-medium leading-tight">{row.name}</p>
-                          <p className="text-xs font-mono text-muted-foreground truncate">{row.id}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>{row.issuer}</TableCell>
-                      <TableCell>{renderDecisionBadge(row)}</TableCell>
-                      <TableCell>{renderStatusBadge(row)}</TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {(row.riskFlags || []).length === 0 ? (
-                            <span className="text-xs text-muted-foreground">—</span>
-                          ) : (
-                            (row.riskFlags || []).slice(0, 3).map((c, i) => (
-                              <Badge key={i} variant="secondary" className="text-[10px] font-mono">
-                                {normalizeReasonCode(c)}
-                              </Badge>
-                            ))
-                          )}
-                          {(row.riskFlags || []).length > 3 && (
-                            <Badge variant="outline" className="text-[10px] font-mono">
-                              +{(row.riskFlags || []).length - 3}
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">{row.riskScore}</TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          aria-label={`View details for ${row.name}`}
-                          onClick={() => setSelectedVerification(row)}
-                        >
-                          View
-                        </Button>
-                      </TableCell>
-                    </TableRow>
+                    <VerificationRow key={row.id} row={row} onView={handleView} />
                   ))}
                 </TableBody>
               </Table>
