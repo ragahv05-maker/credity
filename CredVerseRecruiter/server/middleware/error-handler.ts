@@ -4,7 +4,7 @@ import { captureException } from '../services/sentry';
 import { logError } from '../services/logger';
 import { AppError, ERROR_CODES, getRequestContext, sanitizeContext } from './observability';
 
-function resolveError(err: unknown): AppError {
+export function resolveError(err: unknown): AppError {
     if (err instanceof AppError) {
         return err;
     }

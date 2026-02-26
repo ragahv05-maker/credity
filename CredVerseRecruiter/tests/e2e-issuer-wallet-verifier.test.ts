@@ -7,9 +7,29 @@ import { registerRoutes as registerIssuerRoutes } from '../../CredVerseIssuer 3/
 import { registerRoutes as registerWalletRoutes } from '../../BlockWalletDigi/server/routes';
 import { registerRoutes as registerVerifierRoutes } from '../server/routes';
 import { blockchainService as issuerBlockchainService } from '../../CredVerseIssuer 3/server/services/blockchain-service';
-import { generateAccessToken as generateIssuerAccessToken } from '@credverse/shared-auth';
+import { storage as issuerStorage } from '../../CredVerseIssuer 3/server/storage';
 import { generateAccessToken as generateVerifierAccessToken } from '../server/services/auth-service';
 import { generateAccessToken as generateWalletAccessToken } from '../../BlockWalletDigi/server/services/auth-service';
+
+// Mock shared-auth to inject tenantId into verified token
+vi.mock('@credverse/shared-auth', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@credverse/shared-auth')>();
+  return {
+    ...actual,
+    verifyAccessToken: vi.fn((token: string) => {
+      if (token === 'mock-issuer-token-with-tenant') {
+        return {
+          userId: 'issuer-e2e',
+          username: 'issuer-e2e',
+          role: 'issuer',
+          tenantId: '550e8400-e29b-41d4-a716-446655440000',
+          type: 'access',
+        };
+      }
+      return actual.verifyAccessToken(token);
+    }),
+  };
+});
 
 type ChainMode = 'active' | 'deferred' | 'writes-disabled';
 
@@ -23,11 +43,23 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
   const verifierToken = generateVerifierAccessToken({ id: '1', username: 'verifier', role: 'recruiter' });
   const verifierWrongRoleToken = generateVerifierAccessToken({ id: '2', username: 'issuer-user', role: 'issuer' });
   const walletToken = generateWalletAccessToken({ id: 1, username: 'holder', role: 'holder' });
-  const issuerBearerToken = generateIssuerAccessToken({ id: 'issuer-e2e', username: 'issuer-e2e', role: 'issuer' });
+  let issuerBearerToken: string;
 
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
     process.env.ISSUER_BOOTSTRAP_API_KEY = issuerApiKey;
+
+    // Seed issuer user for e2e tests
+    await issuerStorage.createUser({
+        username: 'issuer-e2e',
+        password: 'password',
+        role: 'issuer',
+        email: 'issuer-e2e@example.com',
+        tenantId: '550e8400-e29b-41d4-a716-446655440000', // Matches seeded tenant
+    });
+
+    // Use the special mock token that verifyAccessToken will recognize
+    issuerBearerToken = 'mock-issuer-token-with-tenant';
 
     issuerApp = express();
     issuerApp.use(express.json());

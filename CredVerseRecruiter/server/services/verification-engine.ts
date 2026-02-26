@@ -232,6 +232,14 @@ export class VerificationEngine {
                 riskFlags.push('UNVERIFIED_ISSUER');
             }
 
+            // Check 2.5: Proof Hash Integrity
+            const proofHashCheck = this.verifyProofHash(credential);
+            checks.push(proofHashCheck);
+            if (proofHashCheck.status === 'failed') {
+                overallStatus = 'failed';
+                riskFlags.push('PROOF_HASH_MISMATCH');
+            }
+
             // Check 3: Expiration Check
             const expirationCheck = this.checkExpiration(credential);
             checks.push(expirationCheck);
@@ -464,6 +472,44 @@ export class VerificationEngine {
     }
 
     /**
+     * Check proof hash integrity
+     */
+    private verifyProofHash(credential: any): VerificationCheck {
+        // If credential has a proof with a hash, verify it matches
+        const proofHash = credential.proof?.credentialHash;
+
+        if (!proofHash) {
+            return {
+                name: 'Proof Hash Integrity',
+                status: 'skipped',
+                message: 'No proof hash present to verify',
+            };
+        }
+
+        // Calculate expected hash
+        // Exclude proof property from calculation as it contains the hash
+        const { proof, ...rest } = credential;
+
+        // Canonicalize and hash the credential subject/content
+        // Note: This must match the issuance hashing algorithm exactly
+        const expectedHash = this.hashCredential(rest);
+
+        const isValid = proofHash === expectedHash;
+
+        return {
+            name: 'Proof Hash Integrity',
+            status: isValid ? 'passed' : 'failed',
+            message: isValid
+                ? 'Proof hash matches credential content'
+                : 'Proof hash mismatch (Credential content may have been tampered)',
+            details: {
+                expected: expectedHash,
+                received: proofHash
+            }
+        };
+    }
+
+    /**
      * Check credential expiration
      */
     private checkExpiration(credential: any): VerificationCheck {
@@ -644,6 +690,7 @@ export class VerificationEngine {
             'NO_BLOCKCHAIN_ANCHOR': 5,
             'DID_RESOLUTION_FAILED': 15,
             'UNVERIFIED_ISSUER': 10,
+            'PROOF_HASH_MISMATCH': 50,
         };
 
         for (const flag of flags) {

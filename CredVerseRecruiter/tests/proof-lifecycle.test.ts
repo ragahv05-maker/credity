@@ -1,10 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi, afterAll } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { createServer } from 'http';
 import { registerRoutes } from '../server/routes';
 import { generateAccessToken } from '../server/services/auth-service';
 import { deterministicHash, deterministicHashLegacyTopLevel } from '../server/services/proof-lifecycle';
+import { verificationEngine } from '../server/services/verification-engine';
 
 const app = express();
 app.use(express.json());
@@ -17,6 +18,10 @@ const token = generateAccessToken({ id: '1', username: 'tester', role: 'recruite
 const issuerToken = generateAccessToken({ id: '2', username: 'issuer-user', role: 'issuer' });
 
 describe('proof lifecycle routes', () => {
+  afterAll(() => {
+    vi.restoreAllMocks();
+  });
+
   it('returns explicit unauthorized code for link verification without auth', async () => {
     const res = await request(app)
       .post('/api/verify/link')
@@ -83,6 +88,17 @@ describe('proof lifecycle routes', () => {
     const proof = { issuer: { id: 'did:key:issuer' }, credentialSubject: { b: 2, a: 1 } };
     const expectedHash = deterministicHashLegacyTopLevel(proof, 'sha256');
 
+    // Mock verification engine to prevent network calls and ensure success
+    const verifySpy = vi.spyOn(verificationEngine, 'verifyCredential').mockResolvedValue({
+      status: 'verified',
+      confidence: 100,
+      checks: [],
+      riskScore: 0,
+      riskFlags: [],
+      timestamp: new Date(),
+      verificationId: 'mock-id'
+    });
+
     const res = await request(app)
       .post('/api/v1/proofs/verify')
       .set('Authorization', `Bearer ${token}`)
@@ -92,6 +108,8 @@ describe('proof lifecycle routes', () => {
         expected_hash: expectedHash,
         hash_algorithm: 'sha256',
       });
+
+    verifySpy.mockRestore();
 
     expect(res.status).toBe(200);
     expect(res.body.valid).toBe(true);
