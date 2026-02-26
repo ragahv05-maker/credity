@@ -24,7 +24,7 @@ vi.mock('@credverse/shared-auth', async () => {
 
 // Mock fetch globally
 const fetchMock = vi.fn();
-global.fetch = fetchMock;
+vi.stubGlobal('fetch', fetchMock);
 
 describe('VerificationEngine', () => {
   let engine: VerificationEngine;
@@ -50,7 +50,7 @@ describe('VerificationEngine', () => {
   });
 
   afterEach(() => {
-    vi.resetAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it('initializes with default issuers', () => {

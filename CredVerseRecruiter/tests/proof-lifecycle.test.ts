@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { createServer } from 'http';
@@ -17,6 +17,21 @@ const token = generateAccessToken({ id: '1', username: 'tester', role: 'recruite
 const issuerToken = generateAccessToken({ id: '2', username: 'issuer-user', role: 'issuer' });
 
 describe('proof lifecycle routes', () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    vi.stubGlobal('fetch', fetchMock);
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ valid: true }),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('returns explicit unauthorized code for link verification without auth', async () => {
     const res = await request(app)
       .post('/api/verify/link')
