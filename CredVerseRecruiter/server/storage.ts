@@ -1,6 +1,7 @@
-import { type User, type InsertUser } from "@shared/schema";
+import { type User, type InsertUser, users, verifications, workScoreEvaluations } from "@shared/schema";
+import { eq, desc, and, gte, lte } from "drizzle-orm";
+import { db } from "./db";
 import { randomUUID } from "crypto";
-import { PostgresStateStore } from "@credverse/shared-auth";
 
 // modify the interface with any CRUD methods
 // you might need
@@ -160,6 +161,107 @@ export class MemStorage implements IStorage {
   }
 }
 
+export class DatabaseStorage implements IStorage {
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db.insert(users).values(insertUser).returning();
+    return user;
+  }
+
+  async addVerification(record: VerificationRecord): Promise<void> {
+    await db.insert(verifications).values({
+      ...record,
+    });
+  }
+
+  async getVerifications(filters?: { status?: string; startDate?: Date; endDate?: Date }): Promise<VerificationRecord[]> {
+    const conditions = [];
+    if (filters?.status) {
+      conditions.push(eq(verifications.status, filters.status));
+    }
+    if (filters?.startDate) {
+      conditions.push(gte(verifications.timestamp, filters.startDate!));
+    }
+    if (filters?.endDate) {
+      conditions.push(lte(verifications.timestamp, filters.endDate!));
+    }
+
+    const result = await db
+      .select()
+      .from(verifications)
+      .where(and(...conditions))
+      .orderBy(desc(verifications.timestamp));
+
+    return result as VerificationRecord[];
+  }
+
+  async getVerification(id: string): Promise<VerificationRecord | undefined> {
+    const [record] = await db.select().from(verifications).where(eq(verifications.id, id));
+    return record as VerificationRecord | undefined;
+  }
+
+  async addWorkScoreEvaluation(snapshot: WorkScoreEvaluationSnapshot): Promise<void> {
+    await db.insert(workScoreEvaluations).values({
+      id: snapshot.id,
+      candidateHash: snapshot.candidate_hash,
+      contextHash: snapshot.context_hash,
+      score: snapshot.score,
+      breakdown: snapshot.breakdown,
+      decision: snapshot.decision,
+      reasonCodes: snapshot.reason_codes,
+      evidence: snapshot.evidence,
+      timestamp: snapshot.timestamp,
+    });
+  }
+
+  async getWorkScoreEvaluation(id: string): Promise<WorkScoreEvaluationSnapshot | undefined> {
+    const [row] = await db.select().from(workScoreEvaluations).where(eq(workScoreEvaluations.id, id));
+    if (!row) return undefined;
+
+    return {
+      id: row.id,
+      candidate_hash: row.candidateHash || undefined,
+      context_hash: row.contextHash || undefined,
+      score: row.score,
+      breakdown: row.breakdown as Record<string, number>,
+      decision: row.decision,
+      reason_codes: row.reasonCodes as string[],
+      evidence: row.evidence as { summary: string; anchors_checked: string[]; docs_checked: string[] },
+      timestamp: row.timestamp,
+    };
+  }
+
+  async getWorkScoreEvaluations(limit = 50): Promise<WorkScoreEvaluationSnapshot[]> {
+    const normalizedLimit = Number.isFinite(limit) ? Math.max(1, Math.floor(limit)) : 50;
+    const rows = await db
+      .select()
+      .from(workScoreEvaluations)
+      .orderBy(desc(workScoreEvaluations.timestamp))
+      .limit(Math.min(normalizedLimit, 200));
+
+    return rows.map(row => ({
+      id: row.id,
+      candidate_hash: row.candidateHash || undefined,
+      context_hash: row.contextHash || undefined,
+      score: row.score,
+      breakdown: row.breakdown as Record<string, number>,
+      decision: row.decision,
+      reason_codes: row.reasonCodes as string[],
+      evidence: row.evidence as { summary: string; anchors_checked: string[]; docs_checked: string[] },
+      timestamp: row.timestamp,
+    }));
+  }
+}
+
 const requirePersistentStorage =
   process.env.NODE_ENV === "production" || process.env.REQUIRE_DATABASE === "true";
 const databaseUrl = process.env.DATABASE_URL;
@@ -170,68 +272,6 @@ if (requirePersistentStorage && !databaseUrl) {
   );
 }
 
-function createPersistedStorage(base: MemStorage, dbUrl?: string): MemStorage {
-  if (!dbUrl) {
-    return base;
-  }
-
-  const stateStore = new PostgresStateStore<RecruiterStorageState>({
-    databaseUrl: dbUrl,
-    serviceKey: "recruiter-storage",
-  });
-
-  let hydrated = false;
-  let hydrationPromise: Promise<void> | null = null;
-  let persistChain = Promise.resolve();
-  const mutatingPrefixes = ["create", "add", "update", "delete", "revoke", "bulk"];
-
-  const ensureHydrated = async () => {
-    if (hydrated) return;
-    if (!hydrationPromise) {
-      hydrationPromise = (async () => {
-        const loaded = await stateStore.load();
-        if (loaded) {
-          base.importState(loaded);
-        } else {
-          await stateStore.save(base.exportState());
-        }
-        hydrated = true;
-      })();
-    }
-    await hydrationPromise;
-  };
-
-  const queuePersist = async () => {
-    persistChain = persistChain
-      .then(async () => {
-        await stateStore.save(base.exportState());
-      })
-      .catch((error) => {
-        console.error("[Storage] Failed to persist recruiter state:", error);
-      });
-    await persistChain;
-  };
-
-  return new Proxy(base, {
-    get(target, prop, receiver) {
-      const value = Reflect.get(target, prop, receiver);
-      if (typeof value !== "function") {
-        return value;
-      }
-
-      return async (...args: unknown[]) => {
-        await ensureHydrated();
-        const result = await value.apply(target, args);
-        const shouldPersist = mutatingPrefixes.some(
-          (prefix) => typeof prop === "string" && prop.startsWith(prefix),
-        );
-        if (shouldPersist) {
-          await queuePersist();
-        }
-        return result;
-      };
-    },
-  }) as MemStorage;
-}
-
-export const storage = createPersistedStorage(new MemStorage(), databaseUrl);
+// If a DATABASE_URL is present, we use the real database.
+// Otherwise, we fallback to in-memory storage.
+export const storage: IStorage = databaseUrl ? new DatabaseStorage() : new MemStorage();
