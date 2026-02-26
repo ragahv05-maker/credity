@@ -12,6 +12,7 @@ import {
     authMiddleware,
     checkRateLimit,
     AuthUser,
+    validatePasswordStrength,
 } from '../services/auth-service';
 
 const router = Router();
@@ -25,6 +26,14 @@ router.post('/auth/register', async (req, res) => {
 
         if (!username || !password) {
             return res.status(400).json({ error: 'Username and password required' });
+        }
+
+        const validation = validatePasswordStrength(password);
+        if (!validation.isValid) {
+            return res.status(400).json({
+                error: 'Password does not meet security requirements',
+                errors: validation.errors,
+            });
         }
 
         // Rate limit registration
