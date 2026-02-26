@@ -22,15 +22,15 @@ vi.mock('@credverse/shared-auth', async () => {
   };
 });
 
-// Mock fetch globally
-const fetchMock = vi.fn();
-vi.stubGlobal('fetch', fetchMock);
-
 describe('VerificationEngine', () => {
   let engine: VerificationEngine;
+  let fetchMock: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
     engine = new VerificationEngine();
 
     // Default blockchain service behavior
