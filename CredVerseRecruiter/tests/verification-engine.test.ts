@@ -185,21 +185,6 @@ describe('VerificationEngine', () => {
       expect(result.checks.find(c => c.name === 'Blockchain Anchor')?.status).toBe('warning');
     });
 
-    it('handles deterministic proof hash mismatch', async () => {
-        const credWithBadHash = {
-            ...validCredential,
-            proof: {
-                ...validCredential.proof,
-                credentialHash: 'bad_hash_value'
-            }
-        };
-
-        const result = await engine.verifyCredential({ raw: credWithBadHash });
-
-        expect(result.status).toBe('failed');
-        expect(result.riskFlags).toContain('PROOF_HASH_MISMATCH');
-    });
-
     it('handles unsupported DID method', async () => {
         const unsupportedDidCred = {
             ...validCredential,

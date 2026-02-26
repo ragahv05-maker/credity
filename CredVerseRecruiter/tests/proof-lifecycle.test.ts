@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi, beforeAll, afterEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { createServer } from 'http';
@@ -16,7 +16,43 @@ const token = generateAccessToken({ id: '1', username: 'tester', role: 'recruite
 
 const issuerToken = generateAccessToken({ id: '2', username: 'issuer-user', role: 'issuer' });
 
+const fetchMock = vi.fn();
+global.fetch = fetchMock;
+
 describe('proof lifecycle routes', () => {
+  beforeAll(() => {
+    fetchMock.mockImplementation(async (url) => {
+        const urlStr = String(url);
+        // Return 404 for invalid DID scenarios
+        if (urlStr.includes('not-a-did') || urlStr.includes('did:key:unknown')) {
+             return { ok: false, status: 404, json: async () => ({}) } as Response;
+        }
+        // Return success for issuer/revocation checks
+        return {
+            ok: true,
+            status: 200,
+            json: async () => {
+                if (urlStr.includes('/registry/issuers/did/')) {
+                    return {
+                        did: 'did:key:issuer',
+                        name: 'Mocked Issuer',
+                        trustStatus: 'trusted',
+                        verified: true
+                    };
+                }
+                if (urlStr.includes('/verify/') || urlStr.includes('/status')) {
+                    return { revoked: false };
+                }
+                return {};
+            }
+        } as Response;
+    });
+  });
+
+  afterEach(() => {
+    fetchMock.mockClear();
+  });
+
   it('returns explicit unauthorized code for link verification without auth', async () => {
     const res = await request(app)
       .post('/api/verify/link')
