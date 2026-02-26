@@ -26,6 +26,18 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
   const issuerBearerToken = generateIssuerAccessToken({ id: 'issuer-e2e', username: 'issuer-e2e', role: 'issuer' });
 
   beforeAll(async () => {
+    // Mock external fetch calls while allowing internal/local ones
+    const originalFetch = global.fetch;
+    vi.stubGlobal('fetch', async (url: string | URL | Request, init?: RequestInit) => {
+      const urlString = url.toString();
+      // Allow calls to local test servers
+      if (urlString.includes('127.0.0.1') || urlString.includes('localhost')) {
+        return originalFetch(url, init);
+      }
+      // Mock external calls (e.g., revocation checks, DID resolution) to succeed
+      return new Response(JSON.stringify({ valid: true, revoked: false }), { status: 200 });
+    });
+
     process.env.NODE_ENV = 'test';
     process.env.ISSUER_BOOTSTRAP_API_KEY = issuerApiKey;
 
@@ -48,6 +60,7 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
 
   afterAll(async () => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     await new Promise<void>((resolve, reject) =>
       issuerServer.close((err) => (err ? reject(err) : resolve())),
     );
