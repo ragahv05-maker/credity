@@ -219,7 +219,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        res.status(401).json({ error: 'No token provided' });
+        res.status(401).json({ error: 'No token provided', code: 'PROOF_AUTH_REQUIRED' });
         return;
     }
 
@@ -227,7 +227,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
     const payload = verifyAccessToken(token);
 
     if (!payload) {
-        res.status(401).json({ error: 'Invalid or expired token' });
+        res.status(401).json({ error: 'Invalid or expired token', code: 'PROOF_AUTH_REQUIRED' });
         return;
     }
 
@@ -258,7 +258,7 @@ export function optionalAuthMiddleware(req: Request, res: Response, next: NextFu
 export function requireRole(...roles: AuthUser['role'][]) {
     return (req: Request, res: Response, next: NextFunction): void => {
         if (!req.user) {
-            res.status(401).json({ error: 'Authentication required' });
+            res.status(401).json({ error: 'Authentication required', code: 'PROOF_AUTH_REQUIRED' });
             return;
         }
 
@@ -269,7 +269,7 @@ export function requireRole(...roles: AuthUser['role'][]) {
         }
 
         if (!roles.includes(userRole)) {
-            res.status(403).json({ error: 'Insufficient permissions' });
+            res.status(403).json({ error: 'Insufficient permissions', code: 'PROOF_FORBIDDEN' });
             return;
         }
 
