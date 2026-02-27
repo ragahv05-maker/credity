@@ -45,7 +45,25 @@ const token = generateAccessToken({ id: '1', username: 'tester', role: 'recruite
 
 const issuerToken = generateAccessToken({ id: '2', username: 'issuer-user', role: 'issuer' });
 
+// Mock global fetch for DID resolution
+const fetchMock = vi.fn();
+global.fetch = fetchMock;
+
 describe('proof lifecycle routes', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        did: 'did:key:issuer',
+        trustStatus: 'trusted',
+        verified: true,
+        name: 'Mock Issuer'
+      }),
+    } as Response);
+  });
+
   it('returns explicit unauthorized code for link verification without auth', async () => {
     const res = await request(app)
       .post('/api/verify/link')

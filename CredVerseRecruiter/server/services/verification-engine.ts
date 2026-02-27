@@ -653,6 +653,7 @@ export class VerificationEngine {
             'NO_BLOCKCHAIN_ANCHOR': 5,
             'DID_RESOLUTION_FAILED': 15,
             'UNVERIFIED_ISSUER': 10,
+            'PROOF_HASH_MISMATCH': 75,
         };
 
         for (const flag of flags) {
