@@ -9,7 +9,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "pretest": "cd ../../packages/shared-auth && npm run build",
+    "pretest": "cd ../../packages/shared-auth && npm install && npm run build",
     "test": "vitest run --config vitest.config.ts"
   },
   "dependencies": {
@@ -53,6 +53,8 @@
     "vitest": "^4.0.18"
   },
   "overrides": {
-    "tar": "^7.5.7"
+    "tar": "^7.5.9",
+    "minimatch": "^10.0.0",
+    "rollup": "^4.59.0"
   }
 }

@@ -57,6 +57,38 @@ function safeJsonParse(value?: string) {
   }
 }
 
+// ⚡ Bolt: Hoisted helper functions outside component to prevent re-creation on every render
+const renderStatusBadge = (row: BulkVerificationResultRow) => {
+  if (row.status === "verified")
+    return (
+      <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+        <CheckCircle2 className="w-3 h-3 mr-1" /> Verified
+      </Badge>
+    );
+  if (row.status === "failed")
+    return (
+      <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+        <XCircle className="w-3 h-3 mr-1" /> Failed
+      </Badge>
+    );
+  if (row.status === "suspicious")
+    return (
+      <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+        <AlertCircle className="w-3 h-3 mr-1" /> Suspicious
+      </Badge>
+    );
+  return <Badge variant="secondary">Pending</Badge>;
+};
+
+const renderDecisionBadge = (row: BulkVerificationResultRow) => {
+  const decision = getDecisionTierFromStatus(row.status, row.riskScore);
+  if (decision === "PASS") return <Badge className="bg-emerald-100 text-emerald-700 border-0">PASS</Badge>;
+  if (decision === "FAIL") return <Badge className="bg-red-100 text-red-700 border-0">FAIL</Badge>;
+  return <Badge className="bg-amber-100 text-amber-700 border-0">REVIEW</Badge>;
+};
+
+const findEvidence = (checks: VerificationCheck[] | undefined, name: string) => (checks || []).find((c) => c.name === name);
+
 export default function BulkVerify() {
   const [results, setResults] = useState<BulkVerificationResultRow[]>([]);
   const [selectedVerification, setSelectedVerification] = useState<BulkVerificationResultRow | null>(null);
@@ -226,37 +258,6 @@ export default function BulkVerify() {
       toast({ title: "Copy failed", variant: "destructive" });
     }
   };
-
-  const renderStatusBadge = (row: BulkVerificationResultRow) => {
-    if (row.status === "verified")
-      return (
-        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-          <CheckCircle2 className="w-3 h-3 mr-1" /> Verified
-        </Badge>
-      );
-    if (row.status === "failed")
-      return (
-        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-          <XCircle className="w-3 h-3 mr-1" /> Failed
-        </Badge>
-      );
-    if (row.status === "suspicious")
-      return (
-        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-          <AlertCircle className="w-3 h-3 mr-1" /> Suspicious
-        </Badge>
-      );
-    return <Badge variant="secondary">Pending</Badge>;
-  };
-
-  const renderDecisionBadge = (row: BulkVerificationResultRow) => {
-    const decision = getDecisionTierFromStatus(row.status, row.riskScore);
-    if (decision === "PASS") return <Badge className="bg-emerald-100 text-emerald-700 border-0">PASS</Badge>;
-    if (decision === "FAIL") return <Badge className="bg-red-100 text-red-700 border-0">FAIL</Badge>;
-    return <Badge className="bg-amber-100 text-amber-700 border-0">REVIEW</Badge>;
-  };
-
-  const findEvidence = (checks: VerificationCheck[] | undefined, name: string) => (checks || []).find((c) => c.name === name);
 
   return (
     <DashboardLayout title="Bulk Verification">

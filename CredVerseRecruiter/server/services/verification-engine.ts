@@ -263,6 +263,14 @@ export class VerificationEngine {
                 riskFlags.push('DID_RESOLUTION_FAILED');
             }
 
+            // Check 7: Proof Hash Validation
+            const proofHashCheck = this.verifyProofHash(credential);
+            checks.push(proofHashCheck);
+            if (proofHashCheck.status === 'failed') {
+                overallStatus = 'failed';
+                riskFlags.push('PROOF_HASH_MISMATCH');
+            }
+
             // Calculate risk score
             const riskScore = this.calculateRiskScore(checks, riskFlags);
 
@@ -638,6 +646,7 @@ export class VerificationEngine {
         // Additional risk from flags
         const flagWeights: Record<string, number> = {
             'INVALID_SIGNATURE': 30,
+            'PROOF_HASH_MISMATCH': 100, // Critical integrity failure
             'UNKNOWN_ISSUER': 20,
             'EXPIRED_CREDENTIAL': 25,
             'REVOKED_CREDENTIAL': 50,
@@ -651,6 +660,49 @@ export class VerificationEngine {
         }
 
         return Math.min(100, score);
+    }
+
+    /**
+     * Verify proof hash integrity
+     */
+    private verifyProofHash(credential: any): VerificationCheck {
+        // Only validate if a credentialHash is present in the proof (or top-level for legacy)
+        // JWTs handle integrity via signature, so we skip this unless explicit hash claim exists.
+        const proofHash = credential.proof?.credentialHash || credential.credentialHash;
+
+        if (!proofHash) {
+            return {
+                name: 'Proof Hash Integrity',
+                status: 'skipped',
+                message: 'No credential hash present for integrity check',
+            };
+        }
+
+        // Re-calculate hash (excluding proof)
+        // Clone and remove proof/signature for hashing
+        const { proof, signature, ...credentialToHash } = credential;
+
+        // Handle legacy top-level hash removal if present
+        if ('credentialHash' in credentialToHash) {
+            delete credentialToHash.credentialHash;
+        }
+
+        const calculatedHash = this.hashCredential(credentialToHash);
+
+        if (calculatedHash !== proofHash) {
+            return {
+                name: 'Proof Hash Integrity',
+                status: 'failed',
+                message: 'Credential hash mismatch (Integrity violation)',
+                details: { expected: proofHash, calculated: calculatedHash },
+            };
+        }
+
+        return {
+            name: 'Proof Hash Integrity',
+            status: 'passed',
+            message: 'Credential integrity verified',
+        };
     }
 
     /**

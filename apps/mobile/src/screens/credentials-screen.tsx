@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, ListRenderItem, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -98,7 +98,7 @@ export function CredentialsScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
-  const { data, isLoading, isError, refetch } = useQuery({
+  const { data, isLoading, isError, refetch, isRefetching } = useQuery({
     queryKey: ['holder', 'credentials'],
     queryFn: getHolderCredentials,
   });
@@ -257,42 +257,6 @@ export function CredentialsScreen() {
     return activeCountLabel;
   }, [activeCountLabel]);
 
-  function renderCards() {
-    if (isLoading || isError) return null;
-    return credentials.map((credential) => {
-      const sc = statusColor(credential.status, colors);
-      return (
-        <LinearGradient
-          key={credential.id}
-          colors={[colors.gradientStart, colors.gradientEnd]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.gradientBorder}
-        >
-          <Pressable style={styles.card} onPress={() => openDetail(credential)}>
-            <View style={styles.badgeRow}>
-              {credential.typeBadges.map((badge) => (
-                <View key={`${credential.id}-${badge}`} style={styles.typeBadge}>
-                  <Text style={styles.typeBadgeText}>{badge}</Text>
-                </View>
-              ))}
-            </View>
-
-            <View style={styles.cardMetaRow}>
-              <Text style={styles.issuerText}>{credential.issuerName}</Text>
-              <View style={[styles.statusChip, { backgroundColor: sc.bg }]}>
-                <Text style={[styles.statusChipText, { color: sc.text }]}>{credential.status}</Text>
-              </View>
-            </View>
-
-            <Text style={styles.dateText}>Issued: {formatDate(credential.issuedAt)}</Text>
-            <Text style={styles.dateText}>Expiry: {formatDate(credential.expiresAt)}</Text>
-          </Pressable>
-        </LinearGradient>
-      );
-    });
-  }
-
   function shareViaQr() {
     if (!selected?.jwt) {
       Alert.alert('Unavailable', 'This credential does not include a shareable JWT yet.');
@@ -301,45 +265,100 @@ export function CredentialsScreen() {
     setShowQr(true);
   }
 
+  const renderItem: ListRenderItem<CredentialItem> = useCallback(
+    ({ item }) => {
+      const sc = statusColor(item.status, colors);
+      return (
+        <LinearGradient
+          colors={[colors.gradientStart, colors.gradientEnd]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradientBorder}
+        >
+          <Pressable style={styles.card} onPress={() => openDetail(item)}>
+            <View style={styles.badgeRow}>
+              {item.typeBadges.map((badge) => (
+                <View key={`${item.id}-${badge}`} style={styles.typeBadge}>
+                  <Text style={styles.typeBadgeText}>{badge}</Text>
+                </View>
+              ))}
+            </View>
+
+            <View style={styles.cardMetaRow}>
+              <Text style={styles.issuerText}>{item.issuerName}</Text>
+              <View style={[styles.statusChip, { backgroundColor: sc.bg }]}>
+                <Text style={[styles.statusChipText, { color: sc.text }]}>{item.status}</Text>
+              </View>
+            </View>
+
+            <Text style={styles.dateText}>Issued: {formatDate(item.issuedAt)}</Text>
+            <Text style={styles.dateText}>Expiry: {formatDate(item.expiresAt)}</Text>
+          </Pressable>
+        </LinearGradient>
+      );
+    },
+    [colors, styles, openDetail],
+  );
+
+  const ListHeader = useMemo(
+    () => (
+      <View style={styles.headerRow}>
+        <View>
+          <Text style={styles.kicker}>Credential Wallet</Text>
+          <Text style={styles.title}>My Credentials</Text>
+        </View>
+        <View style={styles.countBadge}>
+          <Text style={styles.countBadgeText}>{countBadgeText}</Text>
+        </View>
+      </View>
+    ),
+    [styles, countBadgeText],
+  );
+
+  const ListEmpty = useCallback(() => {
+    if (isLoading) {
+      return (
+        <View style={styles.placeholderCard}>
+          <Text style={styles.placeholderText}>Loading credentials...</Text>
+        </View>
+      );
+    }
+
+    if (isError) {
+      return (
+        <View style={styles.placeholderCard}>
+          <Text style={styles.errorText}>Could not load credentials.</Text>
+          <Pressable style={styles.retryButton} onPress={() => void refetch()}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </Pressable>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.placeholderCard}>
+        <Text style={styles.emptyTitle}>No credentials yet.</Text>
+        <Text style={styles.emptyText}>
+          Complete identity verification to get your first credential.
+        </Text>
+      </View>
+    );
+  }, [isLoading, isError, refetch, styles]);
+
+  const keyExtractor = useCallback((item: CredentialItem) => item.id, []);
+
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.kicker}>Credential Wallet</Text>
-            <Text style={styles.title}>My Credentials</Text>
-          </View>
-          <View style={styles.countBadge}>
-            <Text style={styles.countBadgeText}>{countBadgeText}</Text>
-          </View>
-        </View>
-
-        {isLoading ? (
-          <View style={styles.placeholderCard}>
-            <Text style={styles.placeholderText}>Loading credentials...</Text>
-          </View>
-        ) : null}
-
-        {isError ? (
-          <View style={styles.placeholderCard}>
-            <Text style={styles.errorText}>Could not load credentials.</Text>
-            <Pressable style={styles.retryButton} onPress={() => void refetch()}>
-              <Text style={styles.retryButtonText}>Retry</Text>
-            </Pressable>
-          </View>
-        ) : null}
-
-        {!isLoading && !isError && credentials.length === 0 ? (
-          <View style={styles.placeholderCard}>
-            <Text style={styles.emptyTitle}>No credentials yet.</Text>
-            <Text style={styles.emptyText}>
-              Complete identity verification to get your first credential.
-            </Text>
-          </View>
-        ) : null}
-
-        {renderCards()}
-      </ScrollView>
+      <FlatList
+        data={credentials}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        contentContainerStyle={styles.content}
+        ListHeaderComponent={ListHeader}
+        ListEmptyComponent={ListEmpty}
+        refreshing={isRefetching}
+        onRefresh={() => void refetch()}
+      />
 
       {isSheetVisible ? sheet : null}
     </View>

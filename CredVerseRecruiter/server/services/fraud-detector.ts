@@ -22,6 +22,21 @@ export interface FraudDetail {
   message: string;
 }
 
+export interface Credential {
+  issuer?: string | { id?: string; name?: string; [key: string]: unknown };
+  iss?: string;
+  issuanceDate?: string | number;
+  iat?: number;
+  expirationDate?: string | number;
+  exp?: number;
+  '@context'?: string | string[];
+  context?: string | string[];
+  type?: string | string[];
+  credentialSubject?: { id?: string; name?: string; [key: string]: unknown } | string;
+  sub?: string;
+  [key: string]: unknown;
+}
+
 const AI_RULE_WEIGHT = Number(process.env.AI_RISK_RULE_WEIGHT || 0.68);
 const AI_MODEL_WEIGHT = Number(process.env.AI_RISK_MODEL_WEIGHT || 0.32);
 
@@ -80,7 +95,7 @@ class FraudDetector {
   /**
    * Analyze a credential for fraud indicators
    */
-  async analyzeCredential(credential: any): Promise<FraudAnalysisResult> {
+  async analyzeCredential(credential: Credential): Promise<FraudAnalysisResult> {
     const flags: string[] = [];
     const details: FraudDetail[] = [];
     let ruleScore = 0;
@@ -184,8 +199,8 @@ class FraudDetector {
   /**
    * Check issuer for fraud indicators
    */
-  private checkIssuer(credential: any): FraudDetail {
-    const issuer = credential.issuer?.id || credential.issuer || credential.iss;
+  private checkIssuer(credential: Credential): FraudDetail {
+    const issuer = typeof credential.issuer === 'object' ? credential.issuer?.id : credential.issuer || credential.iss;
 
     if (!issuer) {
       return {
@@ -224,7 +239,7 @@ class FraudDetector {
   /**
    * Check for temporal anomalies
    */
-  private checkTemporalAnomalies(credential: any): FraudDetail {
+  private checkTemporalAnomalies(credential: Credential): FraudDetail {
     const issuanceDate = credential.issuanceDate || credential.iat;
 
     if (!issuanceDate) {
@@ -267,7 +282,7 @@ class FraudDetector {
   /**
    * Check content for suspicious patterns
    */
-  private checkContentPatterns(credential: any): FraudDetail {
+  private checkContentPatterns(credential: Credential): FraudDetail {
     const content = JSON.stringify(credential);
     const suspiciousFound: string[] = [];
 
@@ -303,7 +318,7 @@ class FraudDetector {
   /**
    * Check format consistency
    */
-  private checkFormatConsistency(credential: any): FraudDetail {
+  private checkFormatConsistency(credential: Credential): FraudDetail {
     // Check for W3C VC format compliance
     const hasContext = credential['@context'] || credential.context;
     const hasType = credential.type;
@@ -335,7 +350,7 @@ class FraudDetector {
   /**
    * Check subject information
    */
-  private checkSubjectInfo(credential: any): FraudDetail {
+  private checkSubjectInfo(credential: Credential): FraudDetail {
     const subject = credential.credentialSubject || credential.sub;
 
     if (!subject) {
