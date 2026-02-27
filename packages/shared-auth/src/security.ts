@@ -128,6 +128,25 @@ export function suspiciousRequestDetector(
 }
 
 // =============================================================================
+// NO CACHE MIDDLEWARE
+// =============================================================================
+
+export function noCacheMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
+  res.setHeader(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, proxy-revalidate",
+  );
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  res.setHeader("Surrogate-Control", "no-store");
+  next();
+}
+
+// =============================================================================
 // COMPOSITE SETUP
 // =============================================================================
 
@@ -183,7 +202,10 @@ export function setupSecurity(app: Application, config: SecurityConfig = {}) {
   app.use(suspiciousRequestDetector);
   // app.use(sanitizationMiddleware); // Removed: context-unaware sanitization corrupts data (e.g. passwords)
 
-  // 6. Request ID
+  // 6. No Cache for API
+  app.use("/api", noCacheMiddleware);
+
+  // 7. Request ID
   app.use((req: Request, res: Response, next: NextFunction) => {
     const requestId =
       (req.headers["x-request-id"] as string) || crypto.randomUUID();
