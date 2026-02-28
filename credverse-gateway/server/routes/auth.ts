@@ -56,11 +56,11 @@ class GatewaySessionStore {
     private readonly pendingStates = new Map<string, { createdAt: Date }>();
 
     constructor(url?: string) {
-        // Run pruning periodically to avoid O(N) operations on every request
-        setInterval(() => this.pruneSessions(), Math.min(SESSION_TTL_SECONDS * 1000 / 2, 5 * 60 * 1000)).unref();
-        setInterval(() => this.prunePendingStates(), Math.min(STATE_TTL_SECONDS * 1000 / 2, 60 * 1000)).unref();
-
         if (!url) {
+            // Run pruning periodically to avoid O(N) operations on every request
+            // Only necessary for in-memory Map usage (when Redis is not configured)
+            setInterval(() => this.pruneSessions(), Math.min(SESSION_TTL_SECONDS * 1000 / 2, 5 * 60 * 1000)).unref();
+            setInterval(() => this.prunePendingStates(), Math.min(STATE_TTL_SECONDS * 1000 / 2, 60 * 1000)).unref();
             return;
         }
 
@@ -80,9 +80,6 @@ class GatewaySessionStore {
         for (const [key, value] of this.pendingStates.entries()) {
             if (value.createdAt.getTime() < expiredBefore) {
                 this.pendingStates.delete(key);
-            } else {
-                // Map insertion order is preserved, so if we hit a non-expired item, the rest are also non-expired
-                break;
             }
         }
     }
@@ -97,9 +94,6 @@ class GatewaySessionStore {
             }
             if (createdAtMs < expiredBefore) {
                 this.sessions.delete(key);
-            } else {
-                // Map insertion order is preserved, so if we hit a non-expired item, the rest are also non-expired
-                break;
             }
         }
     }
