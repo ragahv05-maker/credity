@@ -104,10 +104,11 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
         }
 
         // Simulate auth failure for test servers if headers are missing
-        if (urlStr.includes('127.0.0.1')) {
+        if (urlStr.includes('127.0.0.1') && !urlStr.includes('/public/issuance/offer/consume')) {
              const headers = options?.headers as Record<string, string> || {};
              const hasAuth = headers['Authorization'] || headers['x-api-key'];
-             if (!hasAuth) {
+
+             if (!hasAuth || headers['x-api-key'] === 'invalid-key') {
                  return { ok: false, status: 401, json: async () => ({}) } as Response;
              }
 
@@ -128,6 +129,25 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
                      json: async () => ({ offerUrl: 'http://127.0.0.1:5001/api/v1/public/issuance/offer/consume?token=mock' })
                  } as Response;
              }
+        }
+
+        // Return a mock credential if offer/consume is called
+        if (urlStr.includes('/public/issuance/offer/consume')) {
+             return {
+                 ok: true,
+                 status: 200,
+                 json: async () => ({
+                     credential: {
+                         tenantId: '1',
+                         templateId: 'template-1',
+                         issuerId: 'issuer-1',
+                         recipient: {},
+                         credentialData: {},
+                         vcJwt: 'mock-jwt'
+                     },
+                     vcJwt: 'mock-jwt'
+                 })
+             } as Response;
         }
 
         return { ok: true, status: 200, json: async () => ({}) } as Response;
