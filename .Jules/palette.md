@@ -17,3 +17,7 @@
 ## 2024-10-25 - Dependency Security (Minimatch)
 **Learning:** High-severity ReDoS vulnerabilities in `minimatch` (<9.0.6 or <10.2.2) blocked CI. `npm audit fix` successfully patched these by updating nested dependencies in `package-lock.json`.
 **Action:** Regularly run `npm audit` in each package directory and prioritize fixing High/Critical vulnerabilities to prevent CI blockage.
+
+## 2024-10-25 - CredVerseRecruiter Header Accessibility
+**Learning:** Found that the top navigation header had several `lucide-react` icon-only buttons missing accessible names. Adding `aria-label` attributes to these buttons ensures screen reader users can identify their purpose (Toggle Theme, Help, Notifications, User Menu). Additionally, running `npm run dev` in `CredVerseRecruiter` requires creating a `.env` file first if it doesn't exist, as the start script relies on `--env-file=.env`.
+**Action:** Always check icon-only buttons (common in layout headers) for `aria-label` or visually hidden text, and ensure the `.env` file exists when attempting to start a local dev server for UI verification.
