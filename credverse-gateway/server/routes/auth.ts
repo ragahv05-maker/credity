@@ -56,6 +56,10 @@ class GatewaySessionStore {
     private readonly pendingStates = new Map<string, { createdAt: Date }>();
 
     constructor(url?: string) {
+        // Run pruning periodically to avoid O(N) operations on every request
+        setInterval(() => this.pruneSessions(), Math.min(SESSION_TTL_SECONDS * 1000 / 2, 5 * 60 * 1000)).unref();
+        setInterval(() => this.prunePendingStates(), Math.min(STATE_TTL_SECONDS * 1000 / 2, 60 * 1000)).unref();
+
         if (!url) {
             return;
         }
@@ -76,6 +80,9 @@ class GatewaySessionStore {
         for (const [key, value] of this.pendingStates.entries()) {
             if (value.createdAt.getTime() < expiredBefore) {
                 this.pendingStates.delete(key);
+            } else {
+                // Map insertion order is preserved, so if we hit a non-expired item, the rest are also non-expired
+                break;
             }
         }
     }
@@ -84,8 +91,15 @@ class GatewaySessionStore {
         const expiredBefore = Date.now() - SESSION_TTL_SECONDS * 1000;
         for (const [key, value] of this.sessions.entries()) {
             const createdAtMs = Date.parse(value.createdAt);
-            if (Number.isFinite(createdAtMs) && createdAtMs < expiredBefore) {
+            if (!Number.isFinite(createdAtMs)) {
                 this.sessions.delete(key);
+                continue;
+            }
+            if (createdAtMs < expiredBefore) {
+                this.sessions.delete(key);
+            } else {
+                // Map insertion order is preserved, so if we hit a non-expired item, the rest are also non-expired
+                break;
             }
         }
     }
@@ -97,7 +111,6 @@ class GatewaySessionStore {
         }
 
         this.pendingStates.set(state, { createdAt: new Date() });
-        this.prunePendingStates();
     }
 
     async consumePendingState(state: string): Promise<boolean> {
@@ -109,10 +122,18 @@ class GatewaySessionStore {
             return true;
         }
 
-        this.prunePendingStates();
-        if (!this.pendingStates.has(state)) {
+        const pendingState = this.pendingStates.get(state);
+        if (!pendingState) {
             return false;
         }
+
+        // Manual O(1) expiration check between background prune cycles
+        const expiredBefore = Date.now() - STATE_TTL_SECONDS * 1000;
+        if (pendingState.createdAt.getTime() < expiredBefore) {
+            this.pendingStates.delete(state);
+            return false;
+        }
+
         this.pendingStates.delete(state);
         return true;
     }
@@ -129,7 +150,6 @@ class GatewaySessionStore {
         }
 
         this.sessions.set(sessionId, session);
-        this.pruneSessions();
     }
 
     async getSession(sessionId: string): Promise<SessionRecord | null> {
@@ -143,8 +163,20 @@ class GatewaySessionStore {
             }
         }
 
-        this.pruneSessions();
-        return this.sessions.get(sessionId) ?? null;
+        const session = this.sessions.get(sessionId);
+        if (!session) {
+            return null;
+        }
+
+        // Manual O(1) expiration check between background prune cycles
+        const createdAtMs = Date.parse(session.createdAt);
+        const expiredBefore = Date.now() - SESSION_TTL_SECONDS * 1000;
+        if (!Number.isFinite(createdAtMs) || createdAtMs < expiredBefore) {
+            this.sessions.delete(sessionId);
+            return null;
+        }
+
+        return session;
     }
 
     async deleteSession(sessionId: string): Promise<void> {
