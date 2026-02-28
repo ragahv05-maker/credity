@@ -41,22 +41,22 @@ export function Header({ title }: { title: string }) {
           />
         </div>
 
-        <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-foreground">
+        <Button aria-label="Toggle theme" variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-foreground">
           {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
         </Button>
 
-        <Button variant="ghost" size="icon" className="text-muted-foreground">
+        <Button aria-label="Help" variant="ghost" size="icon" className="text-muted-foreground">
           <HelpCircle className="h-5 w-5" />
         </Button>
 
-        <Button variant="ghost" size="icon" className="relative text-muted-foreground">
+        <Button aria-label="Notifications" variant="ghost" size="icon" className="relative text-muted-foreground">
           <Bell className="h-5 w-5" />
           <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-destructive border border-background" />
         </Button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-9 w-9 rounded-full bg-muted">
+            <Button aria-label="User menu" variant="ghost" className="relative h-9 w-9 rounded-full bg-muted">
               <User className="h-5 w-5 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
