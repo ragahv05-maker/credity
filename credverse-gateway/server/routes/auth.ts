@@ -57,6 +57,10 @@ class GatewaySessionStore {
 
     constructor(url?: string) {
         if (!url) {
+            // Run pruning periodically to avoid O(N) operations on every request
+            // Only necessary for in-memory Map usage (when Redis is not configured)
+            setInterval(() => this.pruneSessions(), Math.min(SESSION_TTL_SECONDS * 1000 / 2, 5 * 60 * 1000)).unref();
+            setInterval(() => this.prunePendingStates(), Math.min(STATE_TTL_SECONDS * 1000 / 2, 60 * 1000)).unref();
             return;
         }
 
@@ -84,7 +88,11 @@ class GatewaySessionStore {
         const expiredBefore = Date.now() - SESSION_TTL_SECONDS * 1000;
         for (const [key, value] of this.sessions.entries()) {
             const createdAtMs = Date.parse(value.createdAt);
-            if (Number.isFinite(createdAtMs) && createdAtMs < expiredBefore) {
+            if (!Number.isFinite(createdAtMs)) {
+                this.sessions.delete(key);
+                continue;
+            }
+            if (createdAtMs < expiredBefore) {
                 this.sessions.delete(key);
             }
         }
@@ -97,7 +105,6 @@ class GatewaySessionStore {
         }
 
         this.pendingStates.set(state, { createdAt: new Date() });
-        this.prunePendingStates();
     }
 
     async consumePendingState(state: string): Promise<boolean> {
@@ -109,10 +116,18 @@ class GatewaySessionStore {
             return true;
         }
 
-        this.prunePendingStates();
-        if (!this.pendingStates.has(state)) {
+        const pendingState = this.pendingStates.get(state);
+        if (!pendingState) {
             return false;
         }
+
+        // Manual O(1) expiration check between background prune cycles
+        const expiredBefore = Date.now() - STATE_TTL_SECONDS * 1000;
+        if (pendingState.createdAt.getTime() < expiredBefore) {
+            this.pendingStates.delete(state);
+            return false;
+        }
+
         this.pendingStates.delete(state);
         return true;
     }
@@ -129,7 +144,6 @@ class GatewaySessionStore {
         }
 
         this.sessions.set(sessionId, session);
-        this.pruneSessions();
     }
 
     async getSession(sessionId: string): Promise<SessionRecord | null> {
@@ -143,8 +157,20 @@ class GatewaySessionStore {
             }
         }
 
-        this.pruneSessions();
-        return this.sessions.get(sessionId) ?? null;
+        const session = this.sessions.get(sessionId);
+        if (!session) {
+            return null;
+        }
+
+        // Manual O(1) expiration check between background prune cycles
+        const createdAtMs = Date.parse(session.createdAt);
+        const expiredBefore = Date.now() - SESSION_TTL_SECONDS * 1000;
+        if (!Number.isFinite(createdAtMs) || createdAtMs < expiredBefore) {
+            this.sessions.delete(sessionId);
+            return null;
+        }
+
+        return session;
     }
 
     async deleteSession(sessionId: string): Promise<void> {
