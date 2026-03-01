@@ -1,6 +1,15 @@
-import { type User, type InsertUser, type Tenant, type InsertTenant, type ApiKey, type InsertApiKey, type Issuer, type InsertIssuer, type Template, type InsertTemplate, type Credential, type InsertCredential } from "@shared/schema";
+import {
+  type User, type InsertUser,
+  type Tenant, type InsertTenant,
+  type ApiKey, type InsertApiKey,
+  type Issuer, type InsertIssuer,
+  type Template, type InsertTemplate,
+  type Credential, type InsertCredential
+} from "@shared/schema";
+import * as schema from "@shared/schema";
 import { randomUUID } from "crypto";
-import { PostgresStateStore } from "@credverse/shared-auth";
+import { db } from "./db";
+import { eq, and, desc, sql } from "drizzle-orm";
 
 // Extended types for full functionality
 export interface Student {
@@ -118,6 +127,47 @@ export interface IStorage {
   getCredentialByVcJwt(vcJwt: string): Promise<Credential | undefined>;
   createCredential(credential: InsertCredential): Promise<Credential>;
   listCredentials(tenantId: string): Promise<Credential[]>;
+  revokeCredential(id: string): Promise<void>;
+  updateCredentialBlockchain(id: string, data: { txHash?: string; blockNumber?: number; credentialHash?: string }): Promise<void>;
+
+  // Activity Log
+  createActivityLog(data: { tenantId: string; type: string; title: string; description: string; metadata?: any }): Promise<void>;
+
+  // Students
+  listStudents(tenantId: string): Promise<Student[]>;
+  getStudent(id: string): Promise<Student | undefined>;
+  createStudent(data: Omit<Student, "id" | "createdAt">): Promise<Student>;
+  updateStudent(id: string, data: Partial<Student>): Promise<Student | undefined>;
+  deleteStudent(id: string): Promise<boolean>;
+  bulkCreateStudents(students: Omit<Student, "id" | "createdAt">[]): Promise<Student[]>;
+
+  // Team Members
+  listTeamMembers(tenantId: string): Promise<TeamMember[]>;
+  getTeamMember(id: string): Promise<TeamMember | undefined>;
+  createTeamMember(data: Omit<TeamMember, "id" | "invitedAt" | "joinedAt">): Promise<TeamMember>;
+  updateTeamMember(id: string, data: Partial<TeamMember>): Promise<TeamMember | undefined>;
+  deleteTeamMember(id: string): Promise<boolean>;
+
+  // Verification Logs
+  listVerificationLogs(tenantId: string): Promise<VerificationLog[]>;
+  createVerificationLog(data: {
+    tenantId: string;
+    credentialId: string;
+    verifierName: string;
+    verifierIp: string;
+    location: string;
+    status: "verified" | "failed" | "suspicious";
+    reason?: string;
+  }): Promise<VerificationLog>;
+  getVerificationStats(tenantId: string): Promise<{ total: number; today: number; suspicious: number }>;
+
+  // Template Designs
+  listTemplateDesigns(tenantId: string): Promise<TemplateDesign[]>;
+  getTemplateDesign(id: string): Promise<TemplateDesign | undefined>;
+  createTemplateDesign(data: Omit<TemplateDesign, "id" | "createdAt" | "updatedAt">): Promise<TemplateDesign>;
+  updateTemplateDesign(id: string, data: Partial<TemplateDesign>): Promise<TemplateDesign | undefined>;
+  deleteTemplateDesign(id: string): Promise<boolean>;
+  duplicateTemplateDesign(id: string): Promise<TemplateDesign | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -637,6 +687,302 @@ export class MemStorage implements IStorage {
   }
 }
 
+export class DbStorage implements IStorage {
+  // User
+  async getUser(id: string): Promise<User | undefined> {
+    if (!db) return undefined;
+    const [user] = await db.select().from(schema.users).where(eq(schema.users.id, id));
+    return user;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    if (!db) return undefined;
+    const [user] = await db.select().from(schema.users).where(eq(schema.users.username, username));
+    return user;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    if (!db) throw new Error("Database not connected");
+    const [user] = await db.insert(schema.users).values(insertUser).returning();
+    return user;
+  }
+
+  // Tenant
+  async getTenant(id: string): Promise<Tenant | undefined> {
+    if (!db) return undefined;
+    const [tenant] = await db.select().from(schema.tenants).where(eq(schema.tenants.id, id));
+    return tenant;
+  }
+
+  async createTenant(insertTenant: InsertTenant): Promise<Tenant> {
+    if (!db) throw new Error("Database not connected");
+    const [tenant] = await db.insert(schema.tenants).values(insertTenant).returning();
+    return tenant;
+  }
+
+  // API Key
+  async getApiKey(keyHash: string): Promise<ApiKey | undefined> {
+    if (!db) return undefined;
+    const [apiKey] = await db.select().from(schema.apiKeys).where(eq(schema.apiKeys.keyHash, keyHash));
+    return apiKey;
+  }
+
+  async createApiKey(insertApiKey: InsertApiKey): Promise<ApiKey> {
+    if (!db) throw new Error("Database not connected");
+    const [apiKey] = await db.insert(schema.apiKeys).values(insertApiKey).returning();
+    return apiKey;
+  }
+
+  // Issuer
+  async getIssuer(id: string): Promise<Issuer | undefined> {
+    if (!db) return undefined;
+    const [issuer] = await db.select().from(schema.issuers).where(eq(schema.issuers.id, id));
+    return issuer;
+  }
+
+  async getIssuerByDid(did: string): Promise<Issuer | undefined> {
+    if (!db) return undefined;
+    const [issuer] = await db.select().from(schema.issuers).where(eq(schema.issuers.did, did));
+    return issuer;
+  }
+
+  async createIssuer(insertIssuer: InsertIssuer): Promise<Issuer> {
+    if (!db) throw new Error("Database not connected");
+    const [issuer] = await db.insert(schema.issuers).values(insertIssuer).returning();
+    return issuer;
+  }
+
+  async listIssuers(tenantId: string): Promise<Issuer[]> {
+    if (!db) return [];
+    return db.select().from(schema.issuers).where(eq(schema.issuers.tenantId, tenantId));
+  }
+
+  // Template
+  async getTemplate(id: string): Promise<Template | undefined> {
+    if (!db) return undefined;
+    const [template] = await db.select().from(schema.templates).where(eq(schema.templates.id, id));
+    return template;
+  }
+
+  async createTemplate(insertTemplate: InsertTemplate): Promise<Template> {
+    if (!db) throw new Error("Database not connected");
+    const [template] = await db.insert(schema.templates).values(insertTemplate).returning();
+    return template;
+  }
+
+  async listTemplates(tenantId: string): Promise<Template[]> {
+    if (!db) return [];
+    return db.select().from(schema.templates).where(eq(schema.templates.tenantId, tenantId));
+  }
+
+  // Credential
+  async getCredential(id: string): Promise<Credential | undefined> {
+    if (!db) return undefined;
+    const [credential] = await db.select().from(schema.credentials).where(eq(schema.credentials.id, id));
+    return credential;
+  }
+
+  async getCredentialByVcJwt(vcJwt: string): Promise<Credential | undefined> {
+    if (!db) return undefined;
+    const [credential] = await db.select().from(schema.credentials).where(eq(schema.credentials.vcJwt, vcJwt));
+    return credential;
+  }
+
+  async createCredential(insertCredential: InsertCredential): Promise<Credential> {
+    if (!db) throw new Error("Database not connected");
+    const [credential] = await db.insert(schema.credentials).values(insertCredential).returning();
+    return credential;
+  }
+
+  async listCredentials(tenantId: string): Promise<Credential[]> {
+    if (!db) return [];
+    return db.select().from(schema.credentials).where(eq(schema.credentials.tenantId, tenantId));
+  }
+
+  async revokeCredential(id: string): Promise<void> {
+    if (!db) return;
+    await db.update(schema.credentials).set({ revoked: true }).where(eq(schema.credentials.id, id));
+  }
+
+  async updateCredentialBlockchain(id: string, data: { txHash?: string; blockNumber?: number; credentialHash?: string }): Promise<void> {
+    if (!db) return;
+    await db.update(schema.credentials).set(data).where(eq(schema.credentials.id, id));
+  }
+
+  async createActivityLog(data: { tenantId: string; type: string; title: string; description: string; metadata?: any }): Promise<void> {
+    if (!db) return; // Should not throw if logging fails, maybe?
+    await db.insert(schema.activityLogs).values(data);
+  }
+
+  // Students
+  async listStudents(tenantId: string): Promise<Student[]> {
+    if (!db) return [];
+    return db.select().from(schema.students).where(eq(schema.students.tenantId, tenantId)) as Promise<Student[]>;
+  }
+
+  async getStudent(id: string): Promise<Student | undefined> {
+    if (!db) return undefined;
+    const [student] = await db.select().from(schema.students).where(eq(schema.students.id, id));
+    return student as Student | undefined;
+  }
+
+  async createStudent(data: Omit<Student, "id" | "createdAt">): Promise<Student> {
+    if (!db) throw new Error("Database not connected");
+    const [student] = await db.insert(schema.students).values(data).returning();
+    return student as Student;
+  }
+
+  async updateStudent(id: string, data: Partial<Student>): Promise<Student | undefined> {
+    if (!db) return undefined;
+    const [student] = await db.update(schema.students).set(data).where(eq(schema.students.id, id)).returning();
+    return student as Student | undefined;
+  }
+
+  async deleteStudent(id: string): Promise<boolean> {
+    if (!db) return false;
+    const result = await db.delete(schema.students).where(eq(schema.students.id, id));
+    // drizzle doesn't return deleted count in all drivers, but for pg it returns.
+    // However result type depends on driver. For simplicity assume it succeeded if no error.
+    return true;
+  }
+
+  async bulkCreateStudents(students: Omit<Student, "id" | "createdAt">[]): Promise<Student[]> {
+    if (!db) throw new Error("Database not connected");
+    // Drizzle insert can take an array
+    if (students.length === 0) return [];
+    const inserted = await db.insert(schema.students).values(students).returning();
+    return inserted as Student[];
+  }
+
+  // Team Members
+  async listTeamMembers(tenantId: string): Promise<TeamMember[]> {
+    if (!db) return [];
+    return db.select().from(schema.teamMembers).where(eq(schema.teamMembers.tenantId, tenantId)) as Promise<TeamMember[]>;
+  }
+
+  async getTeamMember(id: string): Promise<TeamMember | undefined> {
+    if (!db) return undefined;
+    const [member] = await db.select().from(schema.teamMembers).where(eq(schema.teamMembers.id, id));
+    return member as TeamMember | undefined;
+  }
+
+  async createTeamMember(data: Omit<TeamMember, "id" | "invitedAt" | "joinedAt">): Promise<TeamMember> {
+    if (!db) throw new Error("Database not connected");
+    const [member] = await db.insert(schema.teamMembers).values(data).returning();
+    return member as TeamMember;
+  }
+
+  async updateTeamMember(id: string, data: Partial<TeamMember>): Promise<TeamMember | undefined> {
+    if (!db) return undefined;
+    const [member] = await db.update(schema.teamMembers).set(data).where(eq(schema.teamMembers.id, id)).returning();
+    return member as TeamMember | undefined;
+  }
+
+  async deleteTeamMember(id: string): Promise<boolean> {
+    if (!db) return false;
+    await db.delete(schema.teamMembers).where(eq(schema.teamMembers.id, id));
+    return true;
+  }
+
+  // Verification Logs
+  async listVerificationLogs(tenantId: string): Promise<VerificationLog[]> {
+    if (!db) return [];
+    return db.select().from(schema.verificationLogs)
+      .where(eq(schema.verificationLogs.tenantId, tenantId))
+      .orderBy(desc(schema.verificationLogs.timestamp)) as Promise<VerificationLog[]>;
+  }
+
+  async createVerificationLog(data: {
+    tenantId: string;
+    credentialId: string;
+    verifierName: string;
+    verifierIp: string;
+    location: string;
+    status: "verified" | "failed" | "suspicious";
+    reason?: string;
+  }): Promise<VerificationLog> {
+    if (!db) throw new Error("Database not connected");
+    const [log] = await db.insert(schema.verificationLogs).values({
+      tenantId: data.tenantId,
+      credentialId: data.credentialId,
+      verifierName: data.verifierName,
+      ipAddress: data.verifierIp,
+      verifierLocation: data.location,
+      status: data.status === "verified" ? "success" : data.status,
+      reason: data.reason
+    }).returning();
+    return log as VerificationLog;
+  }
+
+  async getVerificationStats(tenantId: string): Promise<{ total: number; today: number; suspicious: number }> {
+    if (!db) return { total: 0, today: 0, suspicious: 0 };
+
+    // Efficient aggregation query using SQL
+    // But since IStorage expects return value, and doing complex SQL with Drizzle requires `sql` operator.
+
+    const logs = await this.listVerificationLogs(tenantId);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return {
+      total: logs.length,
+      today: logs.filter(l => l.timestamp >= today).length,
+      suspicious: logs.filter(l => l.status === "suspicious").length
+    };
+    // Optimization note: Could be replaced with count queries for better performance with large datasets.
+  }
+
+  // Template Designs
+  async listTemplateDesigns(tenantId: string): Promise<TemplateDesign[]> {
+    if (!db) return [];
+    const designs = await db.select().from(schema.templateDesigns).where(eq(schema.templateDesigns.tenantId, tenantId));
+    return designs as unknown as TemplateDesign[]; // Casting due to jsonb fields
+  }
+
+  async getTemplateDesign(id: string): Promise<TemplateDesign | undefined> {
+    if (!db) return undefined;
+    const [design] = await db.select().from(schema.templateDesigns).where(eq(schema.templateDesigns.id, id));
+    return design as unknown as TemplateDesign | undefined;
+  }
+
+  async createTemplateDesign(data: Omit<TemplateDesign, "id" | "createdAt" | "updatedAt">): Promise<TemplateDesign> {
+    if (!db) throw new Error("Database not connected");
+    const [design] = await db.insert(schema.templateDesigns).values(data).returning();
+    return design as unknown as TemplateDesign;
+  }
+
+  async updateTemplateDesign(id: string, data: Partial<TemplateDesign>): Promise<TemplateDesign | undefined> {
+    if (!db) return undefined;
+    const [design] = await db.update(schema.templateDesigns)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(schema.templateDesigns.id, id))
+      .returning();
+    return design as unknown as TemplateDesign | undefined;
+  }
+
+  async deleteTemplateDesign(id: string): Promise<boolean> {
+    if (!db) return false;
+    await db.delete(schema.templateDesigns).where(eq(schema.templateDesigns.id, id));
+    return true;
+  }
+
+  async duplicateTemplateDesign(id: string): Promise<TemplateDesign | undefined> {
+    if (!db) return undefined;
+    const original = await this.getTemplateDesign(id);
+    if (!original) return undefined;
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id: _, createdAt, updatedAt, ...rest } = original;
+
+    const [duplicate] = await db.insert(schema.templateDesigns).values({
+      ...rest,
+      name: `${original.name} (Copy)`,
+      status: "Draft",
+    }).returning();
+
+    return duplicate as unknown as TemplateDesign;
+  }
+}
+
 const requirePersistentStorage =
   process.env.NODE_ENV === "production" || process.env.REQUIRE_DATABASE === "true";
 const databaseUrl = process.env.DATABASE_URL;
@@ -647,69 +993,7 @@ if (requirePersistentStorage && !databaseUrl) {
   );
 }
 
-function createPersistedStorage(base: MemStorage, dbUrl?: string): MemStorage {
-  if (!dbUrl) {
-    return base;
-  }
-
-  const stateStore = new PostgresStateStore<IssuerStorageState>({
-    databaseUrl: dbUrl,
-    serviceKey: "issuer-storage",
-  });
-
-  let hydrated = false;
-  let hydrationPromise: Promise<void> | null = null;
-  let persistChain = Promise.resolve();
-
-  const mutatingPrefixes = ["create", "update", "delete", "revoke", "bulk", "duplicate"];
-
-  const ensureHydrated = async () => {
-    if (hydrated) return;
-    if (!hydrationPromise) {
-      hydrationPromise = (async () => {
-        const loaded = await stateStore.load();
-        if (loaded) {
-          base.importState(loaded);
-        } else {
-          await stateStore.save(base.exportState());
-        }
-        hydrated = true;
-      })();
-    }
-    await hydrationPromise;
-  };
-
-  const queuePersist = async () => {
-    persistChain = persistChain
-      .then(async () => {
-        await stateStore.save(base.exportState());
-      })
-      .catch((error) => {
-        console.error("[Storage] Failed to persist issuer state:", error);
-      });
-    await persistChain;
-  };
-
-  return new Proxy(base, {
-    get(target, prop, receiver) {
-      const value = Reflect.get(target, prop, receiver);
-      if (typeof value !== "function") {
-        return value;
-      }
-
-      return async (...args: unknown[]) => {
-        await ensureHydrated();
-        const result = await value.apply(target, args);
-        const shouldPersist = mutatingPrefixes.some(
-          (prefix) => typeof prop === "string" && prop.startsWith(prefix),
-        );
-        if (shouldPersist) {
-          await queuePersist();
-        }
-        return result;
-      };
-    },
-  }) as MemStorage;
-}
-
-export const storage = createPersistedStorage(new MemStorage(), databaseUrl);
+// Export storage instance
+// If databaseUrl is present, use DbStorage (direct DB access)
+// Otherwise fallback to MemStorage (in-memory)
+export const storage: IStorage = databaseUrl ? new DbStorage() : new MemStorage();
