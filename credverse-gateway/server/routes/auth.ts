@@ -56,19 +56,24 @@ class GatewaySessionStore {
     private readonly pendingStates = new Map<string, { createdAt: Date }>();
 
     constructor(url?: string) {
-        if (!url) {
-            return;
+        if (url) {
+            this.redis = new IORedis(url, {
+                maxRetriesPerRequest: 1,
+                enableReadyCheck: true,
+                lazyConnect: false,
+            });
+
+            this.redis.on('error', (error) => {
+                console.error('[Auth] Redis session store error:', error);
+            });
+        } else {
+            // Periodic pruning for in-memory store
+            const interval = setInterval(() => {
+                this.pruneSessions();
+                this.prunePendingStates();
+            }, 60000);
+            interval.unref();
         }
-
-        this.redis = new IORedis(url, {
-            maxRetriesPerRequest: 1,
-            enableReadyCheck: true,
-            lazyConnect: false,
-        });
-
-        this.redis.on('error', (error) => {
-            console.error('[Auth] Redis session store error:', error);
-        });
     }
 
     private prunePendingStates(): void {
@@ -76,6 +81,9 @@ class GatewaySessionStore {
         for (const [key, value] of this.pendingStates.entries()) {
             if (value.createdAt.getTime() < expiredBefore) {
                 this.pendingStates.delete(key);
+            } else {
+                // Map preserves insertion order, so we can stop at the first non-expired entry
+                break;
             }
         }
     }
@@ -86,6 +94,9 @@ class GatewaySessionStore {
             const createdAtMs = Date.parse(value.createdAt);
             if (Number.isFinite(createdAtMs) && createdAtMs < expiredBefore) {
                 this.sessions.delete(key);
+            } else {
+                // Map preserves insertion order, so we can stop at the first non-expired entry
+                break;
             }
         }
     }
@@ -97,7 +108,6 @@ class GatewaySessionStore {
         }
 
         this.pendingStates.set(state, { createdAt: new Date() });
-        this.prunePendingStates();
     }
 
     async consumePendingState(state: string): Promise<boolean> {
@@ -109,10 +119,15 @@ class GatewaySessionStore {
             return true;
         }
 
-        this.prunePendingStates();
-        if (!this.pendingStates.has(state)) {
+        const stateData = this.pendingStates.get(state);
+        if (!stateData) return false;
+
+        const expiredBefore = Date.now() - STATE_TTL_SECONDS * 1000;
+        if (stateData.createdAt.getTime() < expiredBefore) {
+            this.pendingStates.delete(state);
             return false;
         }
+
         this.pendingStates.delete(state);
         return true;
     }
@@ -129,7 +144,6 @@ class GatewaySessionStore {
         }
 
         this.sessions.set(sessionId, session);
-        this.pruneSessions();
     }
 
     async getSession(sessionId: string): Promise<SessionRecord | null> {
@@ -143,8 +157,17 @@ class GatewaySessionStore {
             }
         }
 
-        this.pruneSessions();
-        return this.sessions.get(sessionId) ?? null;
+        const session = this.sessions.get(sessionId);
+        if (!session) return null;
+
+        const createdAtMs = Date.parse(session.createdAt);
+        const expiredBefore = Date.now() - SESSION_TTL_SECONDS * 1000;
+        if (Number.isFinite(createdAtMs) && createdAtMs < expiredBefore) {
+            this.sessions.delete(sessionId);
+            return null;
+        }
+
+        return session;
     }
 
     async deleteSession(sessionId: string): Promise<void> {
