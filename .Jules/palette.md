@@ -17,3 +17,6 @@
 ## 2024-10-25 - Dependency Security (Minimatch)
 **Learning:** High-severity ReDoS vulnerabilities in `minimatch` (<9.0.6 or <10.2.2) blocked CI. `npm audit fix` successfully patched these by updating nested dependencies in `package-lock.json`.
 **Action:** Regularly run `npm audit` in each package directory and prioritize fixing High/Critical vulnerabilities to prevent CI blockage.
+## 2025-03-02 - Icon-Only Button ARIA Labels
+**Learning:** Found a widespread pattern where icon-only buttons (`<Button size="icon">`) lacked `aria-label`s, breaking accessibility for screen reader users on key actions like "Close", "Copy", and "Go back".
+**Action:** Ensure that any future interactive components relying solely on icons for visual communication explicitly include descriptive `aria-label` attributes to maintain WCAG compliance and usable screen reader experiences.
