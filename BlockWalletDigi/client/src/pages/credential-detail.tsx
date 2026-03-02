@@ -157,7 +157,7 @@ export default function CredentialDetail() {
       <div className="flex-1 md:ml-64 flex flex-col h-screen overflow-y-auto bg-secondary/30">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-card/80 backdrop-blur-md border-b border-border px-6 py-4 flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => setLocation("/")}>
+          <Button variant="ghost" size="icon" onClick={() => setLocation("/")} aria-label="Go back">
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <h1 className="font-semibold text-lg">Credential Details</h1>
