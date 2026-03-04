@@ -190,6 +190,7 @@ function CalendarDayButton({
       ref={ref}
       variant="ghost"
       size="icon"
+      aria-label={`Select date ${day.date.toLocaleDateString()}`}
       data-day={day.date.toLocaleDateString()}
       data-selected-single={
         modifiers.selected &&
