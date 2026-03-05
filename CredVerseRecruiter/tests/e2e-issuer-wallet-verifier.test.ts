@@ -4,6 +4,7 @@ import { createServer, type Server } from 'http';
 import request from 'supertest';
 
 // Setup global fetch mock for E2E tests to handle internal service calls (Issuer/Wallet)
+const originalFetch = global.fetch;
 const fetchMock = vi.fn();
 global.fetch = fetchMock;
 
@@ -105,13 +106,9 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
 
         // Simulate auth failure for test servers if headers are missing
         if (urlStr.includes('127.0.0.1')) {
-             // Exempt public routes from mock auth checks
+             // Exempt public routes from mock auth checks, just let them pass through to the real express server.
              if (urlStr.includes('/public/')) {
-                 return {
-                     ok: true,
-                     status: 200,
-                     json: async () => ({ credential: { id: 'mock-cred', issuerId: 'issuer-1' }, vcJwt: 'mock-jwt' })
-                 } as Response;
+                 return originalFetch(url, options);
              }
 
              const headers = options?.headers as Record<string, string> || {};
@@ -131,25 +128,11 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
                  return { ok: false, status: 401, json: async () => ({}) } as Response;
              }
 
-             // Simulate issuance success (201)
-             if (urlStr.includes('/credentials/issue')) {
-                 return {
-                     ok: true,
-                     status: 201,
-                     json: async () => ({ id: 'mock-credential-id' })
-                 } as Response;
-             }
-
-             // Simulate offer creation
-             if (urlStr.includes('/offer')) {
-                 return {
-                     ok: true,
-                     status: 200,
-                     json: async () => ({ offerUrl: 'http://127.0.0.1:5001/api/v1/public/issuance/offer/consume?token=mock' })
-                 } as Response;
-             }
+             // The auth is valid, let it pass through to the actual express server to process issuance and offer creation properly.
+             return originalFetch(url, options);
         }
 
+        // Default mock for anything else external
         return { ok: true, status: 200, json: async () => ({}) } as Response;
     });
 
