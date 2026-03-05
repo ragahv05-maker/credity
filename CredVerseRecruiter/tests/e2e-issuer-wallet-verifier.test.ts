@@ -105,6 +105,15 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
 
         // Simulate auth failure for test servers if headers are missing
         if (urlStr.includes('127.0.0.1')) {
+             // Exempt public routes from mock auth checks
+             if (urlStr.includes('/public/')) {
+                 return {
+                     ok: true,
+                     status: 200,
+                     json: async () => ({ credential: { id: 'mock-cred', issuerId: 'issuer-1' }, vcJwt: 'mock-jwt' })
+                 } as Response;
+             }
+
              const headers = options?.headers as Record<string, string> || {};
 
              // Extract auth from either direct casing or lowercase variant
