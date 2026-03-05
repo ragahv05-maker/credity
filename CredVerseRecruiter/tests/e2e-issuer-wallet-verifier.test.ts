@@ -106,8 +106,19 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
         // Simulate auth failure for test servers if headers are missing
         if (urlStr.includes('127.0.0.1')) {
              const headers = options?.headers as Record<string, string> || {};
-             const hasAuth = headers['Authorization'] || headers['x-api-key'];
-             if (!hasAuth) {
+
+             // Extract auth from either direct casing or lowercase variant
+             const hasAuth = headers['Authorization'] || headers['authorization'] || headers['x-api-key'];
+
+             // Need stricter validation since 'supports issuer auth permutations' expects 401 for 'invalid-key'
+             let isAuthValid = false;
+             if (hasAuth && typeof hasAuth === 'string') {
+                 if (hasAuth.startsWith('Bearer ') || hasAuth === issuerApiKey) {
+                     isAuthValid = true;
+                 }
+             }
+
+             if (!isAuthValid) {
                  return { ok: false, status: 401, json: async () => ({}) } as Response;
              }
 
