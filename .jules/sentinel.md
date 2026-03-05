@@ -4,3 +4,8 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+
+## 2024-05-24 - [Insecure Random Number Generation]
+**Vulnerability:** Found `Math.random` being used to generate OTPs, 2FA backup codes, and dummy passwords for OAuth sign-ins.
+**Learning:** `Math.random` is predictable and not cryptographically secure, which could allow attackers to guess backup codes or OTPs, leading to account takeover.
+**Prevention:** Always use the `crypto` module (e.g. `crypto.randomInt` or `crypto.randomBytes`) for generating any security-critical tokens, codes, or passwords instead of `Math.random`.
