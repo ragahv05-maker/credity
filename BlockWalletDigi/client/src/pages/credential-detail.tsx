@@ -60,6 +60,18 @@ interface ConsentLog {
   timestamp: string;
 }
 
+// ⚡ Bolt: Moved static mapping outside component to prevent recreation on every render,
+// reducing GC pressure and memory allocation when rendering details and category themes.
+const CATEGORY_COLORS: Record<string, string> = {
+  academic: "from-blue-600 to-blue-800",
+  employment: "from-purple-600 to-purple-800",
+  skill: "from-green-600 to-green-800",
+  government: "from-red-600 to-red-800",
+  medical: "from-pink-600 to-pink-800",
+};
+
+const getCategoryColor = (category: string) => CATEGORY_COLORS[category] || "from-gray-600 to-gray-800";
+
 export default function CredentialDetail() {
   const [location, setLocation] = useLocation();
   const [match, params] = useRoute("/credential/:id");
@@ -112,16 +124,6 @@ export default function CredentialDetail() {
       </div>
     );
   }
-
-  const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      academic: "from-blue-600 to-blue-800",
-      employment: "from-purple-600 to-purple-800",
-      skill: "from-green-600 to-green-800",
-      government: "from-red-600 to-red-800",
-    };
-    return colors[category] || "from-gray-600 to-gray-800";
-  };
 
   const actions = [
     {

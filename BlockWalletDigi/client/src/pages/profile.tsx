@@ -35,6 +35,18 @@ interface WalletStats {
   totalVerifications: number;
 }
 
+// ⚡ Bolt: Moved static icon mapping outside component to prevent recreation on every render,
+// reducing GC pressure and memory allocation when rendering lists of credentials.
+const CATEGORY_ICONS: Record<string, string> = {
+  academic: "🎓",
+  employment: "💼",
+  skill: "⭐",
+  government: "🏛️",
+  medical: "🏥",
+};
+
+const getCategoryIcon = (category: string) => CATEGORY_ICONS[category] || "📄";
+
 export default function ProfilePage() {
   const [copied, setCopied] = useState(false);
 
@@ -71,17 +83,6 @@ export default function ProfilePage() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
-  };
-
-  const getCategoryIcon = (category: string) => {
-    const icons: Record<string, string> = {
-      academic: "🎓",
-      employment: "💼",
-      skill: "⭐",
-      government: "🏛️",
-      medical: "🏥",
-    };
-    return icons[category] || "📄";
   };
 
   const isLoading = walletLoading || credentialsLoading;
