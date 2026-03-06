@@ -79,6 +79,7 @@
     "file-saver": "^2.0.5",
     "framer-motion": "^12.23.24",
     "helmet": "^8.1.0",
+    "hono": "^4.12.4",
     "hpp": "^0.2.3",
     "input-otp": "^1.4.2",
     "ioredis": "^5.8.2",
