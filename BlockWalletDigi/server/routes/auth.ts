@@ -401,7 +401,8 @@ router.post('/auth/apple', async (req, res) => {
 
         let user = await storage.getUserByEmail(email);
         if (!user) {
-            const hashed = await hashPassword(String(Math.random()));
+            const { randomBytes } = await import('crypto');
+            const hashed = await hashPassword(randomBytes(32).toString('hex'));
             user = await storage.createUser({
                 username: email,
                 email,
@@ -488,7 +489,8 @@ router.get('/auth/google/callback',
 
             let user = await storage.getUserByEmail(email);
             if (!user) {
-                const hashed = await hashPassword(String(Math.random()));
+                const { randomBytes } = await import('crypto');
+                const hashed = await hashPassword(randomBytes(32).toString('hex'));
                 user = await storage.createUser({
                     username: email,
                     email,
