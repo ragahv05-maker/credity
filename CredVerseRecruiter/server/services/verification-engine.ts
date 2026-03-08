@@ -177,7 +177,7 @@ export class VerificationEngine {
     /**
      * Verify a single credential
      */
-    async verifyCredential(payload: CredentialPayload): Promise<VerificationResult> {
+    async verifyCredential(payload: CredentialPayload, options?: { skipPersist?: boolean }): Promise<VerificationResult> {
         await ensureHydrated();
         const verificationId = `verify-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         const checks: VerificationCheck[] = [];
@@ -290,7 +290,9 @@ export class VerificationEngine {
 
             // Cache result
             verificationCache.set(verificationId, result);
-            await queuePersist();
+            if (!options?.skipPersist) {
+                await queuePersist();
+            }
 
             return result;
         } catch (error) {
@@ -311,13 +313,21 @@ export class VerificationEngine {
         let failed = 0;
         let suspicious = 0;
 
-        for (const cred of credentials) {
-            const result = await this.verifyCredential(cred);
-            results.push(result);
+        // Process in chunks of 10 to manage concurrency and avoid overwhelming network/services
+        for (let i = 0; i < credentials.length; i += 10) {
+            const chunk = credentials.slice(i, i + 10);
 
-            if (result.status === 'verified') verified++;
-            else if (result.status === 'failed') failed++;
-            else if (result.status === 'suspicious') suspicious++;
+            // Verify chunk concurrently, skip individual persistence to save full state only once at the end
+            const chunkResults = await Promise.all(
+                chunk.map(cred => this.verifyCredential(cred, { skipPersist: true }))
+            );
+
+            for (const result of chunkResults) {
+                results.push(result);
+                if (result.status === 'verified') verified++;
+                else if (result.status === 'failed') failed++;
+                else if (result.status === 'suspicious') suspicious++;
+            }
         }
 
         const bulkResult: BulkVerificationResult = {
