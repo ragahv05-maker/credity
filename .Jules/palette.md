@@ -17,3 +17,7 @@
 ## 2024-10-25 - Dependency Security (Minimatch)
 **Learning:** High-severity ReDoS vulnerabilities in `minimatch` (<9.0.6 or <10.2.2) blocked CI. `npm audit fix` successfully patched these by updating nested dependencies in `package-lock.json`.
 **Action:** Regularly run `npm audit` in each package directory and prioritize fixing High/Critical vulnerabilities to prevent CI blockage.
+
+## 2024-10-25 - ARIA Labels in CredVerseRecruiter Header
+**Learning:** Found multiple icon-only buttons (Theme Toggle, Help, Notifications) lacking `aria-label` attributes, which reduces accessibility for screen reader users.
+**Action:** When creating or modifying icon-only `<Button>` components in React apps, always include an `aria-label` attribute to describe the button's action.

@@ -41,15 +41,15 @@ export function Header({ title }: { title: string }) {
           />
         </div>
 
-        <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-foreground">
+        <Button aria-label="Toggle theme" variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-foreground">
           {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
         </Button>
 
-        <Button variant="ghost" size="icon" className="text-muted-foreground">
+        <Button aria-label="Help & Support" variant="ghost" size="icon" className="text-muted-foreground">
           <HelpCircle className="h-5 w-5" />
         </Button>
 
-        <Button variant="ghost" size="icon" className="relative text-muted-foreground">
+        <Button aria-label="Notifications" variant="ghost" size="icon" className="relative text-muted-foreground">
           <Bell className="h-5 w-5" />
           <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-destructive border border-background" />
         </Button>
