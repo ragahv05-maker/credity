@@ -4,6 +4,7 @@ import { createServer, type Server } from 'http';
 import request from 'supertest';
 
 // Setup global fetch mock for E2E tests to handle internal service calls (Issuer/Wallet)
+const originalFetch = global.fetch;
 const fetchMock = vi.fn();
 global.fetch = fetchMock;
 
@@ -105,29 +106,19 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
 
         // Simulate auth failure for test servers if headers are missing
         if (urlStr.includes('127.0.0.1')) {
-             const headers = options?.headers as Record<string, string> || {};
-             const hasAuth = headers['Authorization'] || headers['x-api-key'];
-             if (!hasAuth) {
-                 return { ok: false, status: 401, json: async () => ({}) } as Response;
-             }
+            const headers = (options?.headers as Record<string, string>) || {};
+            // Make header check case-insensitive
+            const hasAuth = Object.keys(headers).some(key =>
+                key.toLowerCase() === 'authorization' || key.toLowerCase() === 'x-api-key'
+            );
 
-             // Simulate issuance success (201)
-             if (urlStr.includes('/credentials/issue')) {
-                 return {
-                     ok: true,
-                     status: 201,
-                     json: async () => ({ id: 'mock-credential-id' })
-                 } as Response;
-             }
+            // Allow public routes
+            if (!hasAuth && !urlStr.includes('/public/')) {
+                return { ok: false, status: 401, json: async () => ({}) } as Response;
+            }
 
-             // Simulate offer creation
-             if (urlStr.includes('/offer')) {
-                 return {
-                     ok: true,
-                     status: 200,
-                     json: async () => ({ offerUrl: 'http://127.0.0.1:5001/api/v1/public/issuance/offer/consume?token=mock' })
-                 } as Response;
-             }
+            // Fallback to original fetch for 127.0.0.1 (local test server) calls
+            return originalFetch(url, options);
         }
 
         return { ok: true, status: 200, json: async () => ({}) } as Response;
