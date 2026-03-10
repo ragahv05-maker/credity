@@ -4,6 +4,7 @@ import { createServer, type Server } from 'http';
 import request from 'supertest';
 
 // Setup global fetch mock for E2E tests to handle internal service calls (Issuer/Wallet)
+const originalFetch = global.fetch;
 const fetchMock = vi.fn();
 global.fetch = fetchMock;
 
@@ -34,63 +35,6 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
     fetchMock.mockImplementation(async (url, options) => {
         const urlStr = String(url);
 
-        // Allow local issuer app calls (port 5001) to pass through to the real server?
-        // Wait, issueOfferClaim uses `fetch('http://127.0.0.1:5001/...')`.
-        // If we mock global.fetch, these calls will hit our mock, not the server.
-        // We need to allow localhost calls to proceed if we want to test the real server.
-        // BUT `fetch` in Node 20 (undici) might not be easily mocked to "pass through" to localhost
-        // if we completely replace it.
-        // Actually, we only want to mock EXTERNAL calls (like DID resolution).
-        // Internal E2E calls should probably run.
-
-        // HOWEVER, the error was ECONNREFUSED for `verifyIssuer` which uses `process.env.ISSUER_REGISTRY_URL`.
-        // In this test, we spin up `issuerServer` on port 5001.
-        // So `fetch` SHOULD work if it hits localhost:5001.
-        // Why did it fail in logs?
-        // Because `VerificationEngine` calls `did:key:issuer` resolution.
-        // In `VerificationEngine`, it tries `registryUrl + ...`.
-        // If `registryUrl` defaults to `localhost:5001`, and `issuerServer` is running, it should work.
-        // BUT the logs showed `verifyIssuer` failing.
-        // Maybe `issuerServer` hadn't started yet? No, `beforeAll` awaits `listen`.
-        // Ah, `VerificationEngine` resolves `did:key:issuer`.
-        // Does `CredVerseIssuer` have that endpoint?
-        // `api/v1/public/registry/issuers/did/:did`.
-        // If `CredVerseIssuer` doesn't have the DID seeded, it returns 404?
-        // Or maybe `process.env.ISSUER_REGISTRY_URL` was not set correctly?
-        // In `VerificationEngine`: `process.env.ISSUER_REGISTRY_URL || 'http://localhost:5001'`.
-
-        // The failure in CI: `[Verification] Failed to resolve issuer did:key:issuer remotely: TypeError: fetch failed`
-        // `fetch failed` with `ECONNREFUSED` suggests the server wasn't reachable.
-        // This suggests `issuerServer` might not be listening on the interface `fetch` uses.
-        // I bind it to `127.0.0.1`. `fetch` to `localhost` should work.
-        // Unless `node` resolves `localhost` to `::1` (IPv6) and server is IPv4?
-
-        // If I mock `fetch`, I MUST handle the E2E calls (issue, offer) manually OR forward them.
-        // Forwarding with `vi.importActual` or `originalFetch` is tricky with `undici`.
-        // Instead, I can mock SPECIFIC calls that fail (resolution) and let others fall through?
-        // But if I replace `global.fetch`, I replace it all.
-
-        // BETTER APPROACH for E2E:
-        // Mock ONLY the DID resolution calls that `VerificationEngine` makes,
-        // but let the "issue/offer" calls (which use full URLs) fail if I don't handle them.
-        // Wait, `issueOfferClaim` uses `fetch`.
-        // If I mock `fetch`, I break `issueOfferClaim`.
-
-        // So I must implement a smart mock that forwards to `undici.fetch` (real fetch)
-        // EXCEPT for the problematic calls?
-        // Or, maybe I should fix the network config?
-        // The error `ECONNREFUSED` suggests `fetch` couldn't connect.
-        // If I use `fetchMock`, I avoid the network.
-        // So I can simulate the `issue` and `offer` responses too?
-        // That turns E2E into Integration with mocks. That's acceptable for CI stability.
-
-        // Let's implement the mock to handle the `issue` and `offer` endpoints too?
-        // That's a lot of logic.
-        // Alternatively, use `vi.spyOn(global, 'fetch')` and use `mockImplementation` that calls original if not matched?
-        // `const originalFetch = global.fetch;`
-        // `vi.spyOn(global, 'fetch').mockImplementation((url, init) => { ... return originalFetch(url, init); })`
-        // This allows pass-through.
-
         if (urlStr.includes('/registry/issuers/did/')) {
              return { ok: true, status: 200, json: async () => ({
                  did: 'did:key:issuer',
@@ -103,31 +47,39 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
              return { ok: true, status: 200, json: async () => ({ revoked: false }) } as Response;
         }
 
-        // Simulate auth failure for test servers if headers are missing
+        // Pass 127.0.0.1 traffic directly to the local test servers
         if (urlStr.includes('127.0.0.1')) {
-             const headers = options?.headers as Record<string, string> || {};
-             const hasAuth = headers['Authorization'] || headers['x-api-key'];
-             if (!hasAuth) {
-                 return { ok: false, status: 401, json: async () => ({}) } as Response;
+             const opts = { ...options };
+             let headers: Record<string, string> = {};
+             if (opts.headers) {
+                 for (const [key, val] of Object.entries(opts.headers)) {
+                     headers[key.toLowerCase()] = val as string;
+                 }
+             }
+             opts.headers = headers;
+
+             // Helper to convert supertest response to fetch Response
+             const toFetchResponse = (res: any) => ({
+                ok: res.status >= 200 && res.status < 300,
+                status: res.status,
+                json: async () => res.body,
+                text: async () => res.text,
+             } as Response);
+
+             // If it's a POST and has an un-parsed body string
+             if (opts.body && typeof opts.body === 'string') {
+                 // But wait, the issue is that it returns 200 instead of 201 because of missing supertest mock handling for auth?
+                 // Or rather the issue in my previous commit was I was using supertest but sending JSON.parse(body) which might have failed to pass auth?
              }
 
-             // Simulate issuance success (201)
-             if (urlStr.includes('/credentials/issue')) {
-                 return {
-                     ok: true,
-                     status: 201,
-                     json: async () => ({ id: 'mock-credential-id' })
-                 } as Response;
-             }
-
-             // Simulate offer creation
-             if (urlStr.includes('/offer')) {
-                 return {
-                     ok: true,
-                     status: 200,
-                     json: async () => ({ offerUrl: 'http://127.0.0.1:5001/api/v1/public/issuance/offer/consume?token=mock' })
-                 } as Response;
-             }
+             // The instructions specifically mention using originalFetch to pass it directly:
+             // "the global fetch mock should store the original fetch (const originalFetch = global.fetch) and use it to pass 127.0.0.1 traffic (including unauthenticated /public/ routes) directly to the locally spawned express test servers. This ensures proper handling of case-insensitive auth headers and prevents static mocked responses from missing dynamically generated data like proof objects..."
+             // My previous attempt failed with 200 expected 201. Why?
+             // Ah, wait. The local memory fix I did in my first tool call using originalFetch returned `200` from `noAuthRes` which expects `401`.
+             // If we use originalFetch and the server gets it, why would the server return 200 instead of 401 for an unauthorized request?
+             // Because originalFetch strips custom headers if not passed as lower case?
+             // Let's pass headers as they are but rely on node fetch.
+             return originalFetch(url, { ...opts, headers });
         }
 
         return { ok: true, status: 200, json: async () => ({}) } as Response;
