@@ -240,14 +240,23 @@ export default function BulkVerify() {
   };
 
   const summary = useMemo(() => {
-    return {
-      verified: results.filter((r) => r.status === "verified").length,
-      failed: results.filter((r) => r.status === "failed").length,
-      suspicious: results.filter((r) => r.status === "suspicious" || r.status === "pending").length,
-      pass: results.filter((r) => getDecisionTierFromStatus(r.status, r.riskScore) === "PASS").length,
-      review: results.filter((r) => getDecisionTierFromStatus(r.status, r.riskScore) === "REVIEW").length,
-      fail: results.filter((r) => getDecisionTierFromStatus(r.status, r.riskScore) === "FAIL").length,
-    };
+    // ⚡ Bolt Optimization: Combine 6 O(N) filters into a single O(N) reduce pass
+    // Reduces array iterations from 6N to 1N when calculating bulk summaries.
+    return results.reduce(
+      (acc, r) => {
+        if (r.status === "verified") acc.verified++;
+        else if (r.status === "failed") acc.failed++;
+        else if (r.status === "suspicious" || r.status === "pending") acc.suspicious++;
+
+        const tier = getDecisionTierFromStatus(r.status, r.riskScore);
+        if (tier === "PASS") acc.pass++;
+        else if (tier === "REVIEW") acc.review++;
+        else if (tier === "FAIL") acc.fail++;
+
+        return acc;
+      },
+      { verified: 0, failed: 0, suspicious: 0, pass: 0, review: 0, fail: 0 }
+    );
   }, [results]);
 
   const copyToClipboard = async (text: string) => {
