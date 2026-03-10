@@ -1,0 +1,3 @@
+## 2024-05-14 - Tooltip composition for accessible icon buttons
+**Learning:** Adding `Tooltip` to an interactive component like `Button` requires the `TooltipTrigger` to use the `asChild` prop. Without it, the event handlers might not compose correctly and it might generate invalid HTML (e.g. `<button>` inside `<button>`). Adding aria-labels to the buttons themselves provides baseline screen reader support, while tooltips help visual users.
+**Action:** Always use `asChild` on `TooltipTrigger` when wrapping existing semantic elements or components like `Button`. Ensure `aria-label` is present on the interactive element itself to guarantee screen reader accessibility regardless of tooltip behavior.
