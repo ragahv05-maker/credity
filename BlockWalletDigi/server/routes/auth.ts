@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import { randomBytes } from 'crypto';
 import { storage } from '../storage';
 import { generateOtp, verifyOtp, sendEmailOtp, sendSmsOtp } from '../services/otp-service';
 import {
@@ -401,7 +402,7 @@ router.post('/auth/apple', async (req, res) => {
 
         let user = await storage.getUserByEmail(email);
         if (!user) {
-            const hashed = await hashPassword(String(Math.random()));
+            const hashed = await hashPassword(randomBytes(32).toString('hex'));
             user = await storage.createUser({
                 username: email,
                 email,
@@ -488,7 +489,7 @@ router.get('/auth/google/callback',
 
             let user = await storage.getUserByEmail(email);
             if (!user) {
-                const hashed = await hashPassword(String(Math.random()));
+                const hashed = await hashPassword(randomBytes(32).toString('hex'));
                 user = await storage.createUser({
                     username: email,
                     email,
