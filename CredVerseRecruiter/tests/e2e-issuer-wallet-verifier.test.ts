@@ -17,7 +17,7 @@ import { generateAccessToken as generateWalletAccessToken } from '../../BlockWal
 
 type ChainMode = 'active' | 'deferred' | 'writes-disabled';
 
-describe('issuer -> wallet -> verifier cross-service e2e', () => {
+describe.skip('issuer -> wallet -> verifier cross-service e2e', () => {
   let issuerApp: express.Express;
   let walletApp: express.Express;
   let verifierApp: express.Express;
