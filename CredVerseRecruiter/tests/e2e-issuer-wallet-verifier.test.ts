@@ -5,6 +5,7 @@ import request from 'supertest';
 
 // Setup global fetch mock for E2E tests to handle internal service calls (Issuer/Wallet)
 const fetchMock = vi.fn();
+const originalFetch = global.fetch;
 global.fetch = fetchMock;
 
 import { registerRoutes as registerIssuerRoutes } from '../../CredVerseIssuer 3/server/routes';
@@ -103,34 +104,8 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
              return { ok: true, status: 200, json: async () => ({ revoked: false }) } as Response;
         }
 
-        // Simulate auth failure for test servers if headers are missing
-        if (urlStr.includes('127.0.0.1')) {
-             const headers = options?.headers as Record<string, string> || {};
-             const hasAuth = headers['Authorization'] || headers['x-api-key'];
-             if (!hasAuth) {
-                 return { ok: false, status: 401, json: async () => ({}) } as Response;
-             }
-
-             // Simulate issuance success (201)
-             if (urlStr.includes('/credentials/issue')) {
-                 return {
-                     ok: true,
-                     status: 201,
-                     json: async () => ({ id: 'mock-credential-id' })
-                 } as Response;
-             }
-
-             // Simulate offer creation
-             if (urlStr.includes('/offer')) {
-                 return {
-                     ok: true,
-                     status: 200,
-                     json: async () => ({ offerUrl: 'http://127.0.0.1:5001/api/v1/public/issuance/offer/consume?token=mock' })
-                 } as Response;
-             }
-        }
-
-        return { ok: true, status: 200, json: async () => ({}) } as Response;
+        // Fall back to original fetch so integration tests run against real local express servers
+        return originalFetch(url, options);
     });
 
     process.env.NODE_ENV = 'test';
