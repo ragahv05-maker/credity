@@ -131,10 +131,13 @@ router.post('/liveness/complete', async (req: Request, res: Response) => {
             // Create a completed session for the user
             const session = livenessService.startLivenessSession(userId);
 
-            // Mark all challenges as complete
-            for (const challenge of session.challenges) {
-                await livenessService.completeChallenge(session.id, challenge.id);
-            }
+            // Mark all challenges as complete concurrently for better performance
+            // Safe to use Promise.all here because completeChallenge updates the session index synchronously
+            await Promise.all(
+                session.challenges.map(challenge =>
+                    livenessService.completeChallenge(session.id, challenge.id)
+                )
+            );
 
             const result = livenessService.getSessionResult(session.id);
 
