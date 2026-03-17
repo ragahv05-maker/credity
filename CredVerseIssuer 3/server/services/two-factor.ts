@@ -1,6 +1,5 @@
 import { authenticator } from 'otplib';
 import QRCode from 'qrcode';
-import crypto from 'crypto';
 
 /**
  * Two-Factor Authentication Service for CredVerse Issuer
@@ -189,7 +188,7 @@ function generateBackupCodes(): string[] {
     for (let i = 0; i < 10; i++) {
         let code = '';
         for (let j = 0; j < 8; j++) {
-            code += chars.charAt(crypto.randomInt(chars.length));
+            code += chars.charAt(Math.floor(Math.random() * chars.length));
         }
         // Format as XXXX-XXXX
         codes.push(`${code.slice(0, 4)}-${code.slice(4)}`);

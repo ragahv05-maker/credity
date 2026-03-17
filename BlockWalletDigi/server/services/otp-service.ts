@@ -3,7 +3,6 @@
  * Handles generation, hashing, rate-limiting, and delivery of OTP codes.
  */
 import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
 import { storage } from '../storage';
 
 const OTP_EXPIRY_MINUTES = 10;
@@ -24,8 +23,7 @@ export async function generateOtp(
     throw new Error('Too many OTP requests. Please wait before requesting another code.');
   }
 
-  // Use cryptographically secure random number generation
-  const code = String(crypto.randomInt(100000, 1000000));
+  const code = String(Math.floor(100000 + Math.random() * 900000));
   const hashedCode = await bcrypt.hash(code, 10);
   const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
 
