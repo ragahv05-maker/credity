@@ -104,11 +104,7 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
              return { ok: true, status: 200, json: async () => ({ revoked: false }) } as Response;
         }
 
-        // Let original fetch handle local calls so they hit the test server
-        if (urlStr.includes('127.0.0.1') || urlStr.includes('localhost')) {
-            return originalFetch(url, options);
-        }
-
+        // Fall back to original fetch so integration tests run against real local express servers
         return originalFetch(url, options);
     });
 
