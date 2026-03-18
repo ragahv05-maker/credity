@@ -331,9 +331,10 @@ router.post("/digilocker/import-all", authMiddleware, async (req, res) => {
         }
 
         if (credentialsToStore.length > 0) {
-            for (const credential of credentialsToStore) {
-                await walletService.storeCredential(userId, credential);
-            }
+            // ⚡ Bolt Performance Optimization:
+            // Use batched storeCredentials instead of sequential storeCredential in a loop
+            // to avoid N+1 database queries/writes and significantly improve import speed.
+            await walletService.storeCredentials(userId, credentialsToStore);
             imported.push(...successDocs);
         }
 
@@ -423,9 +424,10 @@ router.post("/digilocker/connect", authMiddleware, async (req, res) => {
             }
 
             if (credentialsToStore.length > 0) {
-                for (const credential of credentialsToStore) {
-                    await walletService.storeCredential(userId, credential);
-                }
+                // ⚡ Bolt Performance Optimization:
+                // Use batched storeCredentials instead of sequential storeCredential in a loop
+                // to avoid N+1 database queries/writes and significantly improve import speed.
+                await walletService.storeCredentials(userId, credentialsToStore);
             }
 
             await storage.createActivity({
