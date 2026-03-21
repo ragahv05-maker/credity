@@ -1,5 +1,5 @@
 ## 2024-10-23 - CredVerseRecruiter Bulk Verify UX
-**Learning:** Verified frontend changes in a complex auth-walled app by mocking API responses in Playwright, avoiding full backend setup.
+**Learning:** Verified frontend accessibility changes in a complex auth-walled app by mocking API responses in Playwright, avoiding full backend setup.
 **Action:** Use `page.route` to mock API endpoints for UI testing when backend is complex.
 
 ## 2024-10-23 - CredVerseRecruiter Sidebar Asset
@@ -17,3 +17,7 @@
 ## 2024-10-25 - Dependency Security (Minimatch)
 **Learning:** High-severity ReDoS vulnerabilities in `minimatch` (<9.0.6 or <10.2.2) blocked CI. `npm audit fix` successfully patched these by updating nested dependencies in `package-lock.json`.
 **Action:** Regularly run `npm audit` in each package directory and prioritize fixing High/Critical vulnerabilities to prevent CI blockage.
+
+## 2025-03-21 - Pervasive Missing ARIA Labels on Icon Buttons
+**Learning:** Icon-only UI components in BlockWalletDigi extensively use `<Button size="icon">` (using `shadcn/ui`) without intrinsic `aria-label` attributes, creating a significant barrier for screen reader navigation across core flows (sharing, settings, profile management).
+**Action:** Systematically audit all `<Button size="icon">` usages across the app ensuring an explicit `aria-label` is defined for every icon-only interaction to meet WCAG accessibility standards.
