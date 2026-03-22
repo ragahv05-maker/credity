@@ -17,3 +17,7 @@
 ## 2024-10-25 - Dependency Security (Minimatch)
 **Learning:** High-severity ReDoS vulnerabilities in `minimatch` (<9.0.6 or <10.2.2) blocked CI. `npm audit fix` successfully patched these by updating nested dependencies in `package-lock.json`.
 **Action:** Regularly run `npm audit` in each package directory and prioritize fixing High/Critical vulnerabilities to prevent CI blockage.
+
+## 2025-03-22 - CredVerseIssuer 3 Header Accessibility
+**Learning:** Found that `aria-label` was missing on icon-only action buttons (`HelpCircle`, `Bell`, `Copy`) in the Header component. Without labels, screen readers fail to communicate their purpose to users.
+**Action:** When creating or reviewing icon-only buttons, especially in global layouts like headers or navigation, always ensure `aria-label` is present for accessibility.
