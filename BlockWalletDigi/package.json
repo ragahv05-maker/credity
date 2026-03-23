@@ -55,6 +55,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@sentry/node": "^10.19.0",
     "@tanstack/react-query": "^5.60.5",
+    "@tootallnate/once": "^3.0.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/passport-google-oauth20": "^2.0.17",
     "@types/qrcode": "^1.5.6",
@@ -69,7 +70,7 @@
     "drizzle-zod": "^0.7.1",
     "embla-carousel-react": "^8.6.0",
     "express": "^4.21.2",
-    "express-rate-limit": "^8.2.1",
+    "express-rate-limit": "^8.2.2",
     "express-session": "^1.18.1",
     "framer-motion": "^12.23.24",
     "helmet": "^8.1.0",
@@ -146,5 +147,12 @@
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
+  },
+  "overrides": {
+    "express-rate-limit": "^8.2.2",
+    "h3": "^1.15.9",
+    "hono": "^4.12.8",
+    "socket.io-parser": "^4.2.6",
+    "@tootallnate/once": "^3.0.1"
   }
 }
