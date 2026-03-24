@@ -176,7 +176,7 @@ export async function initQueueService(): Promise<boolean> {
 
         // Create the issuance queue
         issuanceQueue = new Queue('credential-issuance', {
-            connection: redisConnection,
+            connection: redisConnection as any,
             defaultJobOptions: {
                 attempts: retryConfig.attempts,
                 backoff: {
@@ -189,7 +189,7 @@ export async function initQueueService(): Promise<boolean> {
         });
 
         deadLetterQueue = new Queue('credential-issuance-dlq', {
-            connection: redisConnection,
+            connection: redisConnection as any,
             defaultJobOptions: {
                 removeOnComplete: false,
                 removeOnFail: false,
@@ -198,7 +198,7 @@ export async function initQueueService(): Promise<boolean> {
 
         // Create queue events for monitoring
         queueEvents = new QueueEvents('credential-issuance', {
-            connection: redisConnection,
+            connection: redisConnection as any,
         });
 
         queueEvents.on('failed', (event) => {
@@ -308,7 +308,7 @@ export function startIssuanceWorker(
             return result;
         },
         {
-            connection: redisConnection,
+            connection: redisConnection as any,
             concurrency: 5, // Process 5 credentials concurrently
         }
     );
