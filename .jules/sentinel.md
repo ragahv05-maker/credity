@@ -9,3 +9,7 @@
 **Vulnerability:** Predictable OTP generation using `Math.random()` in `BlockWalletDigi/server/services/otp-service.ts`.
 **Learning:** `Math.random()` is not cryptographically secure and can be predicted, potentially allowing attackers to bypass 2FA.
 **Prevention:** Always use Node.js `crypto` module (`crypto.randomInt` or `crypto.randomBytes`) for generating security-sensitive values like OTPs, tokens, or passwords.
+
+## 2025-02-23 - [ESM vs CommonJS named exports]
+**Learning:** Overriding `brace-expansion` to `^2.0.1` broke the `vitest` execution in `CredVerseIssuer 3` because the older version is a CommonJS module that does not support the named export `expand` expected by the codebase (which expects ESM).
+**Action:** Always ensure dependency overrides (especially for low-level parsing libraries like `brace-expansion`) remain compatible with the project module type (`"type": "module"`). Bumping to `^5.0.5` resolved both the vulnerability and the ESM import issue.
