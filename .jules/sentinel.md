@@ -4,3 +4,8 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+
+## 2025-02-23 - [Weak RNG for OTPs]
+**Vulnerability:** Predictable OTP generation using `Math.random()` in `BlockWalletDigi/server/services/otp-service.ts`.
+**Learning:** `Math.random()` is not cryptographically secure and can be predicted, potentially allowing attackers to bypass 2FA.
+**Prevention:** Always use Node.js `crypto` module (`crypto.randomInt` or `crypto.randomBytes`) for generating security-sensitive values like OTPs, tokens, or passwords.
