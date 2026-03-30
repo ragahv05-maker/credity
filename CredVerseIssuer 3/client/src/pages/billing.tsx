@@ -220,7 +220,7 @@ export default function Billing() {
                                             <CheckCircle className="w-3 h-3 mr-1" />
                                             {invoice.status}
                                         </Badge>
-                                        <Button variant="ghost" size="icon">
+                                        <Button variant="ghost" size="icon" aria-label={`Download invoice for ${invoice.date}`}>
                                             <Download className="h-4 w-4" />
                                         </Button>
                                     </div>
