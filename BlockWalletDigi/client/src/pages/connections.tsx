@@ -294,7 +294,7 @@ export default function PlatformConnections() {
 
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon" aria-label="Connection options">
+                                                    <Button variant="ghost" size="icon">
                                                         <MoreVertical className="w-4 h-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
