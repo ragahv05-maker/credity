@@ -311,13 +311,35 @@ export class VerificationEngine {
         let failed = 0;
         let suspicious = 0;
 
-        for (const cred of credentials) {
-            const result = await this.verifyCredential(cred);
-            results.push(result);
+        // ⚡ Bolt Optimization: Parallelize credential verification to improve bulk throughput
+        const settledResults = await Promise.allSettled(
+            credentials.map(cred => this.verifyCredential(cred))
+        );
 
-            if (result.status === 'verified') verified++;
-            else if (result.status === 'failed') failed++;
-            else if (result.status === 'suspicious') suspicious++;
+        for (const outcome of settledResults) {
+            if (outcome.status === 'fulfilled') {
+                const result = outcome.value;
+                results.push(result);
+
+                if (result.status === 'verified') verified++;
+                else if (result.status === 'failed') failed++;
+                else if (result.status === 'suspicious') suspicious++;
+            } else {
+                // If a single verification unexpectedly throws, we count it as a failure
+                // to avoid crashing the entire bulk operation.
+                failed++;
+                // Fallback result for unexpected verification failure to maintain array length matching
+                const errorResult: VerificationResult = {
+                    status: 'failed',
+                    confidence: 0,
+                    checks: [{ name: 'Verification Execution', status: 'failed', message: 'Internal error during verification' }],
+                    riskScore: 100,
+                    riskFlags: ['SYSTEM_ERROR'],
+                    timestamp: new Date(),
+                    verificationId: `err-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                };
+                results.push(errorResult);
+            }
         }
 
         const bulkResult: BulkVerificationResult = {
