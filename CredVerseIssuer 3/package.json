@@ -74,7 +74,7 @@
     "embla-carousel-react": "^8.6.0",
     "ethers": "^6.16.0",
     "express": "^4.21.2",
-    "express-rate-limit": "^8.2.1",
+    "express-rate-limit": "^8.2.2",
     "express-session": "^1.18.1",
     "file-saver": "^2.0.5",
     "framer-motion": "^12.23.24",
@@ -161,6 +161,14 @@
     "bufferutil": "^4.0.8"
   },
   "overrides": {
-    "minimatch": "^10.2.3"
+    "minimatch": "^10.2.3",
+    "express-rate-limit": "^8.2.2",
+    "brace-expansion": "^5.0.5",
+    "h3": "^1.15.9",
+    "hono": "^4.12.7",
+    "path-to-regexp": "^0.1.13",
+    "picomatch": "^2.3.2",
+    "socket.io-parser": "^4.2.6",
+    "flatted": "^3.4.2"
   }
 }
