@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
@@ -128,23 +129,42 @@ export function Header() {
 
           <ThemeToggle />
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground hover:text-foreground"
-            onClick={() => navigate('/help')}
-          >
-            <HelpCircle className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground hover:text-foreground relative"
-            onClick={() => navigate('/verification-logs')}
-          >
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-background"></span>
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-foreground"
+                  onClick={() => navigate('/help')}
+                  aria-label="Help and Support"
+                >
+                  <HelpCircle className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Help & Support</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-foreground relative"
+                  onClick={() => navigate('/verification-logs')}
+                  aria-label="Verification Logs and Notifications"
+                >
+                  <Bell className="h-5 w-5" />
+                  <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-background"></span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Notifications</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
           <div className="h-6 w-px bg-border mx-1" />
 
