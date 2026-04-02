@@ -2,7 +2,7 @@
  * Express middleware for authentication
  */
 import type { Request, Response, NextFunction } from 'express';
-import { verifyAccessToken } from './jwt.js';
+import { verifyAccessToken } from './jwt';
 import type { AuthUser, TokenPayload } from './types';
 
 type AuthenticatedRequest = Request & {
