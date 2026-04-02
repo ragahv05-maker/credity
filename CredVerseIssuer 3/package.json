@@ -118,6 +118,17 @@
     "zod-validation-error": "^3.4.0",
     "zustand": "^5.0.9"
   },
+  "overrides": {
+    "brace-expansion": "^5.0.5",
+    "express-rate-limit": "^8.3.2",
+    "h3": "^1.15.9",
+    "hono": "^4.12.7",
+    "lodash": "^4.17.21",
+    "path-to-regexp": "^0.1.13",
+    "socket.io-parser": "^4.2.6",
+    "picomatch": "^2.3.2",
+    "@tootallnate/once": "^3.0.1"
+  },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@replit/vite-plugin-cartographer": "^0.4.4",
