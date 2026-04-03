@@ -199,37 +199,25 @@ async function getUserTrustData(userId: number): Promise<UserTrustData> {
     let negativeFeedbackCount = 0;
 
     if (db) {
-        // Count share/verification activities for this user
-        const [activityRow] = await db
-            .select({ value: count() })
-            .from(activities)
-            .where(eq(activities.userId, userId));
+        // ⚡ Bolt Optimization: Parallelized 5 database queries to reduce latency.
+        const [
+            [activityRow],
+            [connRow],
+            [endRow],
+            [posRow],
+            [negRow]
+        ] = await Promise.all([
+            db.select({ value: count() }).from(activities).where(eq(activities.userId, userId)),
+            db.select({ value: count() }).from(platformConnections).where(and(eq(platformConnections.userId, userId), eq(platformConnections.status, 'active'))),
+            db.select({ value: count() }).from(reputationEvents).where(and(eq(reputationEvents.userId, userId), gte(reputationEvents.score, 75))),
+            db.select({ value: count() }).from(reputationEvents).where(and(eq(reputationEvents.userId, userId), gte(reputationEvents.score, 50))),
+            db.select({ value: count() }).from(reputationEvents).where(and(eq(reputationEvents.userId, userId), lt(reputationEvents.score, 50)))
+        ]);
+
         totalVerifications = Number(activityRow?.value ?? 0);
-
-        // Count active platform connections for this user
-        const [connRow] = await db
-            .select({ value: count() })
-            .from(platformConnections)
-            .where(and(eq(platformConnections.userId, userId), eq(platformConnections.status, 'active')));
         platformConnectionCount = Number(connRow?.value ?? 0);
-
-        // Count reputation event signals
-        const [endRow] = await db
-            .select({ value: count() })
-            .from(reputationEvents)
-            .where(and(eq(reputationEvents.userId, userId), gte(reputationEvents.score, 75)));
         endorsementCount = Number(endRow?.value ?? 0);
-
-        const [posRow] = await db
-            .select({ value: count() })
-            .from(reputationEvents)
-            .where(and(eq(reputationEvents.userId, userId), gte(reputationEvents.score, 50)));
         positiveFeedbackCount = Number(posRow?.value ?? 0);
-
-        const [negRow] = await db
-            .select({ value: count() })
-            .from(reputationEvents)
-            .where(and(eq(reputationEvents.userId, userId), lt(reputationEvents.score, 50)));
         negativeFeedbackCount = Number(negRow?.value ?? 0);
     }
 
