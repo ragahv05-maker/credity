@@ -148,6 +148,7 @@
     "bufferutil": "^4.0.8"
   },
   "overrides": {
-    "express-rate-limit": "^8.2.2"
+    "express-rate-limit": "^8.2.2",
+    "path-to-regexp": "^0.1.13"
   }
 }
