@@ -170,6 +170,7 @@
     "@tootallnate/once": "^3.0.1",
     "brace-expansion": "^5.0.5",
     "path-to-regexp": "^0.1.13",
-    "picomatch": "^2.3.2"
+    "picomatch": "^2.3.2",
+    "lodash": "^4.18.1"
   }
 }
