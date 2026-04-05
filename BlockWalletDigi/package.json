@@ -69,7 +69,7 @@
     "drizzle-zod": "^0.7.1",
     "embla-carousel-react": "^8.6.0",
     "express": "^4.21.2",
-    "express-rate-limit": "^8.2.1",
+    "express-rate-limit": "^8.2.2",
     "express-session": "^1.18.1",
     "framer-motion": "^12.23.24",
     "helmet": "^8.1.0",
@@ -146,5 +146,16 @@
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
+  },
+  "overrides": {
+    "express-rate-limit": "^8.2.2",
+    "h3": "^1.15.9",
+    "socket.io-parser": "^4.2.6",
+    "tar": "^7.5.11",
+    "@tootallnate/once": "^3.0.1",
+    "brace-expansion": "^5.0.5",
+    "path-to-regexp": "^0.1.13",
+    "picomatch": "^2.3.2",
+    "lodash": "^4.18.1"
   }
 }
