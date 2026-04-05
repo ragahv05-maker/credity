@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import {
     CreditCard, CheckCircle, AlertCircle, Download, Calendar,
     Zap, Building, Users, FileCheck, ExternalLink
@@ -220,9 +221,18 @@ export default function Billing() {
                                             <CheckCircle className="w-3 h-3 mr-1" />
                                             {invoice.status}
                                         </Badge>
-                                        <Button variant="ghost" size="icon">
-                                            <Download className="h-4 w-4" />
-                                        </Button>
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button variant="ghost" size="icon" aria-label="Download invoice">
+                                                        <Download className="h-4 w-4" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Download invoice</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
                                     </div>
                                 </div>
                             ))}
