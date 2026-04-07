@@ -74,7 +74,7 @@
     "embla-carousel-react": "^8.6.0",
     "ethers": "^6.16.0",
     "express": "^4.21.2",
-    "express-rate-limit": "^8.2.1",
+    "express-rate-limit": "^8.2.2",
     "express-session": "^1.18.1",
     "file-saver": "^2.0.5",
     "framer-motion": "^12.23.24",
@@ -161,6 +161,7 @@
     "bufferutil": "^4.0.8"
   },
   "overrides": {
+    "express-rate-limit": "^8.2.2",
     "minimatch": "^10.2.3"
   }
 }
