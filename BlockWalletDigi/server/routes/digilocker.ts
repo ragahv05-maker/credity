@@ -306,10 +306,18 @@ router.post("/digilocker/import-all", authMiddleware, async (req, res) => {
         const credentialsToStore: any[] = [];
         const successDocs: string[] = [];
 
-        for (const doc of documents) {
-            try {
+        // ⚡ Bolt Optimization: Parallelize external API calls to pull documents concurrently
+        const pullResults = await Promise.allSettled(
+            documents.map(async (doc) => {
                 const { document } = await digilockerService.pullDocument(userId, doc.uri);
+                return { doc, document };
+            })
+        );
 
+        pullResults.forEach((result, index) => {
+            const doc = documents[index];
+            if (result.status === 'fulfilled') {
+                const { document } = result.value;
                 credentialsToStore.push({
                     type: ['VerifiableCredential', doc.doctype, 'DigiLockerDocument'],
                     issuer: doc.issuer,
@@ -325,10 +333,10 @@ router.post("/digilocker/import-all", authMiddleware, async (req, res) => {
                     category: doc.doctype.includes('CLASS') ? 'academic' : 'government',
                 });
                 successDocs.push(doc.name);
-            } catch (e) {
+            } else {
                 failed.push(doc.name);
             }
-        }
+        });
 
         if (credentialsToStore.length > 0) {
             for (const credential of credentialsToStore) {
