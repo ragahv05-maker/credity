@@ -148,6 +148,8 @@ export function TrustScoreCard() {
             <div className="p-4 space-y-4">
                 <button
                     onClick={() => setShowBreakdown(!showBreakdown)}
+                    aria-expanded={showBreakdown}
+                    aria-controls="score-breakdown-content"
                     className="w-full flex items-center justify-between text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                     <span className="font-medium">Score Breakdown</span>
@@ -156,6 +158,7 @@ export function TrustScoreCard() {
 
                 {showBreakdown && (
                     <motion.div
+                        id="score-breakdown-content"
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         className="space-y-3"
