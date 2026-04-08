@@ -32,6 +32,12 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+    Tooltip,
+    TooltipTrigger,
+    TooltipContent,
+    TooltipProvider
+} from "@/components/ui/tooltip";
+import {
     Dialog,
     DialogContent,
     DialogDescription,
@@ -293,11 +299,20 @@ export default function PlatformConnections() {
                                             </div>
 
                                             <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon">
-                                                        <MoreVertical className="w-4 h-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button variant="ghost" size="icon" aria-label="More Options">
+                                                                    <MoreVertical className="w-4 h-4" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>More Options</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuItem onClick={() => {
                                                         setSelectedConnection(connection);
