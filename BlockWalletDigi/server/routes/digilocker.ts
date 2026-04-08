@@ -306,27 +306,43 @@ router.post("/digilocker/import-all", authMiddleware, async (req, res) => {
         const credentialsToStore: any[] = [];
         const successDocs: string[] = [];
 
-        for (const doc of documents) {
-            try {
-                const { document } = await digilockerService.pullDocument(userId, doc.uri);
+        // ⚡ Bolt Optimization: Parallelize network read operations to reduce overall import time
+        const pullResults = await Promise.allSettled(
+            documents.map(async (doc) => {
+                try {
+                    const { document } = await digilockerService.pullDocument(userId, doc.uri);
+                    return { success: true, doc, document };
+                } catch (e) {
+                    return { success: false, doc, error: e };
+                }
+            })
+        );
 
-                credentialsToStore.push({
-                    type: ['VerifiableCredential', doc.doctype, 'DigiLockerDocument'],
-                    issuer: doc.issuer,
-                    issuanceDate: new Date(doc.date),
-                    data: {
-                        name: doc.name,
-                        description: doc.description,
-                        source: 'DigiLocker',
-                        uri: doc.uri,
-                        issuerid: doc.issuerid,
-                        ...document,
-                    },
-                    category: doc.doctype.includes('CLASS') ? 'academic' : 'government',
-                });
-                successDocs.push(doc.name);
-            } catch (e) {
-                failed.push(doc.name);
+        for (const result of pullResults) {
+            if (result.status === 'fulfilled') {
+                const val = result.value;
+                if (val.success) {
+                    const { doc, document } = val;
+                    credentialsToStore.push({
+                        type: ['VerifiableCredential', doc.doctype, 'DigiLockerDocument'],
+                        issuer: doc.issuer,
+                        issuanceDate: new Date(doc.date),
+                        data: {
+                            name: doc.name,
+                            description: doc.description,
+                            source: 'DigiLocker',
+                            uri: doc.uri,
+                            issuerid: doc.issuerid,
+                            ...document,
+                        },
+                        category: doc.doctype.includes('CLASS') ? 'academic' : 'government',
+                    });
+                    successDocs.push(doc.name);
+                } else {
+                    failed.push(val.doc.name);
+                }
+            } else {
+                // If map function itself somehow failed unexpectedly
             }
         }
 
