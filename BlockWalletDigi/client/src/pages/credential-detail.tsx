@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/sidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   QrCode,
   Download,
@@ -157,9 +158,16 @@ export default function CredentialDetail() {
       <div className="flex-1 md:ml-64 flex flex-col h-screen overflow-y-auto bg-secondary/30">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-card/80 backdrop-blur-md border-b border-border px-6 py-4 flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => setLocation("/")}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" onClick={() => setLocation("/")} aria-label="Go back to dashboard">
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              <p>Go back to dashboard</p>
+            </TooltipContent>
+          </Tooltip>
           <h1 className="font-semibold text-lg">Credential Details</h1>
           <Badge variant="outline" className="ml-auto capitalize">{credential.category}</Badge>
         </div>
