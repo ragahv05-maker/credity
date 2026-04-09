@@ -306,29 +306,32 @@ router.post("/digilocker/import-all", authMiddleware, async (req, res) => {
         const credentialsToStore: any[] = [];
         const successDocs: string[] = [];
 
-        for (const doc of documents) {
-            try {
-                const { document } = await digilockerService.pullDocument(userId, doc.uri);
+        // ⚡ Bolt Optimization: Parallelize DigiLocker document pulls
+        await Promise.allSettled(
+            documents.map(async (doc) => {
+                try {
+                    const { document } = await digilockerService.pullDocument(userId, doc.uri);
 
-                credentialsToStore.push({
-                    type: ['VerifiableCredential', doc.doctype, 'DigiLockerDocument'],
-                    issuer: doc.issuer,
-                    issuanceDate: new Date(doc.date),
-                    data: {
-                        name: doc.name,
-                        description: doc.description,
-                        source: 'DigiLocker',
-                        uri: doc.uri,
-                        issuerid: doc.issuerid,
-                        ...document,
-                    },
-                    category: doc.doctype.includes('CLASS') ? 'academic' : 'government',
-                });
-                successDocs.push(doc.name);
-            } catch (e) {
-                failed.push(doc.name);
-            }
-        }
+                    credentialsToStore.push({
+                        type: ['VerifiableCredential', doc.doctype, 'DigiLockerDocument'],
+                        issuer: doc.issuer,
+                        issuanceDate: new Date(doc.date),
+                        data: {
+                            name: doc.name,
+                            description: doc.description,
+                            source: 'DigiLocker',
+                            uri: doc.uri,
+                            issuerid: doc.issuerid,
+                            ...document,
+                        },
+                        category: doc.doctype.includes('CLASS') ? 'academic' : 'government',
+                    });
+                    successDocs.push(doc.name);
+                } catch (e) {
+                    failed.push(doc.name);
+                }
+            })
+        );
 
         if (credentialsToStore.length > 0) {
             for (const credential of credentialsToStore) {
