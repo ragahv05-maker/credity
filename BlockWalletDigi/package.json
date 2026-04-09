@@ -65,7 +65,7 @@
     "connect-pg-simple": "^10.0.0",
     "cors": "^2.8.5",
     "date-fns": "^3.6.0",
-    "drizzle-orm": "^0.45.1",
+    "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.7.1",
     "embla-carousel-react": "^8.6.0",
     "express": "^4.21.2",
@@ -148,6 +148,7 @@
     "bufferutil": "^4.0.8"
   },
   "overrides": {
-    "express-rate-limit": "^8.2.2"
+    "express-rate-limit": "^8.2.2",
+    "drizzle-orm": "^0.45.2"
   }
 }
