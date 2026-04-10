@@ -306,26 +306,36 @@ router.post("/digilocker/import-all", authMiddleware, async (req, res) => {
         const credentialsToStore: any[] = [];
         const successDocs: string[] = [];
 
-        for (const doc of documents) {
-            try {
+        // ⚡ Bolt Optimization: Parallelize network fetches using Promise.allSettled to reduce total latency.
+        // We keep database writes (storeCredential) sequential later to ensure data integrity.
+        const pullResults = await Promise.allSettled(
+            documents.map(async (doc) => {
                 const { document } = await digilockerService.pullDocument(userId, doc.uri);
+                return { doc, document };
+            })
+        );
 
+        for (let i = 0; i < pullResults.length; i++) {
+            const result = pullResults[i];
+            const doc = documents[i];
+            if (result.status === 'fulfilled') {
+                const { document, doc: resultDoc } = result.value;
                 credentialsToStore.push({
-                    type: ['VerifiableCredential', doc.doctype, 'DigiLockerDocument'],
-                    issuer: doc.issuer,
-                    issuanceDate: new Date(doc.date),
+                    type: ['VerifiableCredential', resultDoc.doctype, 'DigiLockerDocument'],
+                    issuer: resultDoc.issuer,
+                    issuanceDate: new Date(resultDoc.date),
                     data: {
-                        name: doc.name,
-                        description: doc.description,
+                        name: resultDoc.name,
+                        description: resultDoc.description,
                         source: 'DigiLocker',
-                        uri: doc.uri,
-                        issuerid: doc.issuerid,
+                        uri: resultDoc.uri,
+                        issuerid: resultDoc.issuerid,
                         ...document,
                     },
-                    category: doc.doctype.includes('CLASS') ? 'academic' : 'government',
+                    category: resultDoc.doctype.includes('CLASS') ? 'academic' : 'government',
                 });
-                successDocs.push(doc.name);
-            } catch (e) {
+                successDocs.push(resultDoc.name);
+            } else {
                 failed.push(doc.name);
             }
         }
@@ -400,11 +410,20 @@ router.post("/digilocker/connect", authMiddleware, async (req, res) => {
             const documents = await digilockerService.listDocuments(userId);
 
             const credentialsToStore: any[] = [];
+            const docsToImport = documents.slice(0, 3); // Import first 3
 
-            for (const doc of documents.slice(0, 3)) { // Import first 3
-                try {
+            // ⚡ Bolt Optimization: Parallelize network fetches using Promise.allSettled to reduce total latency.
+            // Database writes (storeCredential) remain sequential.
+            const pullResults = await Promise.allSettled(
+                docsToImport.map(async (doc) => {
                     const { document } = await digilockerService.pullDocument(userId, doc.uri);
+                    return { doc, document };
+                })
+            );
 
+            for (const result of pullResults) {
+                if (result.status === 'fulfilled') {
+                    const { doc, document } = result.value;
                     credentialsToStore.push({
                         type: ['VerifiableCredential', doc.doctype, 'DigiLockerDocument'],
                         issuer: doc.issuer,
@@ -417,8 +436,8 @@ router.post("/digilocker/connect", authMiddleware, async (req, res) => {
                         },
                         category: doc.doctype.includes('CLASS') ? 'academic' : 'government',
                     });
-                } catch (e) {
-                    console.error('[DigiLocker] Demo import error:', e);
+                } else {
+                    console.error('[DigiLocker] Demo import error:', result.reason);
                 }
             }
 
