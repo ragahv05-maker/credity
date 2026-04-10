@@ -319,22 +319,22 @@ router.post("/digilocker/import-all", authMiddleware, async (req, res) => {
             const result = pullResults[i];
             const doc = documents[i];
             if (result.status === 'fulfilled') {
-                const { document } = result.value;
+                const { document, doc: resultDoc } = result.value;
                 credentialsToStore.push({
-                    type: ['VerifiableCredential', doc.doctype, 'DigiLockerDocument'],
-                    issuer: doc.issuer,
-                    issuanceDate: new Date(doc.date),
+                    type: ['VerifiableCredential', resultDoc.doctype, 'DigiLockerDocument'],
+                    issuer: resultDoc.issuer,
+                    issuanceDate: new Date(resultDoc.date),
                     data: {
-                        name: doc.name,
-                        description: doc.description,
+                        name: resultDoc.name,
+                        description: resultDoc.description,
                         source: 'DigiLocker',
-                        uri: doc.uri,
-                        issuerid: doc.issuerid,
+                        uri: resultDoc.uri,
+                        issuerid: resultDoc.issuerid,
                         ...document,
                     },
-                    category: doc.doctype.includes('CLASS') ? 'academic' : 'government',
+                    category: resultDoc.doctype.includes('CLASS') ? 'academic' : 'government',
                 });
-                successDocs.push(doc.name);
+                successDocs.push(resultDoc.name);
             } else {
                 failed.push(doc.name);
             }
