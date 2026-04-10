@@ -4,3 +4,8 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+
+## 2025-04-10 - [Predictable OTP Generation]
+**Vulnerability:** OTPs were generated using `Math.random()`, which is predictable and not cryptographically secure.
+**Learning:** Using predictable pseudo-random number generators (PRNGs) for security-sensitive tokens (like OTPs) can allow attackers to predict future tokens and bypass authentication.
+**Prevention:** Always use cryptographically secure random number generators (CSPRNGs), such as the Node.js `crypto` module's `randomBytes` or `randomInt` functions, for generating OTPs, tokens, passwords, and other security-sensitive values.
