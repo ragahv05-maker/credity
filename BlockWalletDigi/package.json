@@ -146,5 +146,8 @@
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
+  },
+  "overrides": {
+    "path-to-regexp": "^0.1.13"
   }
 }
