@@ -307,8 +307,9 @@ export function ShareModal({ credential, open, onOpenChange }: ShareModalProps) 
                     readOnly
                     value={shareResult.shareUrl}
                     className="font-mono text-xs bg-secondary/30"
+                    aria-label="Share URL"
                   />
-                  <Button size="icon" variant="outline" onClick={handleCopy}>
+                  <Button size="icon" variant="outline" onClick={handleCopy} aria-label={copied ? "Link copied" : "Copy share link"}>
                     {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
                   </Button>
                 </div>
