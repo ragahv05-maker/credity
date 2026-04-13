@@ -4,3 +4,8 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+
+## 2025-02-18 - [Predictable 2FA Backup Codes]
+**Vulnerability:** Used Math.random() to generate 2FA backup codes.
+**Learning:** The use of Math.random() is predictable and unsuitable for security features. It exposes a risk where attackers might predict generated backup codes to bypass 2FA.
+**Prevention:** Use crypto.randomInt() or crypto.randomBytes() for cryptographically secure random number generation in security contexts.
