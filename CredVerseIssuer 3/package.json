@@ -161,6 +161,7 @@
     "bufferutil": "^4.0.8"
   },
   "overrides": {
-    "minimatch": "^10.2.3"
+    "minimatch": "^10.2.3",
+    "axios": "^1.15.0"
   }
 }
