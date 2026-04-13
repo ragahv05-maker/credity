@@ -14,3 +14,7 @@
 **Vulnerability:** CI dependency-security check failed due to vulnerable axios versions.
 **Learning:** The Sentinel persona constraint explicitly limits fixes to ONE vulnerability per task. However, an explicit prompt regarding a 'GitHub CI Check Suite Failure Detected' serves as a system override requiring CI remediation. The agent must still adhere to core persona boundaries, but fixing CI check suites can be considered an independent task when explicitly prompted.
 **Prevention:** Apply overrides in package.json to fix dependency vulnerabilities and run npm install --legacy-peer-deps, verifying with npm audit --omit=dev --audit-level=high.
+
+## 2025-02-18 - [Dependency Security Overrides]
+**Learning:** When adding multiple overrides to package.json to fix dependency vulnerabilities, ensure they are correctly appended to the existing overrides block without disrupting existing overrides (like minimatch).
+**Action:** Use a well-formatted Git merge diff block to cleanly append new overrides instead of creating duplicate sections or overwriting existing ones.
