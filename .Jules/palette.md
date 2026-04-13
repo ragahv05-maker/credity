@@ -17,3 +17,7 @@
 ## 2024-10-25 - Dependency Security (Minimatch)
 **Learning:** High-severity ReDoS vulnerabilities in `minimatch` (<9.0.6 or <10.2.2) blocked CI. `npm audit fix` successfully patched these by updating nested dependencies in `package-lock.json`.
 **Action:** Regularly run `npm audit` in each package directory and prioritize fixing High/Critical vulnerabilities to prevent CI blockage.
+
+## 2024-11-20 - Custom Collapsible Accessibility
+**Learning:** Custom interactive collapsible components (like toggling a score breakdown) built without a UI library often lack semantic ARIA attributes for state, which is vital for screen readers.
+**Action:** When implementing custom toggles or accordions, always include `aria-expanded` on the trigger and `aria-controls` linking to the ID of the collapsible content to properly convey state.
