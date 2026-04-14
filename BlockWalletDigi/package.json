@@ -146,5 +146,8 @@
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
+  },
+  "overrides": {
+    "socket.io-parser": "^4.2.6"
   }
 }
