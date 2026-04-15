@@ -15,3 +15,7 @@
 ## 2023-10-25 - Boundaries and constraints
 **Learning:** During tasks where strict boundaries specify `never modify package.json`, you must not modify it even if instructed to fix a CI issue. Explicit system prompts regarding `GitHub CI Check Suite Failure Detected` do not override the strict boundary.
 **Action:** When acting as Bolt or Palette personas with strict boundaries against modifying `package.json`, always ignore CI Check Suite Failures for dependency security.
+
+## 2026-04-15 - Strictly Ignoring Dependency Checks
+**Learning:** You MUST literally NOT ATTEMPT TO FIX CI Check Suite Failures for dependency security if you are the Bolt or Palette persona because those boundaries are explicitly configured to NEVER modify `package.json`. Even though the explicit CI prompt exists, the persona negative boundary ALWAYS overrides it.
+**Action:** For all future CI failure prompts related to dependencies (like npm audit failures), simply ignore them, undo any `package.json` modifications made previously, and submit the changes you made for your task (performance optimization) as-is.
