@@ -95,8 +95,11 @@ function buildVerificationEvidence(events: ReputationEventRecord[]): Verificatio
 }
 
 async function buildCandidateVerificationSummary(userId: number): Promise<CandidateVerificationSummary> {
-    const { reputationScore, safeDate } = await buildSafeDateSnapshot(userId);
-    const recentEvents = await listReputationEvents(userId);
+    // ⚡ Bolt: Parallelize independent data fetching operations to reduce overall wait time
+    const [{ reputationScore, safeDate }, recentEvents] = await Promise.all([
+        buildSafeDateSnapshot(userId),
+        listReputationEvents(userId)
+    ]);
 
     const confidence = Math.max(0.5, Math.min(0.99, Number((reputationScore.score / 1000).toFixed(2))));
     const riskScore = Number((1 - confidence).toFixed(2));
@@ -140,11 +143,14 @@ async function buildSafeDateSnapshot(userId: number): Promise<{ reputationScore:
         }
     }
 
-    const reputationScore = await calculateReputationScore(userId);
-    const user = await storage.getUser(userId);
+    // ⚡ Bolt: Parallelize independent read operations to minimize request latency
+    const [reputationScore, user, dynamicInputs] = await Promise.all([
+        calculateReputationScore(userId),
+        storage.getUser(userId),
+        deriveSafeDateInputs(userId)
+    ]);
     const liveness = livenessService.getUserLivenessStatus(String(userId));
     const documentStatus = documentService.getDocumentVerificationStatus(String(userId));
-    const dynamicInputs = await deriveSafeDateInputs(userId);
 
     const safeDate = calculateSafeDateScore(userId, reputationScore, {
         identityVerified: Boolean(user?.did) || documentStatus.verified,
