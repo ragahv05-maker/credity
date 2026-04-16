@@ -74,6 +74,7 @@
     "express-session": "^1.18.1",
     "framer-motion": "^12.23.24",
     "helmet": "^8.1.0",
+    "hono": "^4.12.14",
     "hpp": "^0.2.3",
     "input-otp": "^1.4.2",
     "jsonwebtoken": "^9.0.3",
