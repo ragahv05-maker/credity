@@ -62,6 +62,9 @@
     "minimatch": "^10.0.1",
     "@sentry/node": {
       "minimatch": "^10.0.1"
-    }
+    },
+    "protobufjs": "^7.5.5",
+    "express-rate-limit": "^8.2.2",
+    "drizzle-orm": "^0.45.2"
   }
 }
