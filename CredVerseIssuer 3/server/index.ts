@@ -159,7 +159,7 @@ app.use((req, res, next) => {
   await registerRoutes(httpServer, app);
 
   // Sentry error handler (must be before other error handlers)
-  app.use(sentryErrorHandler);
+  app.use(sentryErrorHandler as unknown as express.ErrorRequestHandler);
 
   // Global Error Handler
   app.use(errorHandler);
