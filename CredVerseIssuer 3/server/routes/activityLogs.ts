@@ -129,10 +129,13 @@ router.get("/reports/dashboard", async (req, res) => {
     try {
         const tenantId = (req as any).tenantId;
 
-        const credentials = await storage.listCredentials(tenantId);
-        const students = await storage.listStudents(tenantId);
-        const templates = await storage.listTemplateDesigns(tenantId);
-        const logs = await storage.listVerificationLogs(tenantId);
+        // ⚡ Bolt: Parallelize independent storage queries for faster dashboard loading
+        const [credentials, students, templates, logs] = await Promise.all([
+            storage.listCredentials(tenantId),
+            storage.listStudents(tenantId),
+            storage.listTemplateDesigns(tenantId),
+            storage.listVerificationLogs(tenantId)
+        ]);
 
         // Generate CSV report
         const reportDate = new Date().toLocaleDateString();
