@@ -186,7 +186,7 @@ export default function Records() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <Button variant="outline" size="icon">
+          <Button variant="outline" size="icon" aria-label="Filter records" title="Filter records">
             <Filter className="h-4 w-4" />
           </Button>
         </div>
