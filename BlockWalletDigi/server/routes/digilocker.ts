@@ -303,37 +303,43 @@ router.post("/digilocker/import-all", authMiddleware, async (req, res) => {
         const imported: string[] = [];
         const failed: string[] = [];
 
-        const credentialsToStore: any[] = [];
-        const successDocs: string[] = [];
-
-        for (const doc of documents) {
+        // ⚡ Bolt: Parallelize DigiLocker document pulls for ~O(1) network time instead of sequential O(n).
+        const pullPromises = documents.map(async (doc: any) => {
             try {
                 const { document } = await digilockerService.pullDocument(userId, doc.uri);
 
-                credentialsToStore.push({
-                    type: ['VerifiableCredential', doc.doctype, 'DigiLockerDocument'],
-                    issuer: doc.issuer,
-                    issuanceDate: new Date(doc.date),
-                    data: {
-                        name: doc.name,
-                        description: doc.description,
-                        source: 'DigiLocker',
-                        uri: doc.uri,
-                        issuerid: doc.issuerid,
-                        ...document,
-                    },
-                    category: doc.doctype.includes('CLASS') ? 'academic' : 'government',
-                });
-                successDocs.push(doc.name);
+                return {
+                    success: true,
+                    docName: doc.name,
+                    credential: {
+                        type: ['VerifiableCredential', doc.doctype, 'DigiLockerDocument'],
+                        issuer: doc.issuer,
+                        issuanceDate: new Date(doc.date),
+                        data: {
+                            name: doc.name,
+                            description: doc.description,
+                            source: 'DigiLocker',
+                            uri: doc.uri,
+                            issuerid: doc.issuerid,
+                            ...document,
+                        },
+                        category: doc.doctype.includes('CLASS') ? 'academic' : 'government',
+                    }
+                };
             } catch (e) {
-                failed.push(doc.name);
+                return { success: false, docName: doc.name };
             }
-        }
+        });
+
+        const results = await Promise.all(pullPromises);
+
+        const credentialsToStore = results.filter((r) => r.success).map((r) => r.credential);
+        const successDocs = results.filter((r) => r.success).map((r) => r.docName as string);
+        failed.push(...results.filter((r) => !r.success).map((r) => r.docName as string));
 
         if (credentialsToStore.length > 0) {
-            for (const credential of credentialsToStore) {
-                await walletService.storeCredential(userId, credential);
-            }
+            // ⚡ Bolt: Use batched persistence to avoid O(n) individual save queue requests
+            await walletService.storeCredentials(userId, credentialsToStore);
             imported.push(...successDocs);
         }
 
@@ -399,33 +405,38 @@ router.post("/digilocker/connect", authMiddleware, async (req, res) => {
             // Import demo documents
             const documents = await digilockerService.listDocuments(userId);
 
-            const credentialsToStore: any[] = [];
-
-            for (const doc of documents.slice(0, 3)) { // Import first 3
+            // ⚡ Bolt: Parallelize demo imports for improved connection speed
+            const pullPromises = documents.slice(0, 3).map(async (doc: any) => {
                 try {
                     const { document } = await digilockerService.pullDocument(userId, doc.uri);
 
-                    credentialsToStore.push({
-                        type: ['VerifiableCredential', doc.doctype, 'DigiLockerDocument'],
-                        issuer: doc.issuer,
-                        issuanceDate: new Date(doc.date),
-                        data: {
-                            name: doc.name,
-                            source: 'DigiLocker',
-                            uri: doc.uri,
-                            ...document,
-                        },
-                        category: doc.doctype.includes('CLASS') ? 'academic' : 'government',
-                    });
+                    return {
+                        success: true,
+                        credential: {
+                            type: ['VerifiableCredential', doc.doctype, 'DigiLockerDocument'],
+                            issuer: doc.issuer,
+                            issuanceDate: new Date(doc.date),
+                            data: {
+                                name: doc.name,
+                                source: 'DigiLocker',
+                                uri: doc.uri,
+                                ...document,
+                            },
+                            category: doc.doctype.includes('CLASS') ? 'academic' : 'government',
+                        }
+                    };
                 } catch (e) {
                     console.error('[DigiLocker] Demo import error:', e);
+                    return { success: false };
                 }
-            }
+            });
+
+            const results = await Promise.all(pullPromises);
+            const credentialsToStore = results.filter((r) => r.success).map((r) => r.credential);
 
             if (credentialsToStore.length > 0) {
-                for (const credential of credentialsToStore) {
-                    await walletService.storeCredential(userId, credential);
-                }
+                // ⚡ Bolt: Batched wallet storage
+                await walletService.storeCredentials(userId, credentialsToStore);
             }
 
             await storage.createActivity({
