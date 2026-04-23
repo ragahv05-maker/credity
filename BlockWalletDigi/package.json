@@ -65,11 +65,11 @@
     "connect-pg-simple": "^10.0.0",
     "cors": "^2.8.5",
     "date-fns": "^3.6.0",
-    "drizzle-orm": "^0.45.1",
+    "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.7.1",
     "embla-carousel-react": "^8.6.0",
     "express": "^4.21.2",
-    "express-rate-limit": "^8.2.1",
+    "express-rate-limit": "^8.2.2",
     "express-session": "^1.18.1",
     "framer-motion": "^12.23.24",
     "helmet": "^8.1.0",
@@ -146,5 +146,10 @@
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
+  },
+  "overrides": {
+    "protobufjs": "^7.5.5",
+    "drizzle-orm": "^0.45.2",
+    "express-rate-limit": "^8.2.2"
   }
 }
