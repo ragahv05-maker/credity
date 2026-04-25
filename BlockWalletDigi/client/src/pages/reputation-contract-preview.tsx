@@ -14,7 +14,7 @@ function isLiveModeEnabled(): boolean {
 }
 
 export default function ReputationContractPreview() {
-  const liveMode = useMemo(() => isLiveModeEnabled(), []);
+  const liveMode = useMemo(isLiveModeEnabled, []);
   const [data, setData] = useState<ReputationPreviewPayload>(mockReputationPreviewPayload);
   const [loading, setLoading] = useState<boolean>(liveMode);
   const [liveError, setLiveError] = useState<string | null>(null);

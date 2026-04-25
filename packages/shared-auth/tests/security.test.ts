@@ -3,7 +3,6 @@ import { suspiciousRequestDetector } from "../src/security";
 import { Request, Response, NextFunction } from "express";
 
 describe("suspiciousRequestDetector", () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mockReq = (body: any) =>
     ({
       body,

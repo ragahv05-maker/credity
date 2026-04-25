@@ -115,7 +115,6 @@ function normalizeSubpath(rawPath: string): string {
 
 function isSubpathAllowed(target: ProxyTarget, subpath: string): boolean {
     if (subpath.length > 1024) return false;
-    // eslint-disable-next-line no-control-regex
     if (/[\\\u0000-\u001F]/.test(subpath)) return false;
     const parts = subpath.split('/');
     if (parts.some((part) => part === '..' || part === '.')) return false;
