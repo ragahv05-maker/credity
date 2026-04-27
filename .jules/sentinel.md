@@ -4,3 +4,8 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+
+## 2025-02-18 - [Overly Permissive CORS Policy]
+**Vulnerability:** The CORS policy configuration used `origin: config.allowedOrigins || process.env.ALLOWED_ORIGINS?.split(",") || true` while `credentials: true` was active.
+**Learning:** Using `origin: true` instructs the `cors` middleware to reflect any incoming `Origin` header back in the `Access-Control-Allow-Origin` header. When combined with `credentials: true`, this completely defeats the purpose of CORS by allowing any malicious site to make cross-origin authenticated requests (e.g., passing cookies/sessions).
+**Prevention:** Never use `true` as a fallback for the CORS `origin` setting when credentials are enabled. Always default to an empty array `[]` or a strict whitelist of known safe origins to ensure secure-by-default behavior if explicit configuration is missing.
