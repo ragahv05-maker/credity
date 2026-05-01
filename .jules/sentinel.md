@@ -4,3 +4,7 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+## 2025-02-18 - [Insecure CORS Fallback Configuration]
+**Vulnerability:** The shared Express security middleware (`packages/shared-auth/src/security.ts`) used a fallback of `origin: true` alongside `credentials: true`.
+**Learning:** Setting `origin: true` automatically reflects any requesting origin back in the `Access-Control-Allow-Origin` header. When combined with `credentials: true`, this creates a critical vulnerability allowing any malicious third-party site to make authenticated cross-origin requests to the API, opening the door for CSRF and data leakage.
+**Prevention:** Always use strict origin checking. If an explicit whitelist is unavailable via configuration or environment variables, use an empty array `[]` or explicitly `false` as a fallback, rather than `true`.
