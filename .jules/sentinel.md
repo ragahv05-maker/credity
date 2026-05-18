@@ -4,3 +4,10 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+
+## 2025-02-18 - [Overly Permissive CORS Origin Reflection]
+**Vulnerability:** The CORS configuration in `shared-auth` used an insecure fallback `origin: ... || true` combined with `credentials: true`. This causes the server to dynamically reflect any requested origin back in the `Access-Control-Allow-Origin` header, allowing cross-origin authenticated requests from arbitrary malicious domains.
+**Learning:** Setting `origin: true` in the Express `cors` middleware is dangerous because it essentially acts as a wildcard (`*`) while circumventing the browser's block on `*` with `credentials: true`. Default configurations must "fail closed".
+**Prevention:**
+1. Never use `true` as a fallback for the CORS `origin` property when `credentials: true` is enabled.
+2. Use an empty array `[]` as the fallback to ensure requests are blocked unless the origin is explicitly whitelisted.
