@@ -153,9 +153,7 @@ export function setupSecurity(app: Application, config: SecurityConfig = {}) {
   app.use(
     cors({
       origin:
-        config.allowedOrigins ||
-        process.env.ALLOWED_ORIGINS?.split(",") ||
-        true,
+        config.allowedOrigins || process.env.ALLOWED_ORIGINS?.split(",") || [], // 🛡️ Sentinel: Fixed overly permissive CORS. Fallback to empty array instead of true when credentials are enabled
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
       allowedHeaders: [
