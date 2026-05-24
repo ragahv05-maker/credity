@@ -1,0 +1,3 @@
+## 2024-05-24 - Accessibility improvements for icon-only buttons
+**Learning:** Icon-only buttons (like those found in `Header.tsx` for help/notifications or `ThemeToggle.tsx` for themes) rely entirely on `aria-label` properties to be accessible by screen readers. When these buttons omit visual text in favor of an icon (e.g., `<HelpCircle className="h-5 w-5" />`), screen readers fail to describe their purpose without the ARIA label, leading to severe accessibility barriers for visually impaired users navigating complex dashboards.
+**Action:** Always ensure that `<Button size="icon">` components or elements consisting exclusively of icons explicitly implement an `aria-label` describing the action (e.g., `aria-label="Notifications"`).
