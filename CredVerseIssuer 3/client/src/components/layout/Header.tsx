@@ -131,6 +131,7 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon"
+            aria-label="Help"
             className="text-muted-foreground hover:text-foreground"
             onClick={() => navigate('/help')}
           >
@@ -139,6 +140,7 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon"
+            aria-label="Notifications"
             className="text-muted-foreground hover:text-foreground relative"
             onClick={() => navigate('/verification-logs')}
           >
