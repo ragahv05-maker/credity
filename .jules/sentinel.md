@@ -4,3 +4,8 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+
+## 2025-02-23 - [Reflective CORS Vulnerability]
+**Vulnerability:** The CORS configuration in `shared-auth` had a fallback of `origin: true` while `credentials: true` was enabled.
+**Learning:** Setting `origin: true` with credentials enabled creates a critical vulnerability by allowing any domain to make cross-origin requests with the user's credentials, effectively bypassing CORS protections.
+**Prevention:** Ensure strict origin checking by using an explicit whitelist or an empty array `[]` as a fallback instead of `true`.
