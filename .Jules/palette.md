@@ -17,3 +17,7 @@
 ## 2024-10-25 - Dependency Security (Minimatch)
 **Learning:** High-severity ReDoS vulnerabilities in `minimatch` (<9.0.6 or <10.2.2) blocked CI. `npm audit fix` successfully patched these by updating nested dependencies in `package-lock.json`.
 **Action:** Regularly run `npm audit` in each package directory and prioritize fixing High/Critical vulnerabilities to prevent CI blockage.
+
+## 2024-10-25 - CredVerseRecruiter Header Tooltips
+**Learning:** Found multiple icon-only buttons (Theme, Help, Notifications) in the header lacking context for sighted users without hover interactions, and missing explicit ARIA labels. Radix UI Tooltips must not be nested directly with other `asChild` triggers (like `DropdownMenuTrigger`).
+**Action:** Always wrap standard icon-only buttons with Shadcn UI `Tooltip` components (`TooltipProvider`, `Tooltip`, `TooltipTrigger asChild`, `TooltipContent`) to provide visual context on hover, but use standard `aria-label` exclusively for complex nested triggers (like User Profile Dropdowns) to prevent ref-forwarding crashes.
