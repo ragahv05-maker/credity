@@ -153,9 +153,8 @@ export function setupSecurity(app: Application, config: SecurityConfig = {}) {
   app.use(
     cors({
       origin:
-        config.allowedOrigins ||
-        process.env.ALLOWED_ORIGINS?.split(",") ||
-        true,
+        // SECURITY: Fallback must be an explicit whitelist or [], not true, since credentials are true.
+        config.allowedOrigins || process.env.ALLOWED_ORIGINS?.split(",") || [],
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
       allowedHeaders: [

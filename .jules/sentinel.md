@@ -4,3 +4,8 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+
+## 2024-03-24 - Fix Overly Permissive CORS Configuration
+**Vulnerability:** CORS origin was configured to fallback to `true` with `credentials: true` enabled.
+**Learning:** Using `origin: true` when credentials are included creates a critical security vulnerability by reflecting the request origin, bypassing strict origin checking.
+**Prevention:** Ensure strict origin checking by using an explicit whitelist or an empty array `[]` as a fallback instead of `true`.
