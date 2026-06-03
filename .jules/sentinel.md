@@ -4,3 +4,8 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+
+## 2025-03-01 - [Insecure Random Number Generation]
+**Vulnerability:** Found `Math.random()` being used to generate OTPs, 2FA backup codes, and temporary OAuth passwords.
+**Learning:** `Math.random()` is not cryptographically secure and can be predicted. Security-sensitive values must use a CSPRNG (Cryptographically Secure Pseudo-Random Number Generator).
+**Prevention:** Always use Node.js's native `crypto` module (e.g., `crypto.randomInt()`, `crypto.randomBytes()`) for generating secrets, tokens, or any security-sensitive random values.
