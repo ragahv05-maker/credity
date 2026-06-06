@@ -179,7 +179,7 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
 
     const issueUrl = 'http://127.0.0.1:5001/api/v1/credentials/issue';
 
-    const issueReq = fetch(issueUrl, {
+    const issueReq = (globalThis.fetch || fetch)(issueUrl, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -210,7 +210,7 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
 
     const offerUrl = `http://127.0.0.1:5001/api/v1/credentials/${issueRes.id as string}/offer`;
 
-    const offerHttpRes = await fetch(offerUrl, {
+    const offerHttpRes = await (globalThis.fetch || fetch)(offerUrl, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -240,14 +240,14 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
   }
 
   it('supports issuer auth permutations (missing, invalid, apiKey, bearer)', async () => {
-    const noAuthRes = await fetch('http://127.0.0.1:5001/api/v1/credentials/issue', {
+    const noAuthRes = await (globalThis.fetch || fetch)('http://127.0.0.1:5001/api/v1/credentials/issue', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ templateId: 'template-1', issuerId: 'issuer-1', recipient: {}, credentialData: {} }),
     });
     expect(noAuthRes.status).toBe(401);
 
-    const invalidApiKeyRes = await fetch('http://127.0.0.1:5001/api/v1/credentials/issue', {
+    const invalidApiKeyRes = await (globalThis.fetch || fetch)('http://127.0.0.1:5001/api/v1/credentials/issue', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-api-key': 'invalid-key' },
       body: JSON.stringify({ templateId: 'template-1', issuerId: 'issuer-1', recipient: {}, credentialData: {} }),
