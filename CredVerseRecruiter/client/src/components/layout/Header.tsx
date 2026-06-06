@@ -1,10 +1,6 @@
 import { Bell, Search, User, HelpCircle, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -48,18 +44,8 @@ export function Header({ title }: { title: string }) {
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              className="text-muted-foreground hover:text-foreground"
-              aria-label="Toggle theme"
-            >
-              {theme === "light" ? (
-                <Moon className="h-5 w-5" />
-              ) : (
-                <Sun className="h-5 w-5" />
-              )}
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-foreground" aria-label="Toggle theme">
+              {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
             </Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -69,12 +55,7 @@ export function Header({ title }: { title: string }) {
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground"
-              aria-label="Help"
-            >
+            <Button variant="ghost" size="icon" className="text-muted-foreground" aria-label="Help">
               <HelpCircle className="h-5 w-5" />
             </Button>
           </TooltipTrigger>
@@ -85,12 +66,7 @@ export function Header({ title }: { title: string }) {
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative text-muted-foreground"
-              aria-label="Notifications"
-            >
+            <Button variant="ghost" size="icon" className="relative text-muted-foreground" aria-label="Notifications">
               <Bell className="h-5 w-5" />
               <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-destructive border border-background" />
             </Button>
@@ -102,10 +78,7 @@ export function Header({ title }: { title: string }) {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="relative h-9 w-9 rounded-full bg-muted"
-            >
+            <Button variant="ghost" className="relative h-9 w-9 rounded-full bg-muted">
               <User className="h-5 w-5 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
