@@ -1,5 +1,6 @@
 import { Bell, Search, User, HelpCircle, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -41,18 +42,39 @@ export function Header({ title }: { title: string }) {
           />
         </div>
 
-        <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-foreground">
-          {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-foreground" aria-label="Toggle theme">
+              {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Toggle theme</p>
+          </TooltipContent>
+        </Tooltip>
 
-        <Button variant="ghost" size="icon" className="text-muted-foreground">
-          <HelpCircle className="h-5 w-5" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" className="text-muted-foreground" aria-label="Help">
+              <HelpCircle className="h-5 w-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Help</p>
+          </TooltipContent>
+        </Tooltip>
 
-        <Button variant="ghost" size="icon" className="relative text-muted-foreground">
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-destructive border border-background" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" className="relative text-muted-foreground" aria-label="Notifications">
+              <Bell className="h-5 w-5" />
+              <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-destructive border border-background" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Notifications</p>
+          </TooltipContent>
+        </Tooltip>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
