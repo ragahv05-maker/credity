@@ -109,7 +109,7 @@ export function Sidebar() {
           <div className="space-y-1">
             {categories.map((cat, idx) => (
               <Link key={idx} href={`/?category=${cat.label.toLowerCase()}`}>
-                <button className="w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors">
+                <button aria-label={`Filter by ${cat.label}`} className="w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors focus-visible:ring-2 focus-visible:outline-none">
                   <span className={cn("w-2.5 h-2.5 rounded-full ring-2 ring-white dark:ring-black shadow-sm", cat.color)} />
                   {cat.label}
                 </button>

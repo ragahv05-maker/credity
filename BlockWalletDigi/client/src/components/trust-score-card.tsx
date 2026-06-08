@@ -147,8 +147,11 @@ export function TrustScoreCard() {
             {/* Score Breakdown */}
             <div className="p-4 space-y-4">
                 <button
+                    aria-expanded={showBreakdown}
+                    aria-controls="score-breakdown"
+                    aria-label={showBreakdown ? "Hide Score Breakdown" : "Show Score Breakdown"}
                     onClick={() => setShowBreakdown(!showBreakdown)}
-                    className="w-full flex items-center justify-between text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="w-full flex items-center justify-between text-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:ring-2 focus-visible:outline-none rounded-sm"
                 >
                     <span className="font-medium">Score Breakdown</span>
                     <ChevronRight className={`w-4 h-4 transition-transform ${showBreakdown ? 'rotate-90' : ''}`} />
@@ -156,6 +159,7 @@ export function TrustScoreCard() {
 
                 {showBreakdown && (
                     <motion.div
+                        id="score-breakdown"
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         className="space-y-3"
