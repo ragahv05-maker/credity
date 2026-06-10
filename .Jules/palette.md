@@ -17,3 +17,6 @@
 ## 2024-10-25 - Dependency Security (Minimatch)
 **Learning:** High-severity ReDoS vulnerabilities in `minimatch` (<9.0.6 or <10.2.2) blocked CI. `npm audit fix` successfully patched these by updating nested dependencies in `package-lock.json`.
 **Action:** Regularly run `npm audit` in each package directory and prioritize fixing High/Critical vulnerabilities to prevent CI blockage.
+## 2024-10-25 - Radix UI Tooltip and Dropdown Trigger Conflict
+**Learning:** Nesting multiple triggers with `asChild` (e.g., `<DropdownMenuTrigger asChild>` and `<TooltipTrigger asChild>`) around the same element (like a `<Button>`) causes ref forwarding and event handler conflicts, breaking the components.
+**Action:** When adding tooltips to buttons that already act as triggers for other components (like DropdownMenus), do not combine these triggers directly on the same child element. Instead, wrap the entire trigger component structure or reconsider the tooltip necessity.
