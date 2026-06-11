@@ -56,7 +56,7 @@ export function deterministicHash(
 
   const content = JSON.stringify(canonicalize(value));
   if (algorithm === 'keccak256') {
-    return ethers.keccak256(ethers.toUtf8Bytes(content));
+    return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(content));
   }
   return crypto.createHash('sha256').update(content).digest('hex');
 }
@@ -68,7 +68,7 @@ export function deterministicHashLegacyTopLevel(value: unknown, algorithm: Proof
       : JSON.stringify(value, value && typeof value === 'object' ? Object.keys(value as Record<string, unknown>).sort() : undefined);
 
   if (algorithm === 'keccak256') {
-    return ethers.keccak256(ethers.toUtf8Bytes(canonical));
+    return ethers.utils.keccak256(ethers.utils.toUtf8Bytes(canonical));
   }
 
   return crypto.createHash('sha256').update(canonical).digest('hex');
