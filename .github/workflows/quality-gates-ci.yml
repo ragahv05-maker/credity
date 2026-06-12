@@ -258,7 +258,7 @@ jobs:
         if: needs.changes.outputs[matrix.key] == 'true' || github.event_name == 'workflow_dispatch'
         working-directory: ${{ matrix.path }}
         run: |
-          if [ "${{ matrix.key }}" = "issuer" ] || [ "${{ matrix.key }}" = "root" ]; then
+          if [ "${{ matrix.key }}" = "issuer" ] || [ "${{ matrix.key }}" = "root" ] || [ "${{ matrix.key }}" = "wallet" ]; then
             npm ci --legacy-peer-deps
           else
             npm ci
