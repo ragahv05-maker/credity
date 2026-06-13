@@ -53,7 +53,7 @@ export interface VerifyResult {
  * Blockchain Service for credential anchoring and verification
  */
 export class BlockchainService {
-    private provider: ethers.JsonRpcProvider;
+    private provider: ethers.providers.JsonRpcProvider;
     private contract: ethers.Contract;
     private signer?: ethers.Wallet;
     private isConfigured: boolean = false;
@@ -75,7 +75,7 @@ export class BlockchainService {
             console.warn(`[Blockchain] Writes disabled for ${this.chain}: ${writePolicy.reason}`);
         }
 
-        this.provider = new ethers.JsonRpcProvider(rpcUrl, {
+        this.provider = new ethers.providers.JsonRpcProvider(rpcUrl, {
             chainId: chainConfig.chainId,
             name: chainConfig.networkName,
         });
@@ -94,7 +94,7 @@ export class BlockchainService {
             this.validateContract(contractAddress, rpcUrl).catch(() => { });
         } else {
             // Create a dummy contract for development
-            this.contract = new ethers.Contract(ethers.ZeroAddress, REGISTRY_ABI, this.provider);
+            this.contract = new ethers.Contract(ethers.constants.AddressZero, REGISTRY_ABI, this.provider);
             console.log(`[Blockchain] Running in deferred mode on ${this.chain} (no contract configuration)`);
         }
     }
