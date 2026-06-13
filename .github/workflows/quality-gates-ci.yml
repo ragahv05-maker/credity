@@ -47,7 +47,7 @@ jobs:
       shared_auth: ${{ steps.filter.outputs.shared_auth }}
       root: ${{ steps.filter.outputs.root }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -106,8 +106,8 @@ jobs:
             lockfile: CredVerseRecruiter/package-lock.json
             command: npm run check
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: '20'
           cache: 'npm'
@@ -162,8 +162,8 @@ jobs:
             lockfile: apps/mobile/package-lock.json
             command: npm test
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: '20'
           cache: 'npm'
@@ -204,8 +204,8 @@ jobs:
       run:
         working-directory: CredVerseIssuer 3/contracts
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: '20'
           cache: 'npm'
@@ -248,8 +248,8 @@ jobs:
             path: CredVerseIssuer 3/contracts
             lockfile: CredVerseIssuer 3/contracts/package-lock.json
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: '20'
           cache: 'npm'
