@@ -51,7 +51,7 @@ export function Nav() {
               Connected
             </div>
           </div>
-          <button className="flex items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 w-full transition-colors">
+          <button className="flex items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 w-full transition-colors" aria-label="Disconnect wallet">
             <LogOut className="w-5 h-5" />
             <span className="font-medium">Disconnect</span>
           </button>
