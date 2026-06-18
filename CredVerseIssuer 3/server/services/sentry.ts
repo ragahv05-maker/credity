@@ -1,3 +1,4 @@
+import type { ErrorRequestHandler } from 'express';
 import * as Sentry from '@sentry/node';
 import { sanitizeContext } from '../middleware/observability';
 
@@ -78,7 +79,7 @@ export function addBreadcrumb(message: string, category: string, data?: Record<s
     });
 }
 
-export const sentryErrorHandler = Sentry.expressErrorHandler();
+export const sentryErrorHandler = Sentry.expressErrorHandler() as unknown as ErrorRequestHandler;
 export const sentryRequestHandler = Sentry.expressIntegration;
 
 export { Sentry };
