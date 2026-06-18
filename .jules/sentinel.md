@@ -4,3 +4,7 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+## 2025-02-18 - [Weak OTP/Backup Code Generation]
+**Vulnerability:** Weak random number generator (`Math.random()`) used for generating OTPs and backup codes.
+**Learning:** `Math.random()` is not cryptographically secure, and the numbers generated can be predicted by an attacker.
+**Prevention:** Use `crypto.randomInt()` or other cryptographically secure functions when generating sensitive tokens, OTPs, or backup codes.
