@@ -1,3 +1,4 @@
+import type { ErrorRequestHandler } from 'express';
 import * as Sentry from '@sentry/node';
 import { sanitizeContext } from '../middleware/observability';
 
@@ -64,6 +65,6 @@ export function clearUser(): void {
     Sentry.setUser(null);
 }
 
-export const sentryErrorHandler = Sentry.expressErrorHandler();
+export const sentryErrorHandler = Sentry.expressErrorHandler() as unknown as ErrorRequestHandler;
 
 export { Sentry };
