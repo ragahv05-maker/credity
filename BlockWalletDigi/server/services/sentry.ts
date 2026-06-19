@@ -64,6 +64,6 @@ export function clearUser(): void {
     Sentry.setUser(null);
 }
 
-export const sentryErrorHandler = Sentry.expressErrorHandler();
+export const sentryErrorHandler = (Sentry as any).setupExpressErrorHandler ? (req: any, res: any, next: any) => { (Sentry as any).setupExpressErrorHandler(req.app); next(); } : ((Sentry as any).expressErrorHandler ? (Sentry as any).expressErrorHandler() : (req: any, res: any, next: any) => next());
 
 export { Sentry };

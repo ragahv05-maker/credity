@@ -23,7 +23,8 @@ export async function generateOtp(
     throw new Error('Too many OTP requests. Please wait before requesting another code.');
   }
 
-  const code = String(Math.floor(100000 + Math.random() * 900000));
+  const crypto = await import('crypto');
+  const code = crypto.randomInt(100000, 1000000).toString();
   const hashedCode = await bcrypt.hash(code, 10);
   const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
 
