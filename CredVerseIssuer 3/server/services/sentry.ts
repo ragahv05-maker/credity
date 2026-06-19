@@ -78,7 +78,7 @@ export function addBreadcrumb(message: string, category: string, data?: Record<s
     });
 }
 
-export const sentryErrorHandler = Sentry.expressErrorHandler();
+export const sentryErrorHandler = (Sentry as any).setupExpressErrorHandler ? (req: any, res: any, next: any) => { (Sentry as any).setupExpressErrorHandler(req.app); next(); } : ((Sentry as any).expressErrorHandler ? (Sentry as any).expressErrorHandler() : (req: any, res: any, next: any) => next());
 export const sentryRequestHandler = Sentry.expressIntegration;
 
 export { Sentry };
