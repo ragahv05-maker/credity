@@ -17,3 +17,6 @@
 ## 2024-10-25 - Dependency Security (Minimatch)
 **Learning:** High-severity ReDoS vulnerabilities in `minimatch` (<9.0.6 or <10.2.2) blocked CI. `npm audit fix` successfully patched these by updating nested dependencies in `package-lock.json`.
 **Action:** Regularly run `npm audit` in each package directory and prioritize fixing High/Critical vulnerabilities to prevent CI blockage.
+## 2024-10-25 - ARIA attributes for custom tabs and collapsible areas
+**Learning:** Found that custom interactive components like tabs (`<button role="tab">`) and collapsible sections (`<button aria-expanded>`) were missing essential ARIA attributes in BlockWalletDigi, which severely impacts screen reader users.
+**Action:** When implementing or reviewing custom UI elements like tabs or accordions that don't use a headless UI library, always ensure proper ARIA roles (`role="tablist"`, `role="tab"`), selection states (`aria-selected`), and expanded states (`aria-expanded`, `aria-controls`) are explicitly added.
