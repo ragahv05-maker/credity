@@ -112,7 +112,7 @@
     "viem": "^2.41.2",
     "wagmi": "^2.19.5",
     "wouter": "^3.3.5",
-    "ws": "^8.18.0",
+    "ws": "^8.21.0",
     "xss-clean": "^0.1.4",
     "zod": "^3.25.76",
     "zod-validation-error": "^3.4.0",
@@ -161,6 +161,12 @@
     "bufferutil": "^4.0.8"
   },
   "overrides": {
-    "minimatch": "^10.2.3"
+    "minimatch": "^10.2.3",
+    "ws": "^8.21.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "ws": "^8.21.0"
+    }
   }
 }
