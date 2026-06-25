@@ -13,7 +13,7 @@ importers:
     dependencies:
       '@credverse/shared-auth':
         specifier: file:../packages/shared-auth
-        version: file:../packages/shared-auth(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(express@4.22.2)
+        version: file:../packages/shared-auth(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(bufferutil@4.1.0)(express@4.22.2)(utf-8-validate@5.0.10)
       '@dnd-kit/core':
         specifier: ^6.3.1
         version: 6.3.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -6482,7 +6482,7 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@credverse/shared-auth@file:../packages/shared-auth(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(express@4.22.2)':
+  '@credverse/shared-auth@file:../packages/shared-auth(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(bufferutil@4.1.0)(express@4.22.2)(utf-8-validate@5.0.10)':
     dependencies:
       bcryptjs: 3.0.3
       cors: 2.8.6
@@ -6493,6 +6493,7 @@ snapshots:
       hpp: 0.2.3
       jsonwebtoken: 9.0.3
       pg: 8.22.0
+      ws: 8.21.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       xss: 1.0.15
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
@@ -6513,6 +6514,7 @@ snapshots:
       - '@vercel/postgres'
       - '@xata.io/client'
       - better-sqlite3
+      - bufferutil
       - bun-types
       - expo-sqlite
       - gel
@@ -6524,6 +6526,7 @@ snapshots:
       - prisma
       - sql.js
       - sqlite3
+      - utf-8-validate
 
   '@date-fns/tz@1.5.0': {}
 
