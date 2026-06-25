@@ -465,7 +465,7 @@ export default function IdentityVerification() {
                     </div>
 
                     {/* Modern Tabs */}
-                    <div className="flex bg-secondary/30 rounded-xl p-1 relative">
+                    <div className="flex bg-secondary/30 rounded-xl p-1 relative" role="tablist">
                         {[
                             { id: 'overview', label: 'Overview', icon: ShieldCheck },
                             { id: 'liveness', label: 'Liveness', icon: Camera },
@@ -475,6 +475,8 @@ export default function IdentityVerification() {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as any)}
+                                aria-selected={activeTab === tab.id}
+                                role="tab"
                                 className={`flex-1 relative flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-300 z-10 ${activeTab === tab.id ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
                                     }`}
                             >
