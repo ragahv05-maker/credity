@@ -2,6 +2,7 @@ import { Sidebar } from "@/components/sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "wouter";
 import {
@@ -111,9 +112,16 @@ export default function ProfilePage() {
                   <Badge variant="outline" className="font-mono text-xs py-1 max-w-[280px] truncate">
                     {did.length > 30 ? `${did.slice(0, 20)}...${did.slice(-8)}` : did}
                   </Badge>
-                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={copyDid}>
-                    {copied ? <CheckCircle2 className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={copyDid} aria-label="Copy DID">
+                        {copied ? <CheckCircle2 className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Copy DID</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
             </div>
