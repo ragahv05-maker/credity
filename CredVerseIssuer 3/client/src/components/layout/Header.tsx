@@ -131,6 +131,8 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon"
+            title="Help"
+            aria-label="Help"
             className="text-muted-foreground hover:text-foreground"
             onClick={() => navigate('/help')}
           >
@@ -139,6 +141,8 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon"
+            title="Notifications"
+            aria-label="Notifications"
             className="text-muted-foreground hover:text-foreground relative"
             onClick={() => navigate('/verification-logs')}
           >
@@ -218,7 +222,7 @@ export function Header() {
                 <code className="flex-1 text-sm font-mono truncate">
                   {address}
                 </code>
-                <Button size="icon" variant="ghost" onClick={handleCopyAddress}>
+                <Button size="icon" variant="ghost" title="Copy Address" aria-label="Copy Address" onClick={handleCopyAddress}>
                   {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
