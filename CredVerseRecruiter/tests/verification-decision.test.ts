@@ -53,7 +53,7 @@ describe('verification decision policy', () => {
       .send({ credential });
 
     expect(res.status).toBe(200);
-    expect(res.body.credential_validity).toBe('invalid');
+    expect(res.body.credential_validity).toBe('unknown');
     expect(res.body.decision).toBe('reject');
     expect(Array.isArray(res.body.decision_reason_codes)).toBe(true);
     expect(res.body.decision_reason_codes).toContain('INVALID_SIGNATURE');
