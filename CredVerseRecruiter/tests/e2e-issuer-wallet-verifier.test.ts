@@ -107,7 +107,7 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
         if (urlStr.includes('127.0.0.1')) {
              const headers = options?.headers as Record<string, string> || {};
              const hasAuth = headers['Authorization'] || headers['x-api-key'];
-             if (!hasAuth) {
+             if (!hasAuth || headers['x-api-key'] === 'invalid-key') {
                  return { ok: false, status: 401, json: async () => ({}) } as Response;
              }
 
