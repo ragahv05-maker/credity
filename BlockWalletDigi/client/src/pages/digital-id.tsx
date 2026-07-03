@@ -13,12 +13,13 @@ import {
 } from "lucide-react";
 import { MOCK_CREDENTIALS } from "@/types/credential";
 import { motion } from "framer-motion";
+import { useMemo } from "react";
 
 export default function DigitalID() {
-  // Sort credentials by date descending for history
-  const history = [...MOCK_CREDENTIALS].sort((a, b) => 
+  // ⚡ Bolt: Memoize expensive array sorting operation to prevent recalculation on every render
+  const history = useMemo(() => [...MOCK_CREDENTIALS].sort((a, b) =>
     new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime()
-  );
+  ), []);
 
   return (
     <div className="flex min-h-screen bg-background">
