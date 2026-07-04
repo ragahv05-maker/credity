@@ -1,12 +1,44 @@
 import { useMemo, useRef, useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Upload, FileSpreadsheet, Download, CheckCircle2, XCircle, AlertCircle, Loader2, ShieldAlert, Clipboard } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Upload,
+  FileSpreadsheet,
+  Download,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Loader2,
+  ShieldAlert,
+  Clipboard,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Papa from "papaparse";
 import { useMutation } from "@tanstack/react-query";
@@ -32,7 +64,10 @@ interface BulkVerificationResultRow {
 
 type DecisionTier = "PASS" | "REVIEW" | "FAIL";
 
-function getDecisionTierFromStatus(status: BulkVerificationResultRow["status"], riskScore: number): DecisionTier {
+function getDecisionTierFromStatus(
+  status: BulkVerificationResultRow["status"],
+  riskScore: number,
+): DecisionTier {
   if (status === "failed") return "FAIL";
   if (status === "suspicious" || status === "pending") return "REVIEW";
   // verified
@@ -61,19 +96,28 @@ function safeJsonParse(value?: string) {
 const renderStatusBadge = (row: BulkVerificationResultRow) => {
   if (row.status === "verified")
     return (
-      <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+      <Badge
+        variant="outline"
+        className="bg-emerald-50 text-emerald-700 border-emerald-200"
+      >
         <CheckCircle2 className="w-3 h-3 mr-1" /> Verified
       </Badge>
     );
   if (row.status === "failed")
     return (
-      <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+      <Badge
+        variant="outline"
+        className="bg-red-50 text-red-700 border-red-200"
+      >
         <XCircle className="w-3 h-3 mr-1" /> Failed
       </Badge>
     );
   if (row.status === "suspicious")
     return (
-      <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+      <Badge
+        variant="outline"
+        className="bg-amber-50 text-amber-700 border-amber-200"
+      >
         <AlertCircle className="w-3 h-3 mr-1" /> Suspicious
       </Badge>
     );
@@ -82,16 +126,22 @@ const renderStatusBadge = (row: BulkVerificationResultRow) => {
 
 const renderDecisionBadge = (row: BulkVerificationResultRow) => {
   const decision = getDecisionTierFromStatus(row.status, row.riskScore);
-  if (decision === "PASS") return <Badge className="bg-emerald-100 text-emerald-700 border-0">PASS</Badge>;
-  if (decision === "FAIL") return <Badge className="bg-red-100 text-red-700 border-0">FAIL</Badge>;
+  if (decision === "PASS")
+    return (
+      <Badge className="bg-emerald-100 text-emerald-700 border-0">PASS</Badge>
+    );
+  if (decision === "FAIL")
+    return <Badge className="bg-red-100 text-red-700 border-0">FAIL</Badge>;
   return <Badge className="bg-amber-100 text-amber-700 border-0">REVIEW</Badge>;
 };
 
-const findEvidence = (checks: VerificationCheck[] | undefined, name: string) => (checks || []).find((c) => c.name === name);
+const findEvidence = (checks: VerificationCheck[] | undefined, name: string) =>
+  (checks || []).find((c) => c.name === name);
 
 export default function BulkVerify() {
   const [results, setResults] = useState<BulkVerificationResultRow[]>([]);
-  const [selectedVerification, setSelectedVerification] = useState<BulkVerificationResultRow | null>(null);
+  const [selectedVerification, setSelectedVerification] =
+    useState<BulkVerificationResultRow | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -110,38 +160,59 @@ export default function BulkVerify() {
       return res.json();
     },
     onSuccess: (data) => {
-      const rawResults: unknown[] = Array.isArray(data?.result?.results) ? data.result.results : [];
+      const rawResults: unknown[] = Array.isArray(data?.result?.results)
+        ? data.result.results
+        : [];
 
-      const mapped: BulkVerificationResultRow[] = rawResults.map((item, index: number) => {
-        // The bulk verifier returns VerificationResult objects (server-side). Keep runtime-safe access.
-        const r = item as Record<string, unknown>;
-        const checks = (r.checks as unknown[]) || [];
+      const mapped: BulkVerificationResultRow[] = rawResults.map(
+        (item, index: number) => {
+          // The bulk verifier returns VerificationResult objects (server-side). Keep runtime-safe access.
+          const r = item as Record<string, unknown>;
+          const checks = (r.checks as unknown[]) || [];
 
-        const findCheckDetails = (checkName: string): Record<string, unknown> | undefined => {
-          const found = (Array.isArray(checks) ? checks : []).find((c) => {
-            if (!c || typeof c !== "object") return false;
-            return (c as Record<string, unknown>).name === checkName;
-          });
-          if (!found || typeof found !== "object") return undefined;
-          const details = (found as Record<string, unknown>).details;
-          if (!details || typeof details !== "object") return undefined;
-          return details as Record<string, unknown>;
-        };
+          const findCheckDetails = (
+            checkName: string,
+          ): Record<string, unknown> | undefined => {
+            const found = (Array.isArray(checks) ? checks : []).find((c) => {
+              if (!c || typeof c !== "object") return false;
+              return (c as Record<string, unknown>).name === checkName;
+            });
+            if (!found || typeof found !== "object") return undefined;
+            const details = (found as Record<string, unknown>).details;
+            if (!details || typeof details !== "object") return undefined;
+            return details as Record<string, unknown>;
+          };
 
-        const credentialSubject = r.credentialSubject as Record<string, unknown> | undefined;
+          const credentialSubject = r.credentialSubject as
+            Record<string, unknown> | undefined;
 
-        return {
-          id: (r.verificationId as string) || `BULK-${index + 1}`,
-          name: (findCheckDetails("Credential Format")?.name as string) || (credentialSubject?.name as string) || "Unknown Candidate",
-          issuer: (findCheckDetails("Issuer Verification")?.issuerName as string) || (r.issuer as string) || "Unknown Issuer",
-          status: (r.status as BulkVerificationResultRow["status"]) || "pending",
-          riskScore: Number((r.riskScore as number) ?? 0),
-          confidence: typeof r.confidence === "number" ? (r.confidence as number) : undefined,
-          riskFlags: Array.isArray(r.riskFlags) ? (r.riskFlags as string[]) : [],
-          checks: Array.isArray(r.checks) ? (r.checks as VerificationCheck[]) : [],
-          details: r,
-        };
-      });
+          return {
+            id: (r.verificationId as string) || `BULK-${index + 1}`,
+            name:
+              (findCheckDetails("Credential Format")?.name as string) ||
+              (credentialSubject?.name as string) ||
+              "Unknown Candidate",
+            issuer:
+              (findCheckDetails("Issuer Verification")?.issuerName as string) ||
+              (r.issuer as string) ||
+              "Unknown Issuer",
+            status:
+              (r.status as BulkVerificationResultRow["status"]) || "pending",
+            riskScore: Number((r.riskScore as number) ?? 0),
+            confidence:
+              typeof r.confidence === "number"
+                ? (r.confidence as number)
+                : undefined,
+            riskFlags: Array.isArray(r.riskFlags)
+              ? (r.riskFlags as string[])
+              : [],
+            checks: Array.isArray(r.checks)
+              ? (r.checks as VerificationCheck[])
+              : [],
+            details: r,
+          };
+        },
+      );
 
       setResults(mapped);
       setIsProcessing(false);
@@ -154,7 +225,8 @@ export default function BulkVerify() {
       setIsProcessing(false);
       toast({
         title: "Bulk verification failed",
-        description: error instanceof Error ? error.message : "Failed to process batch.",
+        description:
+          error instanceof Error ? error.message : "Failed to process batch.",
         variant: "destructive",
       });
     },
@@ -170,25 +242,36 @@ export default function BulkVerify() {
     Papa.parse(file, {
       header: true,
       complete: (parsed) => {
-        const raw = Array.isArray(parsed.data) ? (parsed.data as unknown[]) : [];
+        const raw = Array.isArray(parsed.data)
+          ? (parsed.data as unknown[])
+          : [];
         const rows = raw
           .filter((row) => row && typeof row === "object")
           .map((row) => row as Record<string, unknown>)
-          .filter((row) => Object.values(row || {}).some((v) => String(v || "").trim().length > 0));
+          .filter((row) =>
+            Object.values(row || {}).some(
+              (v) => String(v || "").trim().length > 0,
+            ),
+          );
         const credentials = rows
           .map((row, index) => {
             if (row.jwt) return { jwt: String(row.jwt).trim() };
 
             return {
               credential: {
-                type: ["VerifiableCredential", row.Type || row.type || "AcademicCredential"],
+                type: [
+                  "VerifiableCredential",
+                  row.Type || row.type || "AcademicCredential",
+                ],
                 issuer: row.Issuer || row.issuer || "Unknown",
                 credentialSubject: {
                   name: row.Name || row.name || "Candidate",
                   degree: row.Degree || row.degree || "Qualification",
                   id: `did:key:bulk${index}`,
                 },
-                proof: safeJsonParse(typeof row.proof === "string" ? row.proof : undefined),
+                proof: safeJsonParse(
+                  typeof row.proof === "string" ? row.proof : undefined,
+                ),
               },
             };
           })
@@ -204,13 +287,18 @@ export default function BulkVerify() {
       },
       error: (error) => {
         setIsProcessing(false);
-        toast({ title: "CSV parsing error", description: error.message, variant: "destructive" });
+        toast({
+          title: "CSV parsing error",
+          description: error.message,
+          variant: "destructive",
+        });
       },
     });
   };
 
   const downloadTemplate = () => {
-    const csvContent = "data:text/csv;charset=utf-8,Name,Issuer,Degree,Type\nJohn Doe,Demo University,B.S. Computer Science,AcademicCredential";
+    const csvContent =
+      "data:text/csv;charset=utf-8,Name,Issuer,Degree,Type\nJohn Doe,Demo University,B.S. Computer Science,AcademicCredential";
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -222,11 +310,15 @@ export default function BulkVerify() {
 
   const exportResults = () => {
     if (results.length === 0) return;
-    const header = "ID,Candidate,Issuer,Decision,Status,Confidence,RiskScore,ReasonCodes\n";
+    const header =
+      "ID,Candidate,Issuer,Decision,Status,Confidence,RiskScore,ReasonCodes\n";
     const rows = results
       .map((r) => {
         const decision = getDecisionTierFromStatus(r.status, r.riskScore);
-        const reasonCodes = (r.riskFlags || []).slice(0, 10).map(normalizeReasonCode).join(" |");
+        const reasonCodes = (r.riskFlags || [])
+          .slice(0, 10)
+          .map(normalizeReasonCode)
+          .join(" |");
         return `${r.id},${JSON.stringify(r.name)},${JSON.stringify(r.issuer)},${decision},${r.status},${typeof r.confidence === "number" ? r.confidence : ""},${r.riskScore},${JSON.stringify(reasonCodes)}`;
       })
       .join("\n");
@@ -240,14 +332,23 @@ export default function BulkVerify() {
   };
 
   const summary = useMemo(() => {
-    return {
-      verified: results.filter((r) => r.status === "verified").length,
-      failed: results.filter((r) => r.status === "failed").length,
-      suspicious: results.filter((r) => r.status === "suspicious" || r.status === "pending").length,
-      pass: results.filter((r) => getDecisionTierFromStatus(r.status, r.riskScore) === "PASS").length,
-      review: results.filter((r) => getDecisionTierFromStatus(r.status, r.riskScore) === "REVIEW").length,
-      fail: results.filter((r) => getDecisionTierFromStatus(r.status, r.riskScore) === "FAIL").length,
-    };
+    // ⚡ Bolt: Use a single reduce pass instead of 6 filter passes over the results array (O(n) instead of O(6n))
+    return results.reduce(
+      (acc, r) => {
+        if (r.status === "verified") acc.verified++;
+        else if (r.status === "failed") acc.failed++;
+        else if (r.status === "suspicious" || r.status === "pending")
+          acc.suspicious++;
+
+        const tier = getDecisionTierFromStatus(r.status, r.riskScore);
+        if (tier === "PASS") acc.pass++;
+        else if (tier === "REVIEW") acc.review++;
+        else if (tier === "FAIL") acc.fail++;
+
+        return acc;
+      },
+      { verified: 0, failed: 0, suspicious: 0, pass: 0, review: 0, fail: 0 },
+    );
   }, [results]);
 
   const copyToClipboard = async (text: string) => {
@@ -269,12 +370,26 @@ export default function BulkVerify() {
             </div>
             <h3 className="text-lg font-semibold">Upload Credential CSV</h3>
             <p className="text-sm text-muted-foreground max-w-md mt-2 mb-6">
-              Supported columns: jwt OR Name, Issuer, Degree, Type, proof. Up to 100 rows per batch.
+              Supported columns: jwt OR Name, Issuer, Degree, Type, proof. Up to
+              100 rows per batch.
             </p>
             <div className="flex gap-4">
-              <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleFileUpload} />
-              <Button onClick={() => fileInputRef.current?.click()} disabled={isProcessing}>
-                {isProcessing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileSpreadsheet className="w-4 h-4 mr-2" />}
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept=".csv"
+                onChange={handleFileUpload}
+              />
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <FileSpreadsheet className="w-4 h-4 mr-2" />
+                )}
                 {isProcessing ? "Processing..." : "Select CSV File"}
               </Button>
               <Button variant="outline" onClick={downloadTemplate}>
@@ -288,7 +403,8 @@ export default function BulkVerify() {
         {isProcessing && results.length === 0 && (
           <Card>
             <CardContent className="py-8 flex items-center justify-center text-muted-foreground gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" /> Running batch verification…
+              <Loader2 className="w-4 h-4 animate-spin" /> Running batch
+              verification…
             </CardContent>
           </Card>
         )}
@@ -298,7 +414,10 @@ export default function BulkVerify() {
             <CardContent className="py-10 text-center text-muted-foreground">
               <ShieldAlert className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />
               <p className="font-medium">No results yet</p>
-              <p className="text-sm mt-1">Upload a CSV to get Pass / Review / Fail decisions with reason codes per row.</p>
+              <p className="text-sm mt-1">
+                Upload a CSV to get Pass / Review / Fail decisions with reason
+                codes per row.
+              </p>
             </CardContent>
           </Card>
         )}
@@ -309,7 +428,8 @@ export default function BulkVerify() {
               <div>
                 <CardTitle>Verification Results</CardTitle>
                 <CardDescription>
-                  {results.length} processed • {summary.pass} pass • {summary.review} review • {summary.fail} fail
+                  {results.length} processed • {summary.pass} pass •{" "}
+                  {summary.review} review • {summary.fail} fail
                 </CardDescription>
               </div>
               <Button variant="outline" size="sm" onClick={exportResults}>
@@ -334,8 +454,12 @@ export default function BulkVerify() {
                     <TableRow key={row.id}>
                       <TableCell>
                         <div className="space-y-1">
-                          <p className="font-medium leading-tight">{row.name}</p>
-                          <p className="text-xs font-mono text-muted-foreground truncate">{row.id}</p>
+                          <p className="font-medium leading-tight">
+                            {row.name}
+                          </p>
+                          <p className="text-xs font-mono text-muted-foreground truncate">
+                            {row.id}
+                          </p>
                         </div>
                       </TableCell>
                       <TableCell>{row.issuer}</TableCell>
@@ -344,22 +468,33 @@ export default function BulkVerify() {
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {(row.riskFlags || []).length === 0 ? (
-                            <span className="text-xs text-muted-foreground">—</span>
+                            <span className="text-xs text-muted-foreground">
+                              —
+                            </span>
                           ) : (
                             (row.riskFlags || []).slice(0, 3).map((c, i) => (
-                              <Badge key={i} variant="secondary" className="text-[10px] font-mono">
+                              <Badge
+                                key={i}
+                                variant="secondary"
+                                className="text-[10px] font-mono"
+                              >
                                 {normalizeReasonCode(c)}
                               </Badge>
                             ))
                           )}
                           {(row.riskFlags || []).length > 3 && (
-                            <Badge variant="outline" className="text-[10px] font-mono">
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] font-mono"
+                            >
                               +{(row.riskFlags || []).length - 3}
                             </Badge>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-right">{row.riskScore}</TableCell>
+                      <TableCell className="text-right">
+                        {row.riskScore}
+                      </TableCell>
                       <TableCell className="text-right">
                         <Button
                           size="sm"
@@ -380,18 +515,27 @@ export default function BulkVerify() {
       </div>
 
       {/* Optimization: Hoist Dialog to reduce DOM nodes and improve performance for large lists */}
-      <Dialog open={!!selectedVerification} onOpenChange={(open) => !open && setSelectedVerification(null)}>
+      <Dialog
+        open={!!selectedVerification}
+        onOpenChange={(open) => !open && setSelectedVerification(null)}
+      >
         <DialogContent className="max-w-2xl">
           {selectedVerification && (
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center justify-between gap-4">
                   <span className="truncate">
-                    {selectedVerification.name} — {renderDecisionBadge(selectedVerification)}
+                    {selectedVerification.name} —{" "}
+                    {renderDecisionBadge(selectedVerification)}
                   </span>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button size="sm" variant="ghost" onClick={() => copyToClipboard(selectedVerification.id)} aria-label="Copy Verification ID">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => copyToClipboard(selectedVerification.id)}
+                        aria-label="Copy Verification ID"
+                      >
                         <Clipboard className="w-4 h-4" />
                       </Button>
                     </TooltipTrigger>
@@ -404,47 +548,85 @@ export default function BulkVerify() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="border rounded-lg p-3 bg-muted/10">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase">Status</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase">
+                    Status
+                  </p>
                   <div className="mt-2 flex items-center justify-between">
                     {renderStatusBadge(selectedVerification)}
-                    <p className="text-sm font-mono text-muted-foreground">Risk {selectedVerification.riskScore}</p>
+                    <p className="text-sm font-mono text-muted-foreground">
+                      Risk {selectedVerification.riskScore}
+                    </p>
                   </div>
                   {typeof selectedVerification.confidence === "number" && (
-                    <p className="text-xs text-muted-foreground mt-2">Confidence: {Math.round(selectedVerification.confidence)}%</p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Confidence: {Math.round(selectedVerification.confidence)}%
+                    </p>
                   )}
                 </div>
 
                 <div className="border rounded-lg p-3 bg-muted/10">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase">Reason codes</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase">
+                    Reason codes
+                  </p>
                   <div className="mt-2 flex flex-wrap gap-1">
                     {(selectedVerification.riskFlags || []).length === 0 ? (
-                      <span className="text-sm text-muted-foreground">No risk flags</span>
+                      <span className="text-sm text-muted-foreground">
+                        No risk flags
+                      </span>
                     ) : (
-                      (selectedVerification.riskFlags || []).slice(0, 12).map((c, i) => (
-                        <Badge key={i} variant="secondary" className="text-[10px] font-mono">
-                          {normalizeReasonCode(c)}
-                        </Badge>
-                      ))
+                      (selectedVerification.riskFlags || [])
+                        .slice(0, 12)
+                        .map((c, i) => (
+                          <Badge
+                            key={i}
+                            variant="secondary"
+                            className="text-[10px] font-mono"
+                          >
+                            {normalizeReasonCode(c)}
+                          </Badge>
+                        ))
                     )}
                   </div>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <p className="text-xs font-semibold text-muted-foreground uppercase">Evidence (checks)</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase">
+                  Evidence (checks)
+                </p>
                 {(selectedVerification.checks || []).length === 0 ? (
-                  <div className="text-sm text-muted-foreground border rounded-lg p-3">No check details returned.</div>
+                  <div className="text-sm text-muted-foreground border rounded-lg p-3">
+                    No check details returned.
+                  </div>
                 ) : (
                   <div className="space-y-2 max-h-[280px] overflow-auto pr-1">
                     {(selectedVerification.checks || []).map((c, i) => (
-                      <div key={i} className="border rounded-lg p-3 bg-background">
+                      <div
+                        key={i}
+                        className="border rounded-lg p-3 bg-background"
+                      >
                         <div className="flex items-center justify-between gap-3">
-                          <p className="text-sm font-medium truncate">{c.name}</p>
-                          <Badge variant={c.status === "passed" ? "outline" : c.status === "warning" ? "secondary" : c.status === "skipped" ? "secondary" : "destructive"} className="text-xs">
+                          <p className="text-sm font-medium truncate">
+                            {c.name}
+                          </p>
+                          <Badge
+                            variant={
+                              c.status === "passed"
+                                ? "outline"
+                                : c.status === "warning"
+                                  ? "secondary"
+                                  : c.status === "skipped"
+                                    ? "secondary"
+                                    : "destructive"
+                            }
+                            className="text-xs"
+                          >
                             {c.status}
                           </Badge>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">{c.message}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {c.message}
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -453,16 +635,44 @@ export default function BulkVerify() {
 
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="border rounded-lg p-3 bg-muted/10">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase">Signature</p>
-                  <p className="text-xs text-muted-foreground mt-2">Proof type: {String(findEvidence(selectedVerification.checks, "Signature Validation")?.details?.proofType ?? "unknown")}</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase">
+                    Signature
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Proof type:{" "}
+                    {String(
+                      findEvidence(
+                        selectedVerification.checks,
+                        "Signature Validation",
+                      )?.details?.proofType ?? "unknown",
+                    )}
+                  </p>
                 </div>
                 <div className="border rounded-lg p-3 bg-muted/10">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase">Issuer</p>
-                  <p className="text-xs text-muted-foreground mt-2">{String(findEvidence(selectedVerification.checks, "Issuer Verification")?.details?.issuerName ?? selectedVerification.issuer)}</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase">
+                    Issuer
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {String(
+                      findEvidence(
+                        selectedVerification.checks,
+                        "Issuer Verification",
+                      )?.details?.issuerName ?? selectedVerification.issuer,
+                    )}
+                  </p>
                 </div>
                 <div className="border rounded-lg p-3 bg-muted/10">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase">Anchor hash</p>
-                  <p className="text-xs font-mono text-muted-foreground mt-2 truncate">{String(findEvidence(selectedVerification.checks, "Blockchain Anchor")?.details?.hash ?? "—")}</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase">
+                    Anchor hash
+                  </p>
+                  <p className="text-xs font-mono text-muted-foreground mt-2 truncate">
+                    {String(
+                      findEvidence(
+                        selectedVerification.checks,
+                        "Blockchain Anchor",
+                      )?.details?.hash ?? "—",
+                    )}
+                  </p>
                 </div>
               </div>
             </>
