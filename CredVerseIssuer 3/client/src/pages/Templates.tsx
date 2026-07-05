@@ -153,7 +153,7 @@ export default function Templates() {
                   <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="secondary" size="icon" className="h-8 w-8">
+                        <Button variant="secondary" size="icon" className="h-8 w-8" aria-label="Template actions">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -191,6 +191,7 @@ export default function Templates() {
 
             {/* New Template Placeholder */}
             <button
+              aria-label="Create from Scratch"
               onClick={() => navigate('/template-builder')}
               className="flex flex-col items-center justify-center aspect-[1.414] md:aspect-auto md:h-full border-2 border-dashed border-muted-foreground/25 rounded-xl hover:border-primary/50 hover:bg-primary/5 transition-colors p-6 group"
             >
