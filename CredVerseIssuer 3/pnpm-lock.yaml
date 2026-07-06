@@ -360,6 +360,27 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^5.0.4
         version: 5.2.0(vite@7.3.6(@types/node@20.19.43)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0))
+      '@vitest/expect':
+        specifier: ^4.1.9
+        version: 4.1.9
+      '@vitest/mocker':
+        specifier: ^4.1.9
+        version: 4.1.9(vite@7.3.6(@types/node@20.19.43)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.0))
+      '@vitest/pretty-format':
+        specifier: ^4.1.9
+        version: 4.1.9
+      '@vitest/runner':
+        specifier: ^4.1.9
+        version: 4.1.9
+      '@vitest/snapshot':
+        specifier: ^4.1.9
+        version: 4.1.9
+      '@vitest/spy':
+        specifier: ^4.1.9
+        version: 4.1.9
+      '@vitest/utils':
+        specifier: ^4.1.9
+        version: 4.1.9
       autoprefixer:
         specifier: ^10.4.21
         version: 10.5.2(postcss@8.5.16)
