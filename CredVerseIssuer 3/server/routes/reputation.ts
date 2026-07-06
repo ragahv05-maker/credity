@@ -423,12 +423,14 @@ router.get("/reputation/score", apiKeyOrAuthMiddleware, async (req, res) => {
   }
 
   const events = await db
-    .select()
+    .select({
+      category: reputationEvents.category,
+      score: reputationEvents.score,
+    })
     .from(reputationEvents)
     .where(eq(reputationEvents.subjectDid, subjectDid));
-  const breakdown = buildCategoryBreakdown(
-    events.map((event: any) => ({ category: event.category, score: event.score })),
-  );
+  // Bolt: Optimized query selects only needed columns, avoiding map allocation
+  const breakdown = buildCategoryBreakdown(events);
   const score = Math.max(
     0,
     Math.min(
@@ -484,7 +486,11 @@ router.get("/reputation/safedate", apiKeyOrAuthMiddleware, async (req, res) => {
     .limit(1);
 
   const events = await db
-    .select()
+    .select({
+      signalType: reputationEvents.signalType,
+      category: reputationEvents.category,
+      score: reputationEvents.score,
+    })
     .from(reputationEvents)
     .where(eq(reputationEvents.subjectDid, subjectDid));
 
@@ -493,10 +499,9 @@ router.get("/reputation/safedate", apiKeyOrAuthMiddleware, async (req, res) => {
       0,
       Math.min(
         1000,
+        // Bolt: Optimized query selects only needed columns, avoiding map allocation
         Math.round(
-          buildCategoryBreakdown(
-            events.map((event: any) => ({ category: event.category, score: event.score })),
-          ).reduce((sum, item) => sum + item.weighted_score, 0) * 10,
+          buildCategoryBreakdown(events).reduce((sum, item) => sum + item.weighted_score, 0) * 10,
         ),
       ),
     );
@@ -505,11 +510,7 @@ router.get("/reputation/safedate", apiKeyOrAuthMiddleware, async (req, res) => {
   const safeDate = calculateSafeDateScore(
     toUserId(subjectDid, preferredUserId),
     score1000,
-    events.map((event: any) => ({
-      signalType: event.signalType,
-      score: event.score,
-      category: event.category,
-    })),
+    events,
   );
 
   return res.status(200).json({ success: true, safe_date: safeDate });
@@ -621,12 +622,14 @@ router.post("/reputation/scores/recompute", apiKeyOrAuthMiddleware, async (req, 
   const vertical = verticalRaw as ReputationVertical;
 
   const events = await db
-    .select()
+    .select({
+      category: reputationEvents.category,
+      score: reputationEvents.score,
+    })
     .from(reputationEvents)
     .where(eq(reputationEvents.subjectDid, subjectDid));
-  const breakdown = buildCategoryBreakdown(
-    events.map((event: any) => ({ category: event.category, score: event.score })),
-  );
+  // Bolt: Optimized query selects only needed columns, avoiding map allocation
+  const breakdown = buildCategoryBreakdown(events);
 
   const weightedScore = breakdown.reduce(
     (sum, item) => sum + item.weighted_score,
