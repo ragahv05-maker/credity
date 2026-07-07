@@ -275,7 +275,7 @@ export default function CredentialDetail() {
                   </div>
                   <div className="flex justify-between py-2 border-b border-border">
                     <span className="text-muted-foreground">Hash</span>
-                    <button onClick={handleCopyHash} className="flex items-center gap-1 text-primary hover:underline">
+                    <button onClick={handleCopyHash} className="flex items-center gap-1 text-primary hover:underline" aria-label="Copy credential hash" title="Copy credential hash">
                       <span className="font-mono text-xs">{credential.hash.slice(0, 12)}...</span>
                       {copied ? <CheckCircle2 className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                     </button>

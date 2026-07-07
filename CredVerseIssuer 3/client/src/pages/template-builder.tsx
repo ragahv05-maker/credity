@@ -133,7 +133,7 @@ function CanvasField({
                     <span className="text-xs font-medium">{field.label}</span>
                 </div>
                 {isSelected && (
-                    <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-red-500 hover:text-red-700">
+                    <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-red-500 hover:text-red-700" aria-label={`Delete ${field.label} field`} title={`Delete ${field.label} field`}>
                         <Trash2 className="h-3 w-3" />
                     </button>
                 )}
