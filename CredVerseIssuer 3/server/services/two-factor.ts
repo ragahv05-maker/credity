@@ -189,6 +189,7 @@ function generateBackupCodes(): string[] {
     for (let i = 0; i < 10; i++) {
         let code = '';
         for (let j = 0; j < 8; j++) {
+            // Security: Use cryptographically secure random number generation for backup codes
             const randomIndex = crypto.randomInt(0, chars.length);
             code += chars.charAt(randomIndex);
         }
