@@ -40,7 +40,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
@@ -222,6 +222,19 @@ export default function Team() {
         }
     };
 
+    // ⚡ Bolt: Memoize derived member stats to prevent O(N) recalculations on every render
+    const memberStats = useMemo(() => {
+        let admin = 0;
+        let issuer = 0;
+        let pending = 0;
+        for (const m of members) {
+            if (m.role === 'Admin') admin++;
+            else if (m.role === 'Issuer') issuer++;
+            if (m.status === 'Pending') pending++;
+        }
+        return { admin, issuer, pending };
+    }, [members]);
+
     return (
         <Layout>
             <div className="space-y-8">
@@ -369,7 +382,7 @@ export default function Team() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">
-                                {members.filter(m => m.role === 'Admin').length}
+                                {memberStats.admin}
                             </div>
                             <p className="text-xs text-muted-foreground">Full access users</p>
                         </CardContent>
@@ -381,7 +394,7 @@ export default function Team() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">
-                                {members.filter(m => m.role === 'Issuer').length}
+                                {memberStats.issuer}
                             </div>
                             <p className="text-xs text-muted-foreground">Can issue credentials</p>
                         </CardContent>
@@ -393,7 +406,7 @@ export default function Team() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">
-                                {members.filter(m => m.status === 'Pending').length}
+                                {memberStats.pending}
                             </div>
                             <p className="text-xs text-muted-foreground">Awaiting acceptance</p>
                         </CardContent>
