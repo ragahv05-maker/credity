@@ -4,3 +4,7 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+## 2025-02-23 - [Insecure Randomness for OTP]
+**Vulnerability:** Found `Math.random()` used to generate OTPs in `otp-service.ts`.
+**Learning:** `Math.random()` is predictable and not cryptographically secure, making OTPs susceptible to guessing attacks.
+**Prevention:** Always use a CSPRNG like `crypto.randomInt` from the Node.js `crypto` module for generating security tokens, OTPs, or passwords.
