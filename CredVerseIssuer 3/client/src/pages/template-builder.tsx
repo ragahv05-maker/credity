@@ -11,6 +11,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useCallback } from "react";
 import { useLocation } from "wouter";
@@ -133,9 +134,14 @@ function CanvasField({
                     <span className="text-xs font-medium">{field.label}</span>
                 </div>
                 {isSelected && (
-                    <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-red-500 hover:text-red-700">
-                        <Trash2 className="h-3 w-3" />
-                    </button>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button aria-label="Remove field" onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-red-500 hover:text-red-700 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:outline-none rounded">
+                                <Trash2 className="h-3 w-3" />
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent>Remove field</TooltipContent>
+                    </Tooltip>
                 )}
             </div>
             <div className="mt-2 text-xs text-gray-500 bg-gray-50 rounded p-2">
