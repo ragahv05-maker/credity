@@ -192,7 +192,8 @@ export default function Templates() {
             {/* New Template Placeholder */}
             <button
               onClick={() => navigate('/template-builder')}
-              className="flex flex-col items-center justify-center aspect-[1.414] md:aspect-auto md:h-full border-2 border-dashed border-muted-foreground/25 rounded-xl hover:border-primary/50 hover:bg-primary/5 transition-colors p-6 group"
+              className="flex flex-col items-center justify-center aspect-[1.414] md:aspect-auto md:h-full border-2 border-dashed border-muted-foreground/25 rounded-xl hover:border-primary/50 hover:bg-primary/5 transition-colors p-6 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              aria-label="Create a new template from scratch"
             >
               <div className="h-12 w-12 rounded-full bg-muted group-hover:bg-white group-hover:shadow-sm flex items-center justify-center mb-3 transition-all">
                 <Plus className="h-6 w-6 text-muted-foreground group-hover:text-primary" />
