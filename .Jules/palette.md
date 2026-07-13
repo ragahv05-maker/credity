@@ -17,3 +17,7 @@
 ## 2024-10-25 - Dependency Security (Minimatch)
 **Learning:** High-severity ReDoS vulnerabilities in `minimatch` (<9.0.6 or <10.2.2) blocked CI. `npm audit fix` successfully patched these by updating nested dependencies in `package-lock.json`.
 **Action:** Regularly run `npm audit` in each package directory and prioritize fixing High/Critical vulnerabilities to prevent CI blockage.
+
+## 2024-10-25 - Icon-only buttons and interactive cards
+**Learning:** Found several icon-only buttons (like delete buttons in template builder) and interactive elements acting as cards (like "Create Template" button) missing crucial accessibility attributes. Interactive cards often miss keyboard focus states making them difficult to use for keyboard navigators.
+**Action:** Always verify that icon-only buttons have an `aria-label` and interactive "card-like" buttons have visible focus states (e.g., `focus-visible:ring-2`) and descriptive `aria-label`s.
