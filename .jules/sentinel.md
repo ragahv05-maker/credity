@@ -4,3 +4,7 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+## 2024-07-16 - Math.random() for security purposes
+**Vulnerability:** Found `Math.random()` used to generate OTPs and temporary user passwords for OAuth callbacks in BlockWalletDigi.
+**Learning:** Even for non-persistent or temporary values like OTPs, weak PRNGs make values predictable, leading to potential authentication bypasses.
+**Prevention:** Always use Node.js `crypto` module (e.g., `crypto.randomBytes` or `crypto.randomInt`) for any security-related random generation.

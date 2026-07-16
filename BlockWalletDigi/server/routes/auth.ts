@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import crypto from 'crypto';
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { storage } from '../storage';
@@ -401,7 +402,7 @@ router.post('/auth/apple', async (req, res) => {
 
         let user = await storage.getUserByEmail(email);
         if (!user) {
-            const hashed = await hashPassword(String(Math.random()));
+            const hashed = await hashPassword(crypto.randomBytes(32).toString('hex'));
             user = await storage.createUser({
                 username: email,
                 email,
@@ -488,7 +489,7 @@ router.get('/auth/google/callback',
 
             let user = await storage.getUserByEmail(email);
             if (!user) {
-                const hashed = await hashPassword(String(Math.random()));
+                const hashed = await hashPassword(crypto.randomBytes(32).toString('hex'));
                 user = await storage.createUser({
                     username: email,
                     email,
