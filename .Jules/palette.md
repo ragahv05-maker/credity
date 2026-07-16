@@ -17,3 +17,7 @@
 ## 2024-10-25 - Dependency Security (Minimatch)
 **Learning:** High-severity ReDoS vulnerabilities in `minimatch` (<9.0.6 or <10.2.2) blocked CI. `npm audit fix` successfully patched these by updating nested dependencies in `package-lock.json`.
 **Action:** Regularly run `npm audit` in each package directory and prioritize fixing High/Critical vulnerabilities to prevent CI blockage.
+
+## 2024-07-16 - Add tooltips to icon-only buttons
+**Learning:** Icon-only buttons (like copy/rotate API key) can be confusing without context, and screen readers need descriptive text. Native HTML attributes provide a lightweight, dependency-free way to add visual hints for mouse users (via `title`) and accessible names for screen readers (via `aria-label`).
+**Action:** Always include both an `aria-label` (for screen readers) and a `title` (for mouse hover) on icon-only utility buttons to ensure accessibility without the overhead of external components.
