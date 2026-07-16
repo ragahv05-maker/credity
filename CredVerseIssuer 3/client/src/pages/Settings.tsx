@@ -1,6 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -360,12 +361,22 @@ export default function Settings() {
                                             readOnly
                                             className="font-mono"
                                         />
-                                        <Button variant="outline" size="icon" onClick={handleCopyApiKey}>
-                                            {copiedKey ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                                        </Button>
-                                        <Button variant="outline" size="icon" onClick={handleRotateApiKey}>
-                                            <RefreshCw className="h-4 w-4" />
-                                        </Button>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="outline" size="icon" onClick={handleCopyApiKey} aria-label="Copy Live API Key">
+                                                    {copiedKey ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Copy API Key</TooltipContent>
+                                        </Tooltip>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="outline" size="icon" onClick={handleRotateApiKey} aria-label="Rotate Live API Key">
+                                                    <RefreshCw className="h-4 w-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Rotate API Key</TooltipContent>
+                                        </Tooltip>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
                                         Last used: 2 hours ago • Created: Jan 15, 2024
@@ -386,9 +397,14 @@ export default function Settings() {
                                             readOnly
                                             className="font-mono"
                                         />
-                                        <Button variant="outline" size="icon">
-                                            <Copy className="h-4 w-4" />
-                                        </Button>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="outline" size="icon" aria-label="Copy Test API Key">
+                                                    <Copy className="h-4 w-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Copy API Key</TooltipContent>
+                                        </Tooltip>
                                     </div>
                                 </div>
 
