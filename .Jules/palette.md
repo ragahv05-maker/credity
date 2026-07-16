@@ -19,5 +19,5 @@
 **Action:** Regularly run `npm audit` in each package directory and prioritize fixing High/Critical vulnerabilities to prevent CI blockage.
 
 ## 2024-07-16 - Add tooltips to icon-only buttons
-**Learning:** Icon-only buttons (like copy/rotate API key) can be confusing without context, and screen readers need descriptive text. The `shadcn/ui` Tooltip component provides a clean way to add both visual hints for mouse users and accessible names for screen readers via `aria-label` on the trigger.
-**Action:** Always wrap icon-only utility buttons with a Tooltip component and include an `aria-label` on the trigger element to ensure both visual and semantic clarity.
+**Learning:** Icon-only buttons (like copy/rotate API key) can be confusing without context, and screen readers need descriptive text. Native HTML attributes provide a lightweight, dependency-free way to add visual hints for mouse users (via `title`) and accessible names for screen readers (via `aria-label`).
+**Action:** Always include both an `aria-label` (for screen readers) and a `title` (for mouse hover) on icon-only utility buttons to ensure accessibility without the overhead of external components.
