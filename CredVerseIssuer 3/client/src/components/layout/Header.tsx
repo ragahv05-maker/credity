@@ -151,7 +151,7 @@ export function Header() {
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full" title="User menu" aria-label="User menu">
                 <Avatar className="h-9 w-9 border border-border">
                   <AvatarImage src="https://github.com/shadcn.png" alt="@admin" />
                   <AvatarFallback>AD</AvatarFallback>
@@ -218,7 +218,7 @@ export function Header() {
                 <code className="flex-1 text-sm font-mono truncate">
                   {address}
                 </code>
-                <Button size="icon" variant="ghost" onClick={handleCopyAddress}>
+                <Button size="icon" variant="ghost" onClick={handleCopyAddress} title="Copy wallet address" aria-label="Copy wallet address">
                   {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
