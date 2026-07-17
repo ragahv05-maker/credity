@@ -4,3 +4,7 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+## 2024-05-24 - Weak Random Number Generation in OTP Service
+**Vulnerability:** Found `Math.random()` being used to generate security-sensitive OTP codes in `BlockWalletDigi/server/services/otp-service.ts`.
+**Learning:** Using non-cryptographically secure random number generators for security tokens makes them predictable and vulnerable to attack.
+**Prevention:** Always use the `crypto` module (e.g., `crypto.randomInt()`) for generating secure tokens, passwords, or OTPs.
