@@ -19,7 +19,7 @@ export function getDb() {
 
     if (!db) {
         pool = new Pool({ connectionString: DATABASE_URL });
-        db = drizzle(pool, { schema });
+        db = drizzle(pool as any, { schema });
         console.log('[DB] Connected to PostgreSQL');
     }
 
