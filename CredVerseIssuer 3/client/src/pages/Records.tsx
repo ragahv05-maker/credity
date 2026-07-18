@@ -21,6 +21,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface CredentialRecord {
   id: string;
@@ -186,9 +187,17 @@ export default function Records() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <Button variant="outline" size="icon">
-            <Filter className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Filter className="h-4 w-4" />
+                <span className="sr-only">Filter records</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Filter records</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
 
         <div className="border rounded-md bg-card shadow-sm">
