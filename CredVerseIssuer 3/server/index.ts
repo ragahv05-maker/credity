@@ -159,6 +159,7 @@ app.use((req, res, next) => {
   await registerRoutes(httpServer, app);
 
   // Sentry error handler (must be before other error handlers)
+  // @ts-expect-error - Sentry types are currently incompatible with express 4.x/5.x type definitions
   app.use(sentryErrorHandler);
 
   // Global Error Handler
