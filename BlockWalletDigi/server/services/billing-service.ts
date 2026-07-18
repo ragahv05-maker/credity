@@ -207,7 +207,10 @@ export async function handleWebhook(
       .update(payload)
       .digest('hex');
 
-    if (expectedSignature !== signature) {
+    const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+    const receivedBuffer = Buffer.from(signature, 'hex');
+
+    if (expectedBuffer.length !== receivedBuffer.length || !crypto.timingSafeEqual(expectedBuffer, receivedBuffer)) {
       console.warn('[Billing] Invalid webhook signature');
       throw new Error('Invalid webhook signature');
     }
