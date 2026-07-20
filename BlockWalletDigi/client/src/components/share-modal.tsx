@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Copy, QrCode, Link as LinkIcon, Check, Share2, Clock, Mail, MessageCircle, Loader2, Shield, Eye, EyeOff, ExternalLink } from "lucide-react";
@@ -308,9 +309,17 @@ export function ShareModal({ credential, open, onOpenChange }: ShareModalProps) 
                     value={shareResult.shareUrl}
                     className="font-mono text-xs bg-secondary/30"
                   />
-                  <Button size="icon" variant="outline" onClick={handleCopy}>
-                    {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="icon" variant="outline" onClick={handleCopy} aria-label="Copy share link">
+                        {copied ? <Check className="w-4 h-4 text-green-600" aria-hidden="true" /> : <Copy className="w-4 h-4" aria-hidden="true" />}
+                        <span className="sr-only">Copy share link</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Copy link</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
 
                 {/* Share Options */}
