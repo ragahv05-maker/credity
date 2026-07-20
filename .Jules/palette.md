@@ -17,3 +17,7 @@
 ## 2024-10-25 - Dependency Security (Minimatch)
 **Learning:** High-severity ReDoS vulnerabilities in `minimatch` (<9.0.6 or <10.2.2) blocked CI. `npm audit fix` successfully patched these by updating nested dependencies in `package-lock.json`.
 **Action:** Regularly run `npm audit` in each package directory and prioritize fixing High/Critical vulnerabilities to prevent CI blockage.
+
+## 2024-10-25 - ShareModal Accessible Tooltip Trigger Pattern
+**Learning:** In the BlockWalletDigi `ShareModal`, wrapping the icon-only "Copy share link" button required not only the shadcn/ui `<Tooltip>` and `<TooltipTrigger>` components, but also a redundant but robust `aria-label` attribute on the trigger itself, alongside an inner `<span className="sr-only">`. This ensures maximum screen reader compatibility when nesting interactive triggers.
+**Action:** Use a combination of `aria-label` on the trigger element, an inner `sr-only` span, and descriptive `<TooltipContent>` to safely wrap icon-only buttons in complex modals without risking double-reads or missed announcements.
