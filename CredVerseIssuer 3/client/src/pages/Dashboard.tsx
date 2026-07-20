@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 import { Area, AreaChart, CartesianGrid, XAxis, ResponsiveContainer, Tooltip } from "recharts";
 
@@ -22,15 +22,17 @@ export default function Dashboard() {
     queryKey: ["/api/v1/analytics"],
   });
 
-  const stats = analytics?.stats || STATS;
-  const chartData = analytics?.chartData || [
+
+  const stats = useMemo(() => analytics?.stats || STATS, [analytics?.stats]);
+  const chartData = useMemo(() => analytics?.chartData || [
     { month: "Jan", issued: 186 },
     { month: "Feb", issued: 305 },
     { month: "Mar", issued: 237 },
     { month: "Apr", issued: 73 },
     { month: "May", issued: 209 },
     { month: "Jun", issued: 214 },
-  ];
+  ], [analytics?.chartData]);
+
 
   // Export dashboard report
   const handleExportReport = async () => {
