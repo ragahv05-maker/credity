@@ -4,3 +4,7 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+## 2025-07-20 - [Insecure Randomness for Security Tokens]
+**Vulnerability:** OTP codes were generated using the predictable Math.random() function, potentially allowing an attacker to guess tokens.
+**Learning:** Using non-cryptographic PRNGs for security-sensitive values (like OTPs, passwords, or session tokens) introduces predictability vulnerabilities.
+**Prevention:** Always use cryptographically secure random number generators (e.g., crypto.randomInt or crypto.randomBytes) for any security-related random values.
