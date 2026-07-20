@@ -4,6 +4,7 @@
  */
 import bcrypt from 'bcryptjs';
 import { storage } from '../storage';
+import crypto from 'crypto';
 
 const OTP_EXPIRY_MINUTES = 10;
 const MAX_OTP_PER_WINDOW = 3;
@@ -23,7 +24,7 @@ export async function generateOtp(
     throw new Error('Too many OTP requests. Please wait before requesting another code.');
   }
 
-  const code = String(Math.floor(100000 + Math.random() * 900000));
+  const code = String(crypto.randomInt(100000, 1000000));
   const hashedCode = await bcrypt.hash(code, 10);
   const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
 
