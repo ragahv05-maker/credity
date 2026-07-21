@@ -21,3 +21,7 @@
 ## 2024-11-20 - Icon-Only Buttons Accessibility in CredVerseIssuer 3
 **Learning:** For icon-only buttons using shadcn/ui Tooltips, the tooltip visual text alone does not suffice for screen readers. It's crucial to also add a `<span className="sr-only">` label inside the `<Button>` and set `aria-hidden="true"` on the icon itself (`<Copy className="h-4 w-4" aria-hidden="true" />`).
 **Action:** When adding tooltips to icon-only buttons, always include `sr-only` text and hide the icon from screen readers to ensure full accessibility compliance.
+
+## 2024-11-20 - Dependency Security (Axios & WS)
+**Learning:** High-severity vulnerabilities in nested dependencies (`axios` prototype pollution, `ws` memory exhaustion, `esbuild` arbitrary file read, `uuid` buffer bounds check) caused the `dependency-security` CI check to fail in `CredVerseIssuer 3`. The `npm audit fix` command successfully patched these by automatically resolving and updating the `package-lock.json` file.
+**Action:** When `dependency-security` CI fails due to organic pre-existing vulnerability discovery, use `npm audit fix` in the relevant directory (`CredVerseIssuer 3` in this case) to safely resolve the lockfile vulnerabilities without breaking downstream builds.
