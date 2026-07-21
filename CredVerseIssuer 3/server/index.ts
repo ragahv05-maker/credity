@@ -159,8 +159,7 @@ app.use((req, res, next) => {
   await registerRoutes(httpServer, app);
 
   // Sentry error handler (must be before other error handlers)
-  // @ts-ignore - Known typing mismatch for Sentry error handler
-  app.use(sentryErrorHandler as any);
+    app.use(sentryErrorHandler as any);
 
   // Global Error Handler
   app.use(errorHandler);
