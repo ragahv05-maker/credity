@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -361,28 +360,12 @@ export default function Settings() {
                                             readOnly
                                             className="font-mono"
                                         />
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button variant="outline" size="icon" onClick={handleCopyApiKey}>
-                                                    <span className="sr-only">Copy live API key</span>
-                                                    {copiedKey ? <Check className="h-4 w-4 text-green-600" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>Copy to clipboard</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button variant="outline" size="icon" onClick={handleRotateApiKey}>
-                                                    <span className="sr-only">Rotate live API key</span>
-                                                    <RefreshCw className="h-4 w-4" aria-hidden="true" />
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>Rotate API key</p>
-                                            </TooltipContent>
-                                        </Tooltip>
+                                        <Button variant="outline" size="icon" onClick={handleCopyApiKey} title="Copy live API key" aria-label="Copy live API key">
+                                            {copiedKey ? <Check className="h-4 w-4 text-green-600" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
+                                        </Button>
+                                        <Button variant="outline" size="icon" onClick={handleRotateApiKey} title="Rotate live API key" aria-label="Rotate live API key">
+                                            <RefreshCw className="h-4 w-4" aria-hidden="true" />
+                                        </Button>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
                                         Last used: 2 hours ago • Created: Jan 15, 2024
@@ -403,17 +386,9 @@ export default function Settings() {
                                             readOnly
                                             className="font-mono"
                                         />
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button variant="outline" size="icon">
-                                                    <span className="sr-only">Copy test API key</span>
-                                                    <Copy className="h-4 w-4" aria-hidden="true" />
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>Copy to clipboard</p>
-                                            </TooltipContent>
-                                        </Tooltip>
+                                        <Button variant="outline" size="icon" title="Copy test API key" aria-label="Copy test API key">
+                                            <Copy className="h-4 w-4" aria-hidden="true" />
+                                        </Button>
                                     </div>
                                 </div>
 
