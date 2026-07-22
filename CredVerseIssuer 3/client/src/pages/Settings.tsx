@@ -360,11 +360,11 @@ export default function Settings() {
                                             readOnly
                                             className="font-mono"
                                         />
-                                        <Button variant="outline" size="icon" onClick={handleCopyApiKey}>
-                                            {copiedKey ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                                        <Button variant="outline" size="icon" onClick={handleCopyApiKey} title="Copy live API key" aria-label="Copy live API key">
+                                            {copiedKey ? <Check className="h-4 w-4 text-green-600" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
                                         </Button>
-                                        <Button variant="outline" size="icon" onClick={handleRotateApiKey}>
-                                            <RefreshCw className="h-4 w-4" />
+                                        <Button variant="outline" size="icon" onClick={handleRotateApiKey} title="Rotate live API key" aria-label="Rotate live API key">
+                                            <RefreshCw className="h-4 w-4" aria-hidden="true" />
                                         </Button>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
@@ -386,8 +386,8 @@ export default function Settings() {
                                             readOnly
                                             className="font-mono"
                                         />
-                                        <Button variant="outline" size="icon">
-                                            <Copy className="h-4 w-4" />
+                                        <Button variant="outline" size="icon" title="Copy test API key" aria-label="Copy test API key">
+                                            <Copy className="h-4 w-4" aria-hidden="true" />
                                         </Button>
                                     </div>
                                 </div>
