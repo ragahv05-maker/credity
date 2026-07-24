@@ -22,6 +22,9 @@ export class PostgresStateStore<TState extends object> {
         });
         this.serviceKey = options.serviceKey;
         this.tableName = options.tableName || 'credverse_state_store';
+        if (!/^[a-zA-Z0-9_]+$/.test(this.tableName)) {
+            throw new Error('Invalid table name');
+        }
     }
 
     private async ensureInitialized(): Promise<void> {
