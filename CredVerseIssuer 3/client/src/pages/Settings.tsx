@@ -7,6 +7,8 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
 import {
     Bell, Shield, Palette, Key, Webhook, Trash2, Save, Loader2,
     Moon, Sun, Monitor, Mail, Smartphone, Lock, Copy, Check, RefreshCw
@@ -360,12 +362,24 @@ export default function Settings() {
                                             readOnly
                                             className="font-mono"
                                         />
-                                        <Button variant="outline" size="icon" onClick={handleCopyApiKey}>
-                                            {copiedKey ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                                        </Button>
-                                        <Button variant="outline" size="icon" onClick={handleRotateApiKey}>
-                                            <RefreshCw className="h-4 w-4" />
-                                        </Button>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="outline" size="icon" onClick={handleCopyApiKey}>
+                                                    {copiedKey ? <Check className="h-4 w-4 text-green-600" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
+                                                    <span className="sr-only">Copy API Key</span>
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Copy API Key</TooltipContent>
+                                        </Tooltip>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="outline" size="icon" onClick={handleRotateApiKey}>
+                                                    <RefreshCw className="h-4 w-4" aria-hidden="true" />
+                                                    <span className="sr-only">Rotate API Key</span>
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Rotate API Key</TooltipContent>
+                                        </Tooltip>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
                                         Last used: 2 hours ago • Created: Jan 15, 2024
@@ -386,9 +400,15 @@ export default function Settings() {
                                             readOnly
                                             className="font-mono"
                                         />
-                                        <Button variant="outline" size="icon">
-                                            <Copy className="h-4 w-4" />
-                                        </Button>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="outline" size="icon">
+                                                    <Copy className="h-4 w-4" aria-hidden="true" />
+                                                    <span className="sr-only">Copy Test API Key</span>
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Copy Test API Key</TooltipContent>
+                                        </Tooltip>
                                     </div>
                                 </div>
 
