@@ -17,3 +17,7 @@
 ## 2024-10-25 - Dependency Security (Minimatch)
 **Learning:** High-severity ReDoS vulnerabilities in `minimatch` (<9.0.6 or <10.2.2) blocked CI. `npm audit fix` successfully patched these by updating nested dependencies in `package-lock.json`.
 **Action:** Regularly run `npm audit` in each package directory and prioritize fixing High/Critical vulnerabilities to prevent CI blockage.
+
+## 2024-07-25 - Global TooltipProvider in App.tsx
+**Learning:** When using shadcn/ui tooltips, check if `TooltipProvider` is already globally wrapped around the main app layout (e.g., in `App.tsx`). This allows importing and utilizing `Tooltip`, `TooltipTrigger`, and `TooltipContent` directly in downstream components without needing to redefine the provider locally.
+**Action:** Always check the root layout or `App.tsx` for existing global context providers before assuming a component requires local setup, which saves lines and maintains consistency.
