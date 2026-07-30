@@ -40,7 +40,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
@@ -222,6 +222,13 @@ export default function Team() {
         }
     };
 
+    // ⚡ Bolt: Memoized member statistics to prevent O(n) re-calculations on every render
+    const memberStats = useMemo(() => ({
+        admins: members.filter(m => m.role === 'Admin').length,
+        issuers: members.filter(m => m.role === 'Issuer').length,
+        pending: members.filter(m => m.status === 'Pending').length
+    }), [members]);
+
     return (
         <Layout>
             <div className="space-y-8">
@@ -369,7 +376,7 @@ export default function Team() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">
-                                {members.filter(m => m.role === 'Admin').length}
+                                {memberStats.admins}
                             </div>
                             <p className="text-xs text-muted-foreground">Full access users</p>
                         </CardContent>
@@ -381,7 +388,7 @@ export default function Team() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">
-                                {members.filter(m => m.role === 'Issuer').length}
+                                {memberStats.issuers}
                             </div>
                             <p className="text-xs text-muted-foreground">Can issue credentials</p>
                         </CardContent>
@@ -393,7 +400,7 @@ export default function Team() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">
-                                {members.filter(m => m.status === 'Pending').length}
+                                {memberStats.pending}
                             </div>
                             <p className="text-xs text-muted-foreground">Awaiting acceptance</p>
                         </CardContent>
