@@ -1,6 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -360,12 +361,24 @@ export default function Settings() {
                                             readOnly
                                             className="font-mono"
                                         />
-                                        <Button variant="outline" size="icon" onClick={handleCopyApiKey}>
-                                            {copiedKey ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="outline" size="icon" onClick={handleCopyApiKey}>
+                                                    <span className="sr-only">Copy API key</span>
+                                            {copiedKey ? <Check className="h-4 w-4 text-green-600" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
                                         </Button>
-                                        <Button variant="outline" size="icon" onClick={handleRotateApiKey}>
-                                            <RefreshCw className="h-4 w-4" />
-                                        </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Copy API key</TooltipContent>
+                                        </Tooltip>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="outline" size="icon" onClick={handleRotateApiKey}>
+                                                    <span className="sr-only">Rotate API key</span>
+                                            <RefreshCw className="h-4 w-4" aria-hidden="true" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Rotate API key</TooltipContent>
+                                        </Tooltip>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
                                         Last used: 2 hours ago • Created: Jan 15, 2024
@@ -386,9 +399,15 @@ export default function Settings() {
                                             readOnly
                                             className="font-mono"
                                         />
-                                        <Button variant="outline" size="icon">
-                                            <Copy className="h-4 w-4" />
-                                        </Button>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="outline" size="icon">
+                                                    <span className="sr-only">Copy test API key</span>
+                                                    <Copy className="h-4 w-4" aria-hidden="true" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Copy test API key</TooltipContent>
+                                        </Tooltip>
                                     </div>
                                 </div>
 
