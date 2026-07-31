@@ -4,3 +4,7 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+## 2024-05-15 - [IDOR in Team Routes]
+**Vulnerability:** Insecure Direct Object Reference (IDOR) in multiple `team.ts` endpoints (GET /id, PUT /role, PUT /status, DELETE /id).
+**Learning:** Tenant isolation was missing when retrieving or updating team members by ID. The `req.tenantId` was not checked against the `teamMember.tenantId`.
+**Prevention:** Always ensure the resource being accessed belongs to the authenticated user's tenant context before performing read or write operations.
