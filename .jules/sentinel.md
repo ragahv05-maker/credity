@@ -4,3 +4,8 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+
+## 2025-02-18 - [Insecure Direct Object Reference (IDOR) on Team Members]
+**Vulnerability:** The team member endpoints (`/team/:id`) lacked authorization checks, allowing authenticated users to read, modify, and delete team members belonging to other tenants by guessing or brute-forcing the ID.
+**Learning:** Endpoints managing multi-tenant resources must explicitly validate that the requested resource belongs to the authenticated user's `tenantId`.
+**Prevention:** Always verify `resource.tenantId === req.tenantId` before performing read or write operations on resources identified by ID parameters in a multi-tenant architecture.
