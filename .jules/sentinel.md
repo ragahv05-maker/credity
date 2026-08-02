@@ -4,3 +4,7 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+## 2025-02-23 - [Insecure Direct Object Reference (IDOR) in API Routes]
+**Vulnerability:** API routes managing team members (`GET`, `PUT`, `DELETE` by ID) were directly interacting with the storage layer using user-supplied object IDs without verifying if the requested resource belonged to the authenticated user's `tenantId`.
+**Learning:** In multi-tenant systems, implicitly trusting object IDs from route parameters is a critical IDOR vulnerability. Authorization checks must explicitly validate that the target resource's `tenantId` matches the authenticated `req.tenantId` prior to performing read, update, or delete operations.
+**Prevention:** Always retrieve the target object first and verify `resource.tenantId === req.tenantId` before completing any operation, or enforce tenant isolation at the database query level.
