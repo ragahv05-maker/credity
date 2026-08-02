@@ -17,3 +17,6 @@
 ## 2024-10-25 - Dependency Security (Minimatch)
 **Learning:** High-severity ReDoS vulnerabilities in `minimatch` (<9.0.6 or <10.2.2) blocked CI. `npm audit fix` successfully patched these by updating nested dependencies in `package-lock.json`.
 **Action:** Regularly run `npm audit` in each package directory and prioritize fixing High/Critical vulnerabilities to prevent CI blockage.
+## 2024-08-02 - Tooltips for Icon-Only Actions
+**Learning:** Icon-only buttons for sensitive actions like "Rotate API Key" lack both visual clarity and screen reader context without tooltips, making them ambiguous and inaccessible.
+**Action:** Always pair `shadcn/ui` Tooltips with icon-only `<Button>`s, ensuring `aria-hidden="true"` is set on the icon and a `<span className="sr-only">` label is provided inside the trigger for robust accessibility.
