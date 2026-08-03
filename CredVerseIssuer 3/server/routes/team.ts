@@ -21,7 +21,7 @@ router.get("/team", async (req, res) => {
 router.get("/team/:id", async (req, res) => {
     try {
         const member = await storage.getTeamMember(req.params.id);
-        if (!member) {
+        if (!member || member.tenantId !== (req as any).tenantId) {
             return res.status(404).json({ message: "Team member not found" });
         }
         res.json(member);
@@ -88,6 +88,9 @@ router.put("/team/:id/role", async (req, res) => {
             return res.status(400).json({ message: "Valid role is required (Admin, Issuer, Viewer)" });
         }
 
+        const member = await storage.getTeamMember(req.params.id);
+        if (!member || member.tenantId !== (req as any).tenantId) return res.status(404).json({ message: "Team member not found" });
+
         const updated = await storage.updateTeamMember(req.params.id, { role });
         if (!updated) {
             return res.status(404).json({ message: "Team member not found" });
@@ -106,6 +109,9 @@ router.put("/team/:id/status", async (req, res) => {
             return res.status(400).json({ message: "Valid status is required" });
         }
 
+        const member = await storage.getTeamMember(req.params.id);
+        if (!member || member.tenantId !== (req as any).tenantId) return res.status(404).json({ message: "Team member not found" });
+
         const updated = await storage.updateTeamMember(req.params.id, {
             status,
             joinedAt: status === "Active" ? new Date() : undefined
@@ -122,6 +128,9 @@ router.put("/team/:id/status", async (req, res) => {
 // Remove team member
 router.delete("/team/:id", async (req, res) => {
     try {
+        const member = await storage.getTeamMember(req.params.id);
+        if (!member || member.tenantId !== (req as any).tenantId) return res.status(404).json({ message: "Team member not found" });
+
         const deleted = await storage.deleteTeamMember(req.params.id);
         if (!deleted) {
             return res.status(404).json({ message: "Team member not found" });
