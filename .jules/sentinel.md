@@ -4,3 +4,9 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+## 2025-02-18 - [Missing Authorization Checks in Multi-Tenant Endpoints]
+**Vulnerability:** IDOR vulnerability in `team.ts` endpoints (PUT, DELETE) allowed cross-tenant access to modify or delete team members because `tenantId` ownership was not verified after fetching the record.
+**Learning:** In multi-tenant applications, fetching a record by ID is insufficient. Every endpoint that modifies or deletes a resource must explicitly verify that `resource.tenantId === req.tenantId`.
+**Prevention:**
+1. Implement a shared data access layer that automatically filters by `tenantId`.
+2. Ensure all single-resource endpoints validate ownership before modification.
