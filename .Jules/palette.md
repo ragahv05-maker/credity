@@ -17,3 +17,6 @@
 ## 2024-10-25 - Dependency Security (Minimatch)
 **Learning:** High-severity ReDoS vulnerabilities in `minimatch` (<9.0.6 or <10.2.2) blocked CI. `npm audit fix` successfully patched these by updating nested dependencies in `package-lock.json`.
 **Action:** Regularly run `npm audit` in each package directory and prioritize fixing High/Critical vulnerabilities to prevent CI blockage.
+## 2024-08-04 - Adding Tooltips and SR Labels to Icon-Only Buttons
+**Learning:** In Settings.tsx, the API Key management area has several icon-only buttons (Copy, Rotate) that lacked both accessible names for screen readers and tooltips for sighted users. Using standard `aria-label` or visually hidden `.sr-only` spans inside buttons combined with `shadcn/ui` Tooltips is necessary to provide both a11y support and good UX for ambiguous icons.
+**Action:** Always wrap icon-only buttons in a `Tooltip` and provide a visually hidden fallback (like `span className="sr-only"`) along with `aria-hidden="true"` on the icon element itself.
