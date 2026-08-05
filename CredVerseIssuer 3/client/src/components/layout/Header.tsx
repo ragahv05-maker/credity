@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
 import { useWallet } from "@/hooks/use-wallet";
@@ -128,23 +129,35 @@ export function Header() {
 
           <ThemeToggle />
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground hover:text-foreground"
-            onClick={() => navigate('/help')}
-          >
-            <HelpCircle className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground hover:text-foreground relative"
-            onClick={() => navigate('/verification-logs')}
-          >
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-background"></span>
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-foreground"
+                onClick={() => navigate('/help')}
+              >
+                <HelpCircle className="h-5 w-5" aria-hidden="true" />
+                <span className="sr-only">Help</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Help</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-foreground relative"
+                onClick={() => navigate('/verification-logs')}
+              >
+                <Bell className="h-5 w-5" aria-hidden="true" />
+                <span className="sr-only">Notifications</span>
+                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-background"></span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Notifications</TooltipContent>
+          </Tooltip>
 
           <div className="h-6 w-px bg-border mx-1" />
 
