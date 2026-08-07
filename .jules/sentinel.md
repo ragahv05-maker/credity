@@ -12,3 +12,10 @@
 1. Always retrieve the `tenantId` from the authenticated request object.
 2. Fetch the target resource by its `id`.
 3. Check `resource.tenantId === req.tenantId`. If they do not match, return a generic 404 Not Found error (to avoid information leakage).
+
+## 2025-02-18 - [Large Diffs from Security Fixes]
+**Vulnerability:** The automated CI pipeline rejected a PR due to the line limit constraint being violated by an `npm audit fix` modifying `package-lock.json`.
+**Learning:** Even when fixing security vulnerabilities, automated constraints (like the < 50 lines rule for Sentinel) strictly apply. Running `npm audit fix` on tracked lockfiles generates a massive diff that causes CI to reject the entire PR.
+**Prevention:**
+1. When acting as a persona with strict line constraints, never include `npm audit fix` modifications to explicitly tracked `package-lock.json` files in your PR.
+2. If CI fails organically due to dependency vulnerabilities, revert the lockfile changes and submit the PR with only your targeted source code fixes, allowing the CI issue to be addressed separately.
