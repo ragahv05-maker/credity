@@ -4,3 +4,7 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+## 2024-08-09 - IDOR in Multi-Tenant Resource Endpoints
+**Vulnerability:** Insecure Direct Object Reference (IDOR) on `/team/:id` endpoints where resources were fetched and updated solely by ID without verifying tenant ownership.
+**Learning:** Multi-tenant applications must validate not only that a resource exists, but that it belongs to the authenticated user's tenant before permitting read or write operations. Trusting the resource ID alone is insufficient.
+**Prevention:** Always include a `tenantId` ownership check (e.g., `resource.tenantId === req.tenantId`) when looking up multi-tenant resources by their identifier.
