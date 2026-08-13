@@ -4,3 +4,7 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+## 2024-05-24 - Missing Authorization Checks (IDOR) on Team Endpoints
+**Vulnerability:** Team member endpoints allowed access, modification, and deletion of multi-tenant resources using only the resource ID, without verifying the tenant ownership.
+**Learning:** Relying solely on a resource's ID and API key authentication without checking if the resource belongs to the authenticated user's tenant leads to Insecure Direct Object Reference (IDOR) vulnerabilities.
+**Prevention:** Always explicitly validate that the requested resource's `tenantId` matches the authenticated user's `tenantId` (e.g., `member.tenantId === req.tenantId`) when managing multi-tenant resources.
