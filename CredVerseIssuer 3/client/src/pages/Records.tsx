@@ -17,7 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -49,11 +49,16 @@ export default function Records() {
     }
   });
 
-  const filteredRecords = credentials.filter((cred) =>
-    (cred.recipient?.name || '').toLowerCase().includes(search.toLowerCase()) ||
-    (cred.recipient?.id || cred.recipient?.studentId || '').toLowerCase().includes(search.toLowerCase()) ||
-    (cred.credentialData?.credentialName || '').toLowerCase().includes(search.toLowerCase())
-  );
+  // BOLT OPTIMIZATION: Memoize filtered records and extract search lowercasing outside the loop.
+  // Impact: Reduces O(N) string operations and prevents recalculation on unrelated re-renders.
+  const filteredRecords = useMemo(() => {
+    const searchLower = search.toLowerCase();
+    return credentials.filter((cred) =>
+      (cred.recipient?.name || '').toLowerCase().includes(searchLower) ||
+      (cred.recipient?.id || cred.recipient?.studentId || '').toLowerCase().includes(searchLower) ||
+      (cred.credentialData?.credentialName || '').toLowerCase().includes(searchLower)
+    );
+  }, [credentials, search]);
 
   const handleViewDetails = (cred: CredentialRecord) => {
     toast({
