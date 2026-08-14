@@ -11,6 +11,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useCallback } from "react";
 import { useLocation } from "wouter";
@@ -133,9 +134,15 @@ function CanvasField({
                     <span className="text-xs font-medium">{field.label}</span>
                 </div>
                 {isSelected && (
-                    <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-red-500 hover:text-red-700">
-                        <Trash2 className="h-3 w-3" />
-                    </button>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-red-500 hover:text-red-700">
+                                <Trash2 className="h-3 w-3" aria-hidden="true" />
+                                <span className="sr-only">Delete field</span>
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent>Delete field</TooltipContent>
+                    </Tooltip>
                 )}
             </div>
             <div className="mt-2 text-xs text-gray-500 bg-gray-50 rounded p-2">
@@ -343,9 +350,15 @@ export default function TemplateBuilder() {
                     {/* Header */}
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <Button variant="ghost" size="icon" onClick={() => navigate('/templates')}>
-                                <ArrowLeft className="h-5 w-5" />
-                            </Button>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" onClick={() => navigate('/templates')}>
+                                        <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+                                        <span className="sr-only">Back to templates</span>
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Back to templates</TooltipContent>
+                            </Tooltip>
                             <div>
                                 <Input
                                     value={templateName}
