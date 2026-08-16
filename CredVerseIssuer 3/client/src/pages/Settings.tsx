@@ -14,6 +14,11 @@ import {
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
     Select,
     SelectContent,
     SelectItem,
@@ -360,12 +365,22 @@ export default function Settings() {
                                             readOnly
                                             className="font-mono"
                                         />
-                                        <Button variant="outline" size="icon" onClick={handleCopyApiKey}>
-                                            {copiedKey ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                                        </Button>
-                                        <Button variant="outline" size="icon" onClick={handleRotateApiKey}>
-                                            <RefreshCw className="h-4 w-4" />
-                                        </Button>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="outline" size="icon" onClick={handleCopyApiKey} aria-label="Copy Live API Key">
+                                                    {copiedKey ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Copy Live API Key</TooltipContent>
+                                        </Tooltip>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="outline" size="icon" onClick={handleRotateApiKey} aria-label="Rotate Live API Key">
+                                                    <RefreshCw className="h-4 w-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Rotate Live API Key</TooltipContent>
+                                        </Tooltip>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
                                         Last used: 2 hours ago • Created: Jan 15, 2024
@@ -386,9 +401,14 @@ export default function Settings() {
                                             readOnly
                                             className="font-mono"
                                         />
-                                        <Button variant="outline" size="icon">
-                                            <Copy className="h-4 w-4" />
-                                        </Button>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="outline" size="icon" aria-label="Copy Test API Key">
+                                                    <Copy className="h-4 w-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Copy Test API Key</TooltipContent>
+                                        </Tooltip>
                                     </div>
                                 </div>
 
