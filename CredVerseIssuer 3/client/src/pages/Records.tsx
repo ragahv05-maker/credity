@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Search, Filter, Download, MoreHorizontal, ShieldCheck, AlertCircle, ExternalLink, Send, Copy, Loader2 } from "lucide-react";
 import {
@@ -186,9 +187,7 @@ export default function Records() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <Button variant="outline" size="icon">
-            <Filter className="h-4 w-4" />
-          </Button>
+          <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" aria-label="Filter Records"><Filter className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent><p>Filter Records</p></TooltipContent></Tooltip>
         </div>
 
         <div className="border rounded-md bg-card shadow-sm">
