@@ -4,3 +4,7 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+## 2024-08-20 - Fix IDOR in multi-tenant team member endpoints
+**Vulnerability:** IDOR in endpoints modifying team members (e.g. GET, PUT, DELETE `/team/:id`). Endpoints fetched/modified resources strictly by ID without asserting the resource belonged to the requester's `tenantId`.
+**Learning:** In a multi-tenant system, simply validating an ID exists is insufficient. Lack of `tenantId` checking allows any authenticated user to potentially enumerate, read, or modify data of other tenants.
+**Prevention:** Always assert `resource.tenantId === req.tenantId` for any scoped resource manipulation. Return `404 Not Found` (rather than `403 Forbidden`) when access is denied to avoid leaking valid IDs across tenants.
