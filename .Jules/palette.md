@@ -17,3 +17,7 @@
 ## 2024-10-25 - Dependency Security (Minimatch)
 **Learning:** High-severity ReDoS vulnerabilities in `minimatch` (<9.0.6 or <10.2.2) blocked CI. `npm audit fix` successfully patched these by updating nested dependencies in `package-lock.json`.
 **Action:** Regularly run `npm audit` in each package directory and prioritize fixing High/Critical vulnerabilities to prevent CI blockage.
+
+## 2024-10-25 - CredVerseIssuer 3 Tooltip Wrapping with DropdownMenu
+**Learning:** Found that when wrapping a `DropdownMenuTrigger` (which also acts as a button) with a `Tooltip`, both `TooltipTrigger` and `DropdownMenuTrigger` must use the `asChild` prop and be nested correctly (`<TooltipTrigger asChild><DropdownMenuTrigger asChild><Button>...</Button></DropdownMenuTrigger></TooltipTrigger>`) to ensure both sets of event listeners and refs (hover for tooltip, click for dropdown menu) are properly merged onto the single underlying DOM element.
+**Action:** Always use `asChild` on multiple Radix UI trigger wrappers when they target the same single interactive element.
