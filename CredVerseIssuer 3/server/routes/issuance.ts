@@ -80,7 +80,7 @@ router.post("/credentials/:id/offer", writeIdempotency, async (req, res) => {
 
         const tenantId = (req as any).tenantId;
         if (credential.tenantId !== tenantId) {
-            return res.status(403).json({ message: "Forbidden" });
+            return res.status(404).json({ message: "Credential not found" });
         }
 
         const token = issuanceService.createOffer(credential.id);
@@ -140,9 +140,9 @@ router.post("/credentials/issue", writeIdempotency, async (req, res) => {
         const templateTenantId = typeof (template as any).tenantId === "string" ? String((template as any).tenantId).trim() : undefined;
         const requestTenantId = String(tenantId).trim();
         if (templateTenantId && templateTenantId !== requestTenantId) {
-            return res.status(403).json({
-                message: "Forbidden",
-                code: "TEMPLATE_FORBIDDEN",
+            return res.status(404).json({
+                message: "Template not found",
+                code: "TEMPLATE_NOT_FOUND",
             });
         }
 
@@ -317,7 +317,7 @@ router.get("/credentials/:id", async (req, res) => {
 
         const tenantId = (req as any).tenantId;
         if (credential.tenantId !== tenantId) {
-            return res.status(403).json({ message: "Forbidden" });
+            return res.status(404).json({ message: "Credential not found" });
         }
 
         res.json(credential);
@@ -352,7 +352,7 @@ router.post("/credentials/:id/revoke", writeIdempotency, async (req, res) => {
 
         const tenantId = (req as any).tenantId;
         if (credential.tenantId !== tenantId) {
-            return res.status(403).json({ message: "Forbidden" });
+            return res.status(404).json({ message: "Credential not found" });
         }
 
         const reason = req.body?.reason || "revoked_by_issuer";

@@ -354,7 +354,7 @@ router.post('/api/v1/credentials/:id/revoke', apiKeyOrAuthMiddleware, writeIdemp
         }
         const tenantId = (req as any).tenantId;
         if (credential.tenantId !== tenantId) {
-            return res.status(403).json({ message: 'Forbidden' });
+            return res.status(404).json({ message: 'Credential not found' });
         }
 
         const reason = req.body?.reason || 'revoked_by_issuer';
@@ -395,7 +395,7 @@ router.post('/api/v1/anchors/batches', apiKeyOrAuthMiddleware, writeIdempotency,
         const tenantId = (req as any).tenantId;
         const hasForeignTenantRecord = validRecords.some((record) => record.tenantId !== tenantId);
         if (hasForeignTenantRecord) {
-            return res.status(403).json({ message: 'Forbidden' });
+            return res.status(404).json({ message: 'Credential not found' });
         }
 
         const hashInputs = validRecords.map((record) => {
@@ -529,7 +529,7 @@ router.post('/api/v1/proofs/generate', apiKeyOrAuthMiddleware, enforceProofRoute
             }
             const tenantId = (req as any).tenantId;
             if (credential.tenantId !== tenantId) {
-                return res.status(403).json({ message: 'Forbidden', code: 'PROOF_FORBIDDEN' });
+                return res.status(404).json({ message: 'Credential not found', code: 'CREDENTIAL_NOT_FOUND' });
             }
         }
 

@@ -67,7 +67,7 @@ router.put("/template-designs/:id", async (req, res) => {
 
         const tenantId = (req as any).tenantId;
         if (template.tenantId !== tenantId) {
-            return res.status(403).json({ message: "Forbidden" });
+            return res.status(404).json({ message: "Template design not found" });
         }
 
         const updated = await storage.updateTemplateDesign(req.params.id, req.body);
@@ -87,7 +87,7 @@ router.delete("/template-designs/:id", async (req, res) => {
 
         const tenantId = (req as any).tenantId;
         if (template.tenantId !== tenantId) {
-            return res.status(403).json({ message: "Forbidden" });
+            return res.status(404).json({ message: "Template design not found" });
         }
 
         await storage.deleteTemplateDesign(req.params.id);
@@ -107,7 +107,7 @@ router.post("/template-designs/:id/duplicate", async (req, res) => {
 
         const tenantId = (req as any).tenantId;
         if (template.tenantId !== tenantId) {
-            return res.status(403).json({ message: "Forbidden" });
+            return res.status(404).json({ message: "Template design not found" });
         }
 
         const duplicate = await storage.duplicateTemplateDesign(req.params.id);

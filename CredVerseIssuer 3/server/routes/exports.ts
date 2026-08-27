@@ -90,7 +90,7 @@ router.get("/exports/credentials/:id/pdf", async (req, res) => {
 
         const tenantId = (req as any).tenantId;
         if (credential.tenantId !== tenantId) {
-            return res.status(403).json({ message: "Forbidden" });
+            return res.status(404).json({ message: "Credential not found" });
         }
 
         // Create PDF document
