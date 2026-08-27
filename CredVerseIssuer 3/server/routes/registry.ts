@@ -73,7 +73,7 @@ router.get("/issuers/:id", async (req, res) => {
         // Ensure tenant owns this issuer
         const tenantId = (req as any).tenantId;
         if (issuer.tenantId !== tenantId) {
-            return res.status(403).json({ message: "Forbidden" });
+            return res.status(404).json({ message: "Issuer not found" });
         }
 
         res.json(issuer);

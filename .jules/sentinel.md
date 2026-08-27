@@ -4,3 +4,8 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+
+## 2025-02-27 - [IDOR resulting in 403 instead of 404]
+**Vulnerability:** When a user requested a resource (like a credential or a template) that belonged to another tenant, the application returned a 403 Forbidden instead of a 404 Not Found. This leaked the existence of the resource ID in other tenants' environments.
+**Learning:** Returning 403 Forbidden for cross-tenant mismatches leaks information about valid resource IDs across the platform.
+**Prevention:** For multi-tenant resources, always return a 404 Not Found when the requested resource's tenantId does not match the authenticated user's tenantId.

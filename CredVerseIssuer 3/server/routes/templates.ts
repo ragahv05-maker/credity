@@ -65,7 +65,7 @@ router.post("/templates/:id/render", async (req, res) => {
 
         const tenantId = (req as any).tenantId;
         if (template.tenantId !== tenantId) {
-            return res.status(403).json({ message: "Forbidden" });
+            return res.status(404).json({ message: "Template not found" });
         }
 
         // MVP: Simple string replacement or just return the render string with data
