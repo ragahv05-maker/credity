@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import {
     Bell, Shield, Palette, Key, Webhook, Trash2, Save, Loader2,
@@ -361,6 +361,7 @@ export default function Settings() {
                                             readOnly
                                             className="font-mono"
                                         />
+                                        <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
                                                 <Button aria-label="Copy live API key" variant="outline" size="icon" onClick={handleCopyApiKey}>
@@ -371,6 +372,8 @@ export default function Settings() {
                                                 <p>Copy live API key</p>
                                             </TooltipContent>
                                         </Tooltip>
+                                        </TooltipProvider>
+                                        <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
                                                 <Button aria-label="Rotate live API key" variant="outline" size="icon" onClick={handleRotateApiKey}>
@@ -381,6 +384,7 @@ export default function Settings() {
                                                 <p>Rotate live API key</p>
                                             </TooltipContent>
                                         </Tooltip>
+                                        </TooltipProvider>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
                                         Last used: 2 hours ago • Created: Jan 15, 2024
@@ -401,6 +405,7 @@ export default function Settings() {
                                             readOnly
                                             className="font-mono"
                                         />
+                                        <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
                                                 <Button aria-label="Copy test API key" variant="outline" size="icon">
@@ -411,6 +416,7 @@ export default function Settings() {
                                                 <p>Copy test API key</p>
                                             </TooltipContent>
                                         </Tooltip>
+                                        </TooltipProvider>
                                     </div>
                                 </div>
 
