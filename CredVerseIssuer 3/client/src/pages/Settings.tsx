@@ -54,7 +54,7 @@ export default function Settings() {
     };
 
     const handleCopyApiKey = () => {
-        navigator.clipboard.writeText("cv_live_sk_1234567890abcdef");
+        navigator.clipboard.writeText(import.meta.env.VITE_API_KEY || "cv_live_sk_••••••••••••••••");
         setCopiedKey(true);
         setTimeout(() => setCopiedKey(false), 2000);
         toast({ title: "API key copied", description: "Key copied to clipboard." });
