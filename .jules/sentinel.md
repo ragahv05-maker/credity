@@ -4,3 +4,7 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+## 2024-05-24 - Cross-Tenant Access (IDOR) in Team Management
+**Vulnerability:** Found Insecure Direct Object Reference (IDOR) on `/team/:id` routes (`GET`, `PUT`, `DELETE`). The endpoints modified or returned a team member's record by `id` without verifying the member belonged to the authenticated user's `tenantId`.
+**Learning:** Missing authorization checks at the resource level in multi-tenant systems lead to severe cross-tenant data leakage or manipulation.
+**Prevention:** Always validate that the requested resource belongs to the current user's `tenantId` (e.g., `member.tenantId === req.tenantId`) and return a `404 Not Found` for mismatches to avoid leaking valid resource IDs.
