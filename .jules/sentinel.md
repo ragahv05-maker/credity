@@ -4,3 +4,8 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+
+## 2025-03-05 - [Insecure Direct Object Reference in Cross-Tenant Access]
+**Vulnerability:** Endpoints managing multi-tenant resources (like team members) did not explicitly validate that the requested resource's `tenantId` matches the authenticated user's `tenantId`, leading to IDOR.
+**Learning:** It is crucial to validate `tenantId` (e.g., `member.tenantId === req.tenantId`) to prevent cross-tenant access. Additionally, these mismatch errors should return `404 Not Found` rather than `403 Forbidden` to avoid leaking the existence of valid resource IDs in other tenants' environments.
+**Prevention:** Ensure explicit `tenantId` checks in all tenant-specific routes and consistently return 404 for mismatches to hide resource existence.
