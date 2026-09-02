@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
     Bell, Shield, Palette, Key, Webhook, Trash2, Save, Loader2,
     Moon, Sun, Monitor, Mail, Smartphone, Lock, Copy, Check, RefreshCw
@@ -69,6 +70,7 @@ export default function Settings() {
     };
 
     return (
+        <TooltipProvider>
         <Layout>
             <div className="max-w-4xl mx-auto space-y-8">
                 <div>
@@ -360,12 +362,26 @@ export default function Settings() {
                                             readOnly
                                             className="font-mono"
                                         />
-                                        <Button variant="outline" size="icon" onClick={handleCopyApiKey}>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="outline" size="icon" onClick={handleCopyApiKey} aria-label="Copy Live API Key">
                                             {copiedKey ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                                        </Button>
-                                        <Button variant="outline" size="icon" onClick={handleRotateApiKey}>
-                                            <RefreshCw className="h-4 w-4" />
-                                        </Button>
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>{copiedKey ? "Copied!" : "Copy to clipboard"}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="outline" size="icon" onClick={handleRotateApiKey} aria-label="Rotate API Key">
+                                                    <RefreshCw className="h-4 w-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Rotate API Key</p>
+                                            </TooltipContent>
+                                        </Tooltip>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
                                         Last used: 2 hours ago • Created: Jan 15, 2024
@@ -386,9 +402,16 @@ export default function Settings() {
                                             readOnly
                                             className="font-mono"
                                         />
-                                        <Button variant="outline" size="icon">
-                                            <Copy className="h-4 w-4" />
-                                        </Button>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="outline" size="icon" aria-label="Copy Test API Key">
+                                                    <Copy className="h-4 w-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Copy to clipboard</p>
+                                            </TooltipContent>
+                                        </Tooltip>
                                     </div>
                                 </div>
 
@@ -436,5 +459,6 @@ export default function Settings() {
                 </Tabs>
             </div>
         </Layout>
+        </TooltipProvider>
     );
 }
