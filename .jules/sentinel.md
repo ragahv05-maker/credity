@@ -4,3 +4,7 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+## 2024-05-20 - Cross-Tenant IDOR in Team Endpoints
+**Vulnerability:** Missing authorization check allowing authenticated users to access and modify team members from other tenants using predictable IDs on endpoints like `PUT /team/:id/role`.
+**Learning:** In a multi-tenant system, relying solely on authentication is insufficient for endpoints managing per-tenant resources. Returning 403 leaks the existence of IDs; endpoints must return 404 to avoid enumeration.
+**Prevention:** Always validate that the requested resource belongs to the current user's `tenantId` (e.g., `if (!resource || resource.tenantId !== tenantId)`) and return 404 if it does not.
