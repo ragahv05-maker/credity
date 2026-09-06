@@ -19,8 +19,9 @@ router.get("/template-designs", async (req, res) => {
 // Get single template design
 router.get("/template-designs/:id", async (req, res) => {
     try {
+        const tenantId = (req as any).tenantId;
         const template = await storage.getTemplateDesign(req.params.id);
-        if (!template) {
+        if (!template || template.tenantId !== tenantId) {
             return res.status(404).json({ message: "Template not found" });
         }
         res.json(template);
@@ -60,14 +61,10 @@ router.post("/template-designs", async (req, res) => {
 // Update template design
 router.put("/template-designs/:id", async (req, res) => {
     try {
-        const template = await storage.getTemplateDesign(req.params.id);
-        if (!template) {
-            return res.status(404).json({ message: "Template not found" });
-        }
-
         const tenantId = (req as any).tenantId;
-        if (template.tenantId !== tenantId) {
-            return res.status(403).json({ message: "Forbidden" });
+        const template = await storage.getTemplateDesign(req.params.id);
+        if (!template || template.tenantId !== tenantId) {
+            return res.status(404).json({ message: "Template not found" });
         }
 
         const updated = await storage.updateTemplateDesign(req.params.id, req.body);
@@ -80,14 +77,10 @@ router.put("/template-designs/:id", async (req, res) => {
 // Delete template design
 router.delete("/template-designs/:id", async (req, res) => {
     try {
-        const template = await storage.getTemplateDesign(req.params.id);
-        if (!template) {
-            return res.status(404).json({ message: "Template not found" });
-        }
-
         const tenantId = (req as any).tenantId;
-        if (template.tenantId !== tenantId) {
-            return res.status(403).json({ message: "Forbidden" });
+        const template = await storage.getTemplateDesign(req.params.id);
+        if (!template || template.tenantId !== tenantId) {
+            return res.status(404).json({ message: "Template not found" });
         }
 
         await storage.deleteTemplateDesign(req.params.id);
@@ -100,14 +93,10 @@ router.delete("/template-designs/:id", async (req, res) => {
 // Duplicate template design
 router.post("/template-designs/:id/duplicate", async (req, res) => {
     try {
-        const template = await storage.getTemplateDesign(req.params.id);
-        if (!template) {
-            return res.status(404).json({ message: "Template not found" });
-        }
-
         const tenantId = (req as any).tenantId;
-        if (template.tenantId !== tenantId) {
-            return res.status(403).json({ message: "Forbidden" });
+        const template = await storage.getTemplateDesign(req.params.id);
+        if (!template || template.tenantId !== tenantId) {
+            return res.status(404).json({ message: "Template not found" });
         }
 
         const duplicate = await storage.duplicateTemplateDesign(req.params.id);
