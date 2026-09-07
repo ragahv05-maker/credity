@@ -4,3 +4,7 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+## 2024-09-07 - IDOR Vulnerability in Team API
+**Vulnerability:** The Team API endpoints (`/team/:id`, `/team/:id/role`, `/team/:id/status`, and `DELETE /team/:id`) lacked authorization checks to verify if the requested team member belonged to the authenticated user's tenant.
+**Learning:** This allowed users to access or modify team members belonging to other tenants. Returning a `404 Not Found` instead of `403 Forbidden` for cross-tenant resource requests prevents leaking the existence of valid resource IDs.
+**Prevention:** Always verify ownership or tenant association when retrieving resources by ID before performing any operations on them. Fail securely with a 404 to obscure resource existence.
