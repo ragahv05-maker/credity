@@ -4,3 +4,7 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+## 2024-05-24 - Missing Authorization Checks in Multi-Tenant Endpoints
+**Vulnerability:** The team management endpoints allowed cross-tenant access because they did not verify if the requested `id` belonged to the authenticated `tenantId`.
+**Learning:** In a multi-tenant environment, retrieving objects by ID must always be accompanied by a check validating that the object belongs to the user's tenant.
+**Prevention:** Ensure every backend route that fetches, modifies, or deletes an object verifies ownership via `tenantId` (or similar scope identifier) before proceeding. Return 404 to avoid leaking valid object IDs.
