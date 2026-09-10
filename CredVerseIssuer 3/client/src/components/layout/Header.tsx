@@ -218,7 +218,7 @@ export function Header() {
                 <code className="flex-1 text-sm font-mono truncate">
                   {address}
                 </code>
-                <Button size="icon" variant="ghost" onClick={handleCopyAddress}>
+                <Button size="icon" variant="ghost" onClick={handleCopyAddress} aria-label="Copy address" title="Copy address">
                   {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
