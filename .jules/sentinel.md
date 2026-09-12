@@ -4,3 +4,7 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+## 2024-09-12 - Insecure Randomness in OTP Generation
+**Vulnerability:** Found `Math.random()` being used to generate OTP codes.
+**Learning:** `Math.random()` is not cryptographically secure and predictable, which makes brute-forcing or predicting OTPs easier.
+**Prevention:** Use `crypto.randomInt()` for generating secure random integers.
