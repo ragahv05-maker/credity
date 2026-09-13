@@ -3,7 +3,7 @@ import { suspiciousRequestDetector } from "../src/security";
 import { Request, Response, NextFunction } from "express";
 
 describe("suspiciousRequestDetector", () => {
-  const mockReq = (body: any) =>
+  const mockReq = (body: unknown) =>
     ({
       body,
       query: {},
