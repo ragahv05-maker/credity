@@ -122,7 +122,8 @@ class DigiLockerService {
 
             return {
                 success: true,
-                transactionId: `DL-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                // Security: Use CSPRNG to prevent transaction ID prediction
+                transactionId: `DL-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`,
                 digiLockerUri: `digilocker://view/${document.docRef}`,
             };
         }
