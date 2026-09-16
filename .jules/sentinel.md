@@ -4,3 +4,7 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+## 2025-10-27 - [Insecure Randomness in Security Features]
+**Vulnerability:** Weak PRNG (`Math.random()`) used for generating 2FA backup codes and transaction IDs.
+**Learning:** Using `Math.random()` for any security-sensitive operation (like generating secrets, tokens, or identifiers used in security contexts) makes them predictable and vulnerable to attack.
+**Prevention:** Always use cryptographically secure pseudo-random number generators (CSPRNG), such as Node.js `crypto` module (`crypto.randomInt`, `crypto.randomBytes`), for generating security-related random values.
