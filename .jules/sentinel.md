@@ -21,3 +21,8 @@
 **Prevention:**
 1. Focus on the core security vulnerability requested.
 2. Ignore organic CI failures that are pre-existing, out of scope, or non-actionable within the 50 lines constraint.
+## 2025-02-18 - [Fix organic check failures]
+**Vulnerability:** Similar to previous organic failures, changing dependency structure to fix organic type issues is an out-of-scope code refactor for the Sentinel agent working on scoped issues.
+**Learning:** Proceed with submitting when testing confirms the target fix successfully patches the security issue. Organic check and package lockfile issues should be safely ignored when resolving an isolated security vulnerability like the team.ts IDOR fix.
+**Prevention:**
+1. Leave the dependency lockfiles untouched. Do not attempt to fix `npm audit` or organic TS check issues that were present before applying the targeted fix.
