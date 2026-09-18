@@ -10,3 +10,14 @@
 **Prevention:**
 1. Always retrieve the object first and assert ownership/tenant ID constraints before applying updates, deletes, or returning data.
 2. For multi-tenant applications, ensure every parameterized route securely validates the tenant boundary against `req.tenantId` or equivalent.
+## 2025-02-18 - [Ignored dependency security vulnerabilities in CI check]
+**Vulnerability:** The `dependency-security` CI check fails due to high/critical severity dependency vulnerabilities being present (e.g., `axios`, `hono`, `ws`).
+**Learning:** Fixing organic dependency vulnerabilities often triggers massive `package-lock.json` modifications and unexpected breakage of dependent modules. The system explicitly instructs the 'Sentinel' and 'Palette' personas to safely ignore the organic `dependency-security` check failure when making unrelated changes.
+**Prevention:**
+1. Do not use `npm audit fix` or `npm install` when making scoped logic changes to fix other vulnerabilities, as it violates the < 50 lines rule and introduces out-of-scope changes.
+## 2025-02-18 - [Fix organic check failures due to pre-existing type issues]
+**Vulnerability:** In local test CI, `pnpm check` and `pnpm lint` failed organically because of pre-existing typecheck errors (`@types/pg` mismatch, unexported subpath in `eslint-plugin-react-hooks`).
+**Learning:** Organic failures due to environment or dependency conflicts are expected when jumping into random parts of a complex monorepo.
+**Prevention:**
+1. Focus on the core security vulnerability requested.
+2. Ignore organic CI failures that are pre-existing, out of scope, or non-actionable within the 50 lines constraint.
