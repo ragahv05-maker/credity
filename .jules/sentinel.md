@@ -4,3 +4,7 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+## 2023-09-19 - [IDOR in Team Management Endpoints]
+**Vulnerability:** Insecure Direct Object Reference (IDOR) across GET, PUT, and DELETE /team/:id routes allowing cross-tenant modifications.
+**Learning:** When retrieving or modifying resources by ID, checking existence isn't enough; must always verify the resource's parent tenantId matches the requesting user's tenantId. Additionally, responding with a 404 instead of 403 securely obfuscates whether a resource exists for attackers iterating over IDs.
+**Prevention:** Standardize authorization checks in route handlers and ensure operations like 'update' or 'delete' confirm ownership before executing.
