@@ -360,10 +360,10 @@ export default function Settings() {
                                             readOnly
                                             className="font-mono"
                                         />
-                                        <Button variant="outline" size="icon" onClick={handleCopyApiKey}>
+                                        <Button variant="outline" size="icon" onClick={handleCopyApiKey} title="Copy API key" aria-label="Copy API key">
                                             {copiedKey ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                                         </Button>
-                                        <Button variant="outline" size="icon" onClick={handleRotateApiKey}>
+                                        <Button variant="outline" size="icon" onClick={handleRotateApiKey} title="Rotate API key" aria-label="Rotate API key">
                                             <RefreshCw className="h-4 w-4" />
                                         </Button>
                                     </div>
@@ -386,7 +386,7 @@ export default function Settings() {
                                             readOnly
                                             className="font-mono"
                                         />
-                                        <Button variant="outline" size="icon">
+                                        <Button variant="outline" size="icon" title="Copy API key" aria-label="Copy API key">
                                             <Copy className="h-4 w-4" />
                                         </Button>
                                     </div>
