@@ -416,12 +416,43 @@ router.get('/verify/bulk/:jobId', async (req, res) => {
 });
 
 
+function isAllowedUrl(urlString: string): boolean {
+    try {
+        const parsedUrl = new URL(urlString);
+        if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+            return false;
+        }
+        const hostname = parsedUrl.hostname.toLowerCase();
+        const forbiddenPatterns = [
+            /^localhost$/,
+            /^127\.\d+\.\d+\.\d+$/,
+            /^10\.\d+\.\d+\.\d+$/,
+            /^192\.168\.\d+\.\d+$/,
+            /^172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+$/,
+            /^169\.254\.\d+\.\d+$/,
+            /^0\.0\.0\.0$/,
+            /^::1$/,
+            /^fd[0-9a-f]{2}:/,
+            /^fe80:/
+        ];
+        for (const pattern of forbiddenPatterns) {
+            if (pattern.test(hostname)) return false;
+        }
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 // New route: Verify credential via link URL
 router.post('/verify/link', authMiddleware, writeIdempotency, async (req, res) => {
     try {
         const { link } = req.body;
         if (!link) {
             return res.status(400).json({ error: 'Link URL is required' });
+        }
+        if (!isAllowedUrl(link)) {
+            return res.status(400).json({ error: 'Invalid or forbidden Link URL' });
         }
         // Fetch credential from the provided URL (expects JSON)
         const response = await fetch(link);
