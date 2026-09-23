@@ -91,6 +91,7 @@ export function Header() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
+              aria-label="Search students, credentials, or batches..."
               placeholder="Search students, credentials, or batches..."
               className="pl-9 bg-secondary/50 border-transparent focus:bg-background focus:border-input transition-all"
             />
@@ -133,6 +134,8 @@ export function Header() {
             size="icon"
             className="text-muted-foreground hover:text-foreground"
             onClick={() => navigate('/help')}
+            title="Help"
+            aria-label="Help"
           >
             <HelpCircle className="h-5 w-5" />
           </Button>
@@ -141,6 +144,8 @@ export function Header() {
             size="icon"
             className="text-muted-foreground hover:text-foreground relative"
             onClick={() => navigate('/verification-logs')}
+            title="Notifications"
+            aria-label="Notifications"
           >
             <Bell className="h-5 w-5" />
             <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-background"></span>
@@ -151,7 +156,7 @@ export function Header() {
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full" title="User Menu" aria-label="User Menu">
                 <Avatar className="h-9 w-9 border border-border">
                   <AvatarImage src="https://github.com/shadcn.png" alt="@admin" />
                   <AvatarFallback>AD</AvatarFallback>
@@ -218,7 +223,7 @@ export function Header() {
                 <code className="flex-1 text-sm font-mono truncate">
                   {address}
                 </code>
-                <Button size="icon" variant="ghost" onClick={handleCopyAddress}>
+                <Button size="icon" variant="ghost" onClick={handleCopyAddress} title="Copy Address" aria-label="Copy Address">
                   {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
