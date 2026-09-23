@@ -4,3 +4,10 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+
+## 2025-10-23 - [SSRF via Unvalidated URL Fetch]
+**Vulnerability:** The `/verify/link` endpoint in CredVerseRecruiter used `fetch()` directly on a user-provided URL without any validation, allowing Server-Side Request Forgery (SSRF) against internal services and metadata endpoints (e.g. 169.254.169.254).
+**Learning:** Never trust user-provided URLs when making server-side outbound requests. Always validate the protocol and block requests to internal networks, loopback addresses, and cloud metadata IPs to prevent SSRF in credential verification or importing flows.
+**Prevention:**
+1. Validate the URL structure and enforce strict HTTP/HTTPS protocols.
+2. Implement an `isAllowedUrl` check to filter out internal IPs and `localhost` before executing the `fetch()`.
