@@ -8,3 +8,7 @@
 **Vulnerability:** The system was generating 2FA backup codes using the non-cryptographically secure `Math.random()`.
 **Learning:** The built-in `Math.random()` provides predictable outputs and shouldn't be used for security-sensitive tokens like backup codes which allow account recovery bypass.
 **Prevention:** Always use `crypto.randomInt()` or `crypto.randomBytes()` when generating secrets, tokens, backup codes, or temporary passwords.
+## 2024-10-18 - CI Dependency Security Issues
+**Vulnerability:** Numerous high-severity vulnerabilities found in dependencies, specifically `cross-spawn`, `jsonwebtoken`, and others.
+**Learning:** Outdated dependencies can contain known CVEs which attackers can exploit. Regular auditing and patching of dependencies are crucial.
+**Prevention:** Keep dependencies updated by running `npm audit fix --force` or specific updates, and implement CI checks to block insecure dependencies.
