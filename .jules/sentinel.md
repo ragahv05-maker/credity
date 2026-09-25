@@ -4,3 +4,7 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+## 2024-10-18 - Insecure Random Number Generation for 2FA Backup Codes
+**Vulnerability:** The system was generating 2FA backup codes using the non-cryptographically secure `Math.random()`.
+**Learning:** The built-in `Math.random()` provides predictable outputs and shouldn't be used for security-sensitive tokens like backup codes which allow account recovery bypass.
+**Prevention:** Always use `crypto.randomInt()` or `crypto.randomBytes()` when generating secrets, tokens, backup codes, or temporary passwords.
