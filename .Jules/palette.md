@@ -17,3 +17,6 @@
 ## 2024-10-25 - Dependency Security (Minimatch)
 **Learning:** High-severity ReDoS vulnerabilities in `minimatch` (<9.0.6 or <10.2.2) blocked CI. `npm audit fix` successfully patched these by updating nested dependencies in `package-lock.json`.
 **Action:** Regularly run `npm audit` in each package directory and prioritize fixing High/Critical vulnerabilities to prevent CI blockage.
+## 2024-10-18 - Native aria-label and title for icon buttons
+**Learning:** Using native `title` and `aria-label` attributes on icon-only buttons is an efficient alternative to heavy UI Tooltip components when dealing with strict line limit constraints.
+**Action:** Apply `title` alongside `aria-label` to provide both screen reader support and visual tooltip on hover without adding component dependency bloat.
