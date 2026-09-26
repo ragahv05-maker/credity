@@ -131,6 +131,8 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon"
+            aria-label="Help"
+            title="Help"
             className="text-muted-foreground hover:text-foreground"
             onClick={() => navigate('/help')}
           >
@@ -139,6 +141,8 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon"
+            aria-label="Notifications"
+            title="Notifications"
             className="text-muted-foreground hover:text-foreground relative"
             onClick={() => navigate('/verification-logs')}
           >
@@ -151,7 +155,7 @@ export function Header() {
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+              <Button variant="ghost" aria-label="User menu" title="User menu" className="relative h-9 w-9 rounded-full">
                 <Avatar className="h-9 w-9 border border-border">
                   <AvatarImage src="https://github.com/shadcn.png" alt="@admin" />
                   <AvatarFallback>AD</AvatarFallback>
