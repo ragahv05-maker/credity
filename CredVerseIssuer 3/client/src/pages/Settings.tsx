@@ -54,7 +54,10 @@ export default function Settings() {
     };
 
     const handleCopyApiKey = () => {
-        navigator.clipboard.writeText("cv_live_sk_1234567890abcdef");
+        // SECURITY: Never hardcode real API keys in the client bundle.
+        // In a real application, this would securely fetch a short-lived token
+        // or copy a masked value that the user previously generated.
+        navigator.clipboard.writeText("cv_live_sk_placeholder_do_not_hardcode");
         setCopiedKey(true);
         setTimeout(() => setCopiedKey(false), 2000);
         toast({ title: "API key copied", description: "Key copied to clipboard." });

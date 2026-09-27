@@ -4,3 +4,7 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+## 2024-05-24 - Hardcoded API Key in Client Source
+**Vulnerability:** A live secret API key (`cv_live_sk_1234567890abcdef`) was hardcoded directly in the React frontend source code (`Settings.tsx`) to implement a "Copy API Key" clipboard feature.
+**Learning:** Client-side source code is public. Any secrets bundled into the frontend are easily extracted by attackers, leading to complete compromise of the API endpoints protected by those keys.
+**Prevention:** Never hardcode secrets in client-side code. Retrieve them securely via authenticated backend endpoints, or display masked/placeholder values if the full key is not needed.
