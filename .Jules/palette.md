@@ -17,3 +17,6 @@
 ## 2024-10-25 - Dependency Security (Minimatch)
 **Learning:** High-severity ReDoS vulnerabilities in `minimatch` (<9.0.6 or <10.2.2) blocked CI. `npm audit fix` successfully patched these by updating nested dependencies in `package-lock.json`.
 **Action:** Regularly run `npm audit` in each package directory and prioritize fixing High/Critical vulnerabilities to prevent CI blockage.
+## 2025-09-28 - Native tooltips for icon-only buttons
+**Learning:** Adding a native `title` attribute alongside `aria-label` is an acceptable, efficient alternative to importing and wrapping elements in complex Radix UI tooltip components, saving lines of code under strict constraints while improving both a11y and UX.
+**Action:** Always add `title` and `aria-label` to icon-only buttons to give mouse users context and screen reader users a name.
