@@ -17,3 +17,7 @@
 ## 2024-10-25 - Dependency Security (Minimatch)
 **Learning:** High-severity ReDoS vulnerabilities in `minimatch` (<9.0.6 or <10.2.2) blocked CI. `npm audit fix` successfully patched these by updating nested dependencies in `package-lock.json`.
 **Action:** Regularly run `npm audit` in each package directory and prioritize fixing High/Critical vulnerabilities to prevent CI blockage.
+
+## 2024-09-30 - Icon-only Button Accessibility
+**Learning:** Icon-only buttons for actions like copy, filter, and dropdowns frequently lack accessible names in this app.
+**Action:** Always verify that icon-only `Button` components (especially `size="icon"`) include `title` and `aria-label` attributes to ensure screen reader support and tooltip visibility for sighted users.
