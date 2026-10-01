@@ -17,3 +17,6 @@
 ## 2024-10-25 - Dependency Security (Minimatch)
 **Learning:** High-severity ReDoS vulnerabilities in `minimatch` (<9.0.6 or <10.2.2) blocked CI. `npm audit fix` successfully patched these by updating nested dependencies in `package-lock.json`.
 **Action:** Regularly run `npm audit` in each package directory and prioritize fixing High/Critical vulnerabilities to prevent CI blockage.
+## 2023-10-25 - Icon-only buttons lacking tooltips and aria-labels
+**Learning:** Found that multiple icon-only buttons in the application header (Theme Toggle, Notifications, Help, User Menu, Copy Address) were missing `aria-label` and `title` attributes, severely impacting screen reader accessibility and making the UX less intuitive since hovering didn't provide any context on their purpose.
+**Action:** Always ensure any icon-only `<Button>` component includes a `title` (for mouse hover tooltips) and an `aria-label` (for screen readers). Adding native `title` attributes alongside `aria-label` is an efficient alternative to heavy tooltip components when working under strict line limits.
