@@ -17,3 +17,7 @@
 ## 2024-10-25 - Dependency Security (Minimatch)
 **Learning:** High-severity ReDoS vulnerabilities in `minimatch` (<9.0.6 or <10.2.2) blocked CI. `npm audit fix` successfully patched these by updating nested dependencies in `package-lock.json`.
 **Action:** Regularly run `npm audit` in each package directory and prioritize fixing High/Critical vulnerabilities to prevent CI blockage.
+
+## 2025-01-20 - Icon-Only Button Accessibility in CredVerseIssuer 3 Settings
+**Learning:** Native `title` and `aria-label` attributes provide a lightweight, accessible alternative to full UI tooltip components for icon-only action buttons (e.g., API key actions) when working under strict constraints.
+**Action:** Always provide `title` and `aria-label` when using icon-only buttons to ensure they are readable by screen readers and clear to users on hover.
