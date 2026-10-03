@@ -50,7 +50,7 @@ export default function Profile() {
                                     <AvatarFallback className="text-2xl">AD</AvatarFallback>
                                 </Avatar>
                                 <Button
-                                    size="icon"
+                                    size="icon" title="Edit Profile Picture" aria-label="Edit Profile Picture"
                                     variant="secondary"
                                     className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full shadow"
                                 >
