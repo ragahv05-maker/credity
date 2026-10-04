@@ -17,3 +17,7 @@
 ## 2024-10-25 - Dependency Security (Minimatch)
 **Learning:** High-severity ReDoS vulnerabilities in `minimatch` (<9.0.6 or <10.2.2) blocked CI. `npm audit fix` successfully patched these by updating nested dependencies in `package-lock.json`.
 **Action:** Regularly run `npm audit` in each package directory and prioritize fixing High/Critical vulnerabilities to prevent CI blockage.
+
+## 2024-10-25 - CredVerseIssuer 3 Header Tooltips
+**Learning:** In header navigation, icon-only buttons lacked tooltips and screen reader labels. Adding `title` attributes alongside `aria-label` provides a lightweight, accessible native tooltip without requiring complex UI components or wrappers.
+**Action:** Always verify icon-only buttons have accessible names, and consider using native `title` attributes for quick, accessible tooltips in high-density UI areas.
