@@ -4,3 +4,7 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+## 2024-05-18 - Math.random() is insecure for codes
+**Vulnerability:** Found `Math.random()` being used to generate 2FA backup codes.
+**Learning:** This makes 2FA backup codes predictable because `Math.random()` isn't cryptographically secure.
+**Prevention:** Always use `crypto.randomInt` or `crypto.randomBytes` to generate secrets, OTPs, or backup codes.
