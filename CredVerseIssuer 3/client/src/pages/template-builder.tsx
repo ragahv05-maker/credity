@@ -133,7 +133,7 @@ function CanvasField({
                     <span className="text-xs font-medium">{field.label}</span>
                 </div>
                 {isSelected && (
-                    <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-red-500 hover:text-red-700">
+                    <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-red-500 hover:text-red-700" aria-label="Delete field" title="Delete field">
                         <Trash2 className="h-3 w-3" />
                     </button>
                 )}
@@ -343,7 +343,7 @@ export default function TemplateBuilder() {
                     {/* Header */}
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <Button variant="ghost" size="icon" onClick={() => navigate('/templates')}>
+                            <Button variant="ghost" size="icon" onClick={() => navigate('/templates')} aria-label="Go back to templates" title="Go back to templates">
                                 <ArrowLeft className="h-5 w-5" />
                             </Button>
                             <div>
