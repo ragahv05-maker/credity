@@ -4,3 +4,7 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+## 2025-02-18 - [Insecure Randomness for 2FA Backup Codes]
+**Vulnerability:** `generateBackupCodes` in `two-factor.ts` used `Math.random()` to generate backup codes.
+**Learning:** `Math.random()` is a predictable Pseudo-Random Number Generator (PRNG) and cannot be used for any security sensitive value generation such as authentication bypass codes.
+**Prevention:** Always use cryptographically secure random number generation such as `crypto.randomInt` or `crypto.randomBytes` for sensitive operations.
