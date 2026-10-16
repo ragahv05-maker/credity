@@ -4,3 +4,7 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+## 2025-02-24 - Missing Authorization (IDOR) on Team Management Routes
+**Vulnerability:** The endpoints `GET /team/:id`, `PUT /team/:id/role`, `PUT /team/:id/status`, and `DELETE /team/:id` in `CredVerseIssuer 3/server/routes/team.ts` lacked authorization checks to verify if the requested team member belonged to the authenticated tenant.
+**Learning:** Even if a route is protected by an `apiKeyMiddleware` or similar that extracts `tenantId`, fetching a database record by ID without explicitly asserting `record.tenantId === req.tenantId` creates an IDOR vulnerability, allowing cross-tenant data access or modification. This issue was already mitigated correctly in `students.ts` but missed in `team.ts`.
+**Prevention:** Always scope database queries or explicit validation checks using both the resource ID and the requesting user's `tenantId` / context, rather than trusting the object ID blindly.
