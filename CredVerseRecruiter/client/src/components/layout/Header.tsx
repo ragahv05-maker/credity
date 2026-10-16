@@ -9,6 +9,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useEffect, useState } from "react";
 
 export function Header({ title }: { title: string }) {
@@ -32,44 +38,61 @@ export function Header({ title }: { title: string }) {
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="hidden md:flex relative w-64">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search candidates, IDs..."
-            className="pl-9 h-9 bg-muted/40 border-none focus-visible:ring-1"
-          />
-        </div>
+        <TooltipProvider>
+          <div className="hidden md:flex relative w-64">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search candidates, IDs..."
+              className="pl-9 h-9 bg-muted/40 border-none focus-visible:ring-1"
+            />
+          </div>
 
-        <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-foreground">
-          {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-        </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-foreground" aria-label="Toggle theme">
+                {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent><p>Toggle theme</p></TooltipContent>
+          </Tooltip>
 
-        <Button variant="ghost" size="icon" className="text-muted-foreground">
-          <HelpCircle className="h-5 w-5" />
-        </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="text-muted-foreground" aria-label="Help">
+                <HelpCircle className="h-5 w-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent><p>Help</p></TooltipContent>
+          </Tooltip>
 
-        <Button variant="ghost" size="icon" className="relative text-muted-foreground">
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-destructive border border-background" />
-        </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative text-muted-foreground" aria-label="Notifications">
+                <Bell className="h-5 w-5" />
+                <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-destructive border border-background" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent><p>Notifications</p></TooltipContent>
+          </Tooltip>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-9 w-9 rounded-full bg-muted">
-              <User className="h-5 w-5 text-muted-foreground" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Team Settings</DropdownMenuItem>
-            <DropdownMenuItem>Billing</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Log out</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full bg-muted" aria-label="User menu">
+                <User className="h-5 w-5 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>Profile</DropdownMenuItem>
+              <DropdownMenuItem>Team Settings</DropdownMenuItem>
+              <DropdownMenuItem>Billing</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>Log out</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </TooltipProvider>
       </div>
     </header>
   );
