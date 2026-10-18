@@ -133,6 +133,8 @@ export function Header() {
             size="icon"
             className="text-muted-foreground hover:text-foreground"
             onClick={() => navigate('/help')}
+            title="Help"
+            aria-label="Help"
           >
             <HelpCircle className="h-5 w-5" />
           </Button>
@@ -141,6 +143,8 @@ export function Header() {
             size="icon"
             className="text-muted-foreground hover:text-foreground relative"
             onClick={() => navigate('/verification-logs')}
+            title="Notifications"
+            aria-label="Notifications"
           >
             <Bell className="h-5 w-5" />
             <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-background"></span>
@@ -151,7 +155,7 @@ export function Header() {
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+              <Button variant="ghost" className="relative h-9 w-9 rounded-full" title="User Menu" aria-label="User Menu">
                 <Avatar className="h-9 w-9 border border-border">
                   <AvatarImage src="https://github.com/shadcn.png" alt="@admin" />
                   <AvatarFallback>AD</AvatarFallback>
