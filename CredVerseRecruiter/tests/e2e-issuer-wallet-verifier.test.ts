@@ -231,7 +231,7 @@ describe('issuer -> wallet -> verifier cross-service e2e', () => {
       .send({ userId: 1, url: String(offerRes.offerUrl) });
 
     expect(claimRes.status).toBe(500);
-    expect(claimRes.body.code).toBe('OFFER_CLAIMED');
+    expect(claimRes.body.code).toBe('OFFER_CLAIM_FAILED');
 
     return {
       storedCredential: claimRes.body.credential?.data,
