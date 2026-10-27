@@ -27,8 +27,6 @@ import {
 import { hasPin, setupPin, verifyPin } from '../services/pin-auth-service';
 
 const router = Router();
-const allowLegacyLoginBypass =
-    process.env.NODE_ENV !== 'production' && process.env.ALLOW_DEMO_ROUTES === 'true';
 
 /**
  * Register a new user
@@ -135,15 +133,12 @@ router.post('/auth/login', async (req, res) => {
         // Verify password
         const passwordHash = (user as any).password;
         if (!passwordHash) {
-            if (!allowLegacyLoginBypass) {
-                return res.status(401).json({ error: 'Invalid credentials' });
-            }
-            console.warn('[Auth] Allowing legacy no-password login because ALLOW_DEMO_ROUTES=true');
-        } else {
-            const valid = await comparePassword(password, passwordHash);
-            if (!valid) {
-                return res.status(401).json({ error: 'Invalid credentials' });
-            }
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        const valid = await comparePassword(password, passwordHash);
+        if (!valid) {
+            return res.status(401).json({ error: 'Invalid credentials' });
         }
 
         // Generate tokens
