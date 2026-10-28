@@ -4,3 +4,8 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+
+## 2025-10-28 - [Weak PRNG for OTP Generation]
+**Vulnerability:** Used `Math.random()` to generate One-Time Passwords (OTPs).
+**Learning:** `Math.random()` is not a cryptographically secure pseudo-random number generator (PRNG). Attackers who can predict its output can theoretically guess OTPs and bypass 2FA/MFA checks, leading to account takeover.
+**Prevention:** Always use a cryptographically secure PRNG, such as Node.js's native `crypto.randomInt()`, when generating any security-sensitive values like OTPs, tokens, or passwords.
