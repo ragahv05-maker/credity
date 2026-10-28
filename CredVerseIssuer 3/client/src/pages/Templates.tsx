@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -82,9 +82,10 @@ export default function Templates() {
     },
   });
 
-  const filteredTemplates = category === "All"
+  // ⚡ Bolt: Memoize filter operation to prevent re-filtering templates on non-category state updates.
+  const filteredTemplates = useMemo(() => category === "All"
     ? templates
-    : templates.filter(t => t.category === category);
+    : templates.filter(t => t.category === category), [category, templates]);
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
