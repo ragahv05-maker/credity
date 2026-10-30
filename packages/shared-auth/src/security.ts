@@ -155,7 +155,7 @@ export function setupSecurity(app: Application, config: SecurityConfig = {}) {
       origin:
         config.allowedOrigins ||
         process.env.ALLOWED_ORIGINS?.split(",") ||
-        true,
+        false,
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
       allowedHeaders: [

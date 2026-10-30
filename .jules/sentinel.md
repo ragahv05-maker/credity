@@ -4,3 +4,8 @@
 **Prevention:**
 1. Avoid global input sanitization middleware; prefer validation at input and encoding at output.
 2. Do not block common characters globally; use secure coding practices (parameterized queries) instead of WAF-like filters for internal APIs.
+
+## 2024-10-30 - Fix overly permissive CORS configuration
+**Vulnerability:** The CORS configuration in `packages/shared-auth/src/security.ts` fell back to `origin: true` when `ALLOWED_ORIGINS` was not set, reflecting the request's origin and allowing any domain to make authenticated cross-origin requests.
+**Learning:** Defaulting to `true` in CORS configuration completely nullifies CORS protection, as it instructs the browser to permit cross-origin requests from whatever origin requested it. Combined with `credentials: true`, this creates a severe security risk where attackers can execute unauthorized authenticated actions via CSRF-like techniques from malicious domains.
+**Prevention:** Never use `true` as a fallback for the `origin` property in CORS middleware. Always enforce a strict allowlist of origins or default to `false` (blocking all cross-origin requests by default) to ensure security is opt-in, not opt-out.
