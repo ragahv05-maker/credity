@@ -205,7 +205,7 @@ export default function Dashboard() {
                 >
                   {action.href ? (
                     <Link href={action.href}>
-                      <button className="flex flex-col items-center gap-2 w-full group">
+                      <button className="flex flex-col items-center gap-2 w-full group" aria-label={action.label}>
                         <div className="w-14 h-14 rounded-2xl bg-card border border-border shadow-sm flex items-center justify-center text-primary transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-md group-active:scale-95">
                           <action.icon className="w-6 h-6" />
                         </div>
@@ -216,6 +216,7 @@ export default function Dashboard() {
                     <button
                       onClick={action.action}
                       className="flex flex-col items-center gap-2 w-full group"
+                      aria-label={action.label}
                     >
                       <div className="w-14 h-14 rounded-2xl bg-card border border-border shadow-sm flex items-center justify-center text-primary transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-md group-active:scale-95">
                         <action.icon className="w-6 h-6" />
