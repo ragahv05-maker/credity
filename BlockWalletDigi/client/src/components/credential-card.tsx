@@ -19,7 +19,11 @@ interface CredentialCardProps {
   index: number;
 }
 
-export function CredentialCard({ credential, index }: CredentialCardProps) {
+import React from 'react';
+
+// ⚡ Bolt: Memoized CredentialCard to prevent unnecessary re-renders
+// 📊 Impact: Reduces rendering overhead in lists by caching the card when credential data hasn't changed.
+export const CredentialCard = React.memo(function CredentialCard({ credential, index }: CredentialCardProps) {
   const getIcon = () => {
     switch (credential.type) {
       case "degree": return <Award className="w-6 h-6 text-primary" />;
@@ -91,4 +95,4 @@ export function CredentialCard({ credential, index }: CredentialCardProps) {
       </Card>
     </motion.div>
   );
-}
+});
