@@ -3,6 +3,7 @@ import { storage } from '../storage';
 import {
     hashPassword,
     comparePassword,
+    validatePasswordStrength,
     generateAccessToken,
     generateRefreshToken,
     refreshAccessToken,
@@ -25,6 +26,11 @@ router.post('/auth/register', async (req, res) => {
 
         if (!username || !password) {
             return res.status(400).json({ error: 'Username and password required' });
+        }
+
+        const passwordValidation = validatePasswordStrength(password);
+        if (!passwordValidation.isValid) {
+            return res.status(400).json({ error: 'Weak password', details: passwordValidation.errors });
         }
 
         // Rate limit registration
