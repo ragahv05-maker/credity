@@ -277,7 +277,7 @@ router.post('/verify/instant', writeIdempotency, async (req, res) => {
         await storage.addVerification(record);
 
         const v1 = {
-                credential_validity: verificationResult.status === 'verified' ? 'valid' : 'invalid',
+                credential_validity: verificationResult.status === 'verified' ? 'valid' : verificationResult.status === 'failed' ? 'invalid' : 'unknown',
                 status_validity: verificationResult.riskFlags.includes('REVOKED_CREDENTIAL') ? 'revoked' : 'active',
                 anchor_validity: verificationResult.riskFlags.includes('NO_BLOCKCHAIN_ANCHOR') ? 'pending' : 'anchored',
                 fraud_score: fraudAnalysis.score,
