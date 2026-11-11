@@ -65,11 +65,11 @@
     "connect-pg-simple": "^10.0.0",
     "cors": "^2.8.5",
     "date-fns": "^3.6.0",
-    "drizzle-orm": "^0.45.1",
+    "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.7.1",
     "embla-carousel-react": "^8.6.0",
     "express": "^4.21.2",
-    "express-rate-limit": "^8.2.1",
+    "express-rate-limit": "^8.5.1",
     "express-session": "^1.18.1",
     "framer-motion": "^12.23.24",
     "helmet": "^8.1.0",
@@ -102,8 +102,8 @@
     "twilio": "^5.12.2",
     "vaul": "^1.1.2",
     "wouter": "^3.3.5",
-    "ws": "^8.18.0",
-    "zod": "^3.25.76",
+    "ws": "^8.20.2",
+    "zod": "^4.6.6",
     "zod-validation-error": "^3.4.0"
   },
   "devDependencies": {
@@ -146,5 +146,19 @@
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
+  },
+  "overrides": {
+    "axios": "^1.7.4",
+    "body-parser": "^1.20.3",
+    "drizzle-orm": "^0.45.2",
+    "express-rate-limit": "^8.5.1",
+    "form-data": "^4.0.6",
+    "ip-address": "^10.7.4",
+    "lodash": "^4.17.21",
+    "path-to-regexp": "^0.1.13",
+    "protobufjs": "^7.6.5",
+    "proxy-addr": "^2.0.8",
+    "ws": "^8.20.2",
+    "zod": "^4.6.6"
   }
 }
